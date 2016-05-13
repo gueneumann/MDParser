@@ -1,0 +1,133 @@
+GN: FEB, 2014
+
+MDParser as basis for MDNER -> DONE
+
+MDParser special model for question parsing
+
+GN: DECEMBER, 2014:
+
+- define main method for training, testing and evaluation
+	/MDP/src/de/dfki/lt/mdparser/test/CompleteTrainParseEval.java
+-> DONE
+
+	
+January, 2016:
+
+New maven project:
+- make a maven project MDParser
+- make it on github
+- log file
+- properties for training with MDParser and POS
+- github wiki docu
+- clean code
+
+- integrate learned models into jar-FILE -> usefull for using GNT with FLINK
+	- create runtime-specific jar file with all dependencies and resources to run a tagger
+	- create MODEL-specific jar files -> in order to restrict size of jar
+
+- make sure to use same version for liblinear for GNT and MDP
+- integrate GNT 
+	- POS tagger
+	- NER tagger
+	
+	
+Liblinear properties:
+- new liblinear version
+- why does MCSVM_CS work so well for MDP (and not for GNT)?
+
+Improve MDP:
+
+From paper "Optimizing Dependency Parsing Throughput“
+-	MDParser transforms String features to integer values since the used liblinear classifier operates on numerical values. 
+	This step requires a total of 27 transformations for every word, since MDParser computes 27 different features templates. 
+	Syntactic Parser, in contrast, transforms elementary features to integer values before the features are combined, 
+	requiring only three transformations (part-of-speech, word form and dependency) for every word in a sentence.
+-	Syntactic Parser represents its numerical features n as 64-bit integers (Java long type) which consist of (i) 
+	an 8 bit value indicating the feature type, and (ii) one or more of the following elementary features: 
+	word forms (20 bit), part-of-speech tag (16 bit) or dependency label (16 bit). 
+	The feature type is always stored in the last eight bits, while the position of elementary features 
+	depends on the feature type. 
+-	We, therefore, replace the mapping M: F -> N of parser feature strings fi \in F 
+	to integer values n \in N with three mappings that translate word forms wi \in W 
+	(M_wordform: W -> {0, … ,1048575}), part-of-speech tags posi \in P 
+	(M_pos: P -> {0, …, 65535}) and dependency labels di \in D 
+	(M_dep: D -> {0, …, 65535}) to integer values. 
+	The numerical feature value n is then derived by performing bit operations on these elementary features.
+-	The test for cycles and projectiveness traverse the dependency tree assuming that projectiveness 
+	is a symmetric property, then only a word pair has to be tested once rather than twice 
+	(for potential dependency n_i -> n_j and n_j -> n_i) 
+-	We also perform a final optimization step on the trained model which eliminates features with a weight of zero.
+
+Comments from Alexander:
+
+Hallo Herr Neumann,
+
+interessant :) MDParser ist noch am Leben :)
+
+Also sie haben wohl:
+
+1) ein paar Feature Templates weggelassen (steht dann aber nicht in den Ergebnissen)
+2) seltene Features durch 'unknown'-Werte ersetzt (steht auch nicht in den Ergebnissen was genau das bringt)
+3) String-Konkatenationen durch Integer-Multiplikationen ersetzt
+4) Andere Reihenfolge bei der Berechnung der Permissibility.
+
+Im Prinzip alles sehr plausibel.
+Den Tipp mit den Integer-Multiplikationen hatte ich schon damals erhalten 
+als wir Besuch von Google(Slav Petrov) hatten. 
+Er wollte/konnte mir jedoch keine Einzelheiten verraten. 
+
+Ich meinte aber die Anwendung von hashCode() ausprobiert zu haben, 
+ohne den im Paper beschriebenen Erfolg. Man muss ja bedenken, 
+auch Konkatenationen sind sehr billig, problematisch ist nur ihre Anzahl. 
+Durch die Multiplikationen sinkt die Anzahl nicht, daher kann es meiner Meinung 
+nach nicht zum Durchbruch kommen. 
+
+Die anderen Schritte sind sehr glaubwürdig, 
+insbesondere die Experimente mit der Permissibility, 
+ich muss gestehen ich habe nie daran gedacht damit rumzuspielen, 
+erkenne aber jetzt das Potenzial.
+
+Hallo Herr Neumann,
+
+ja im Prinzip sind alle Ideen eher leicht umzusetzen. 
+Nur wie gesagt, mit 3) habe ich damals nichts auf die Schnelle hinbekommen, 
+vielleicht geht es aber auch ganz einfach.
+
+1) Ja nur nach der Erstellung der Trainingsdaten alle Features durchgehen, 
+zählen und die seltenen durch unknown ersetzen. In der Anwendungsphase muss 
+man das dann natürlich nicht  mehr machen, entweder ist dann ein Feature häufig und vorhanden 
+oder es wird eben keinen Match geben. Ich sehe hier sogar noch mehr Potenzial für Optimierung, 
+denn könnte man solche Fälle vorhersagen, wo es sich gar nicht lohnt ein Feature zu konstruieren, 
+um dann festzustellen, dass es zu selten ist, dann würde man Zeit sparen. 
+
+4) Muss man für beide Phasen ändern, ich glaube aber in beiden Phasen wird dieselbe Funktion genutzt, 
+d.h. im Prinzip wird es nur an einer Stelle geändert und gilt für beide Phasen.
+
+Mit freundlichen Grüßen,
+Alexander
+
+
+MDParser and Morphology
+- check how to integrate morphology and stemming
+- how to generate goldstandard with true morphix results
+    - POS from training data
+    - labels used for disambiguation
+    - stems from morphix
+    - I would to create a morphix-model for disambiguation
+    - then learn a dependency grammar that also uses the morpholgical constraints
+- how to integrate it into preprocessing
+    - I would to create a morphix-model for disambiguation
+    - then apply morphix, map to conll format, filter withnpos tagger and then
+      apply model - in this caseneventually no pos tagger necessary ?
+
+Language models:
+
+-	create models for all treebanks
+	-	specific
+	-	uniform
+-	write java class to run script for learning all necessary models
+	-	POS tagger
+	-	dependency tagger
+-	eventually call two independent jobs
+-	parametrize MDParser to run different languages
+-	write application wrapper to dynamically select language and run it

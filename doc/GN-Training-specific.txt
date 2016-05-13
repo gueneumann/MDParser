@@ -1,0 +1,83 @@
+Usage of Training with MDP with specific treebanks
+
+Details by GN: 
+Start: 4th December, 2014
+
+1. Treebansk files
+	/Users/gune00/dfki/data/MLDP/universal_treebanks_v1.0
+
+2. English  EN
+	-  in CompleteTest.java 
+  		String trainFile = "resources/input/english-train.conll";
+		String goldFile = "resources/input/english-devel.conll";
+		String modelFile = "modelEnglish.zip";
+  
+		Time to read models: 2762 milliseconds.
+		No. of threads: 8
+		No. of sentences: 1334
+		Time to parse: 274.0
+		Speed (sent/s): 4868.613138686132
+		Number of configurations: 63563
+		Average number of configurations per sentence: 47
+		Parent accuracy: 0.8840805562215296
+		Label accuracy:  0.8603752097818269
+		Training time: 135751 milliseconds.
+		Parsing time: 3533 milliseconds.
+		
+		With ONE thread
+		No. of threads: 1
+		No. of sentences: 1334
+		Time to parse: 625.0
+		Speed (sent/s): 2134.4
+		Number of configurations: 63885
+		Average number of configurations per sentence: 47
+		Parent accuracy: 0.8840505873891153
+		Label accuracy:  0.8604051786142412
+		Training time: 137536 milliseconds.
+		Parsing time: 3968 milliseconds.
+		
+	-	parsing only
+		"resources/input/english-devel.conll";
+		"modelEnglish.zip";
+		
+		NOTE:	it is unclear why loading a model and parsing takes more time
+				without training phase done before ?
+				Problems with threads ?
+		
+		Time to read models: 4297 milliseconds.
+		No. of threads: 8
+		No. of sentences: 1334
+		Time to parse: 872.0
+		Speed (sent/s): 1529.8165137614678
+		Number of configurations: 63523
+		Average number of configurations per sentence: 47
+		Parent accuracy: 0.8841704627187725
+		Label accuracy:  0.8606449292735555
+		
+		Time to read models: 4308 milliseconds.
+		No. of threads: 1
+		No. of sentences: 1334
+		Time to parse: 797.0
+		Speed (sent/s): 1673.7766624843161
+		Number of configurations: 63883
+		Average number of configurations per sentence: 47
+		Parent accuracy: 0.8841704627187725
+		Label accuracy:  0.8606449292735555
+	
+
+	Compared to ChenManning, EMNLP, 2014:
+	UAS  	= 92.2
+	LAS  	= 91.1
+	Speed	= 1013 sent/sec
+
+Trainingssätze: 39278
+
+  	
+	
+4. German DE
+
+   	String trainFile = "resources/input/german_tiger_train.conll";
+	String goldFile = "resources/input/german_tiger_test.conll";
+	String modelFile = "modelGerman.zip";
+   
+   	

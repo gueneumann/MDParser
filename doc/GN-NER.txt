@@ -1,0 +1,684 @@
+GN on 13.12.2013:
+
+*******************************************
+Useful NE-specific features for GERMAN used by others:
+
+***********
+Grzegorz Chrupala, Dietrich Klakow (LREC, 2010): FOR GEMRAN
+
+-> their best result: 74.69%
+
+We extract features of the current token to be labeled (con-
+tent features) as well as features of a 5-token window cen-
+tered around the current position (context features):
+Content features
+	– Word form
+	– Lowercase word form
+	– Lemma
+	– Suffixes of length 1..3
+	– Word shape: encodes which character classes
+		(upper-case, lower-case, digits, or punctuation)
+		the word contains and in what order
+	– POS label
+	– Chunk label
+
+Context features
+	– Word form for tokens at positions {-2, -1, 1, 2}
+	– NE label at position -1
+	– Concatenated NE labels at positions -2 and -1
+	
+Additional:
+Automatically labeled data from 32 million pages using Brown clustering
+and Wikipedia info boxes for extracting additional data.
+
+Baseline:
+Just data from CONLL-2003: ~63% F
+Adding Wikipedia-Infoboxes: ~67% F
+Adding Cluster: best result see below
+
+	
+Entity Precision Recall F-score
+All 82.19 (31.32) 71.72 (34.16) 76.60** (34.18)
+LOC 76.85 (22.16) 79.85 (41.39) 78.32 (32.55)
+MISC 77.06 (18.33) 55.54 (28.27) 64.56 (29.49)
+ORG 81.20 (05.86) 61.97 (22.89) 70.29 (21.69)
+PER 90.72 (63.46) 85.15 (51.85) 87.85 (56.95)
+Table 2: NER results on German development set. Numbers
+in brackets show relative error reduction compared to
+the baseline
+
+Entity Precision Recall F-score
+All 80.28 (18.21) 69.83 (22.46) 74.69** (21.67)
+LOC 76.44 (12.71) 74.30 (23.56) 75.36 (19.13)
+MISC 71.37 (11.61) 52.84 (17.28) 60.72 (17.22)
+ORG 73.46 (03.39) 56.92 (11.67) 64.14 (10.24)
+PER 91.59 (48.66) 83.85 (40.07) 87.55 (43.46)
+Table 3: NER results on German test set. Numbers in
+brackets show relative error reduction compared to the
+baseline
+
+***********
+Using CRF-StanfordNER for GERMAN: 
+/Users/gune00/dfki/MDPFrameWork/MDNER/konvens10_faruqui.pdf. FOR GERMAN
+
+-> their best result: 78.2%
+
+ Tokens Clusters Precision Recall F1
+Baseline (0/0) 80.9 58.8 68.1
+10M 100 85.2 68.1 75.7
+10M 200 85.2 66.8 74.9
+20M 100 83.0 64.9 72.9
+20M 200 86.4 70.1 77.4
+50M 200 86.7 69.3 77.0
+50M 400 87.3 71.5 78.6
+100M 200 85.4 69.4 76.6
+100M 400 86.7 76.0 77.8
+175M 200 86.2 71.3 78.0
+175M 400 87.2 71.0 78.3
+175M 600 88.0 72.9 79.8
+Table 1: Performance on CoNLL German TestA development
+set, using HGC as generalization corpus
+
+Tokens Clusters Precision Recall F1
+Baseline (0/0) 80.9 58.8 68.1 (stanford ner without distr. semantics)
+10M 100 83.5 65.5 73.4
+10M 200 84.1 66.0 73.9
+20M 100 84.2 66.2 74.1
+20M 200 84.1 66.8 74.5
+50M 200 85.4 68.9 76.3
+50M 400 85.1 68.9 76.1
+100M 200 84.9 68.6 75.9
+100M 400 84.8 69.1 76.1
+175M 200 85.0 69.4 76.4
+175M 400 86.0 70.0 77.2
+175M 600 85.4 69.3 76.5
+Table 2: Performance on CoNLL German TestA development
+set, using deWac as generalization corpus
+
+Model Precision Recall F1
+Florian et al. (2003) 83.9 63.7 72.4**
+
+Baseline (0/0) 84.5 63.1 72.3** (Stanford-NER without distr. semantics)
+HGC (175M/600) 86.6 71.2 78.2** -> best result
+deWac (175M/400) 86.4 68.5 76.4**
+Table 3: Comparison to best CoNLL 2003 results for
+German on the CoNLL TestB test dataset
+
+NOTE:
+Stanford-NER is a CRF-learner features:
+word features: current word, previous word, next word, all words within a window 
+Orthographic features: Jenny -> Xxxx, IL-2 -> XX-#
+Prefixes and Suffixes: Jenny <J, <Je, <Jen, ..., nny>, ny>, y>
+Label sequences
+Lots of feature conjunctions 
+
+*******************************************
+Useful NE-specific features for ENGLISH used by others:
+
+***********
+http://www.cs.bgu.ac.il/~elhadad/nlp09/hw2.html#svm:
+
+Here is a list of features that have been found appropriate for NER in previous work:
+
+    The word form (the string as it appears in the sentence)
+    The POS of the word
+    ORT - a feature that captures the orthographic (letter) 
+    		structure of the word. It can have any of the following values: 
+    		number, contains-digit, contains-hyphen, capitalized, all-capitals, 
+    		URL, punctuation, regular.
+    prefix1: first letter of the word
+    prefix2: first two letters of the word
+    prefix3: first three letters of the word
+    suffix1: last letter of the word
+    suffix2: last two letters of the word
+    suffix3: last three letters of the word 
+    
+***********
+Paper by Turian et al., 2010, ACL
+    
+- Previous two predictions yi−1 and yi−2
+- Current word xi
+- xi word type information: 
+	all-capitalized,
+	is-capitalized, 
+	all-digits, 
+	alphanumeric, etc.
+- Prefixes and suffixes of xi, if the word contains
+	hyphens, then the tokens between the hyphens
+- Tokens in the window c = (xi−2, xi−1, xi, xi+1, xi+2)
+- Capitalization pattern in the window c
+- Conjunction of c and yi−1.
+
+When using the lexical features, we normalize
+dates and numbers. For example, 1980 becomes
+*DDDD* and 212-325-4751 becomes *DDD*-
+*DDD*-*DDDD*. This allows a degree of abstraction
+to years, phone numbers, etc. This delexicalization
+is performed separately from using the
+word representation. That is, if we have induced
+an embedding for 12/3/2008 , we will use the embedding
+of 12/3/2008 , and *DD*/*D*/*DDDD*
+in the baseline features listed above.
+
+***********
+Paper at http://arxiv.org/pdf/1312.5542v1.pdf:
+
+ENGLISH:
+word embeddings (window size 5) and a capital letter feature. The “caps” feature tells if
+each word was in lowercase, was all uppercase, had first letter capital, 
+or had at least one non-initial capital letter. 
+
+Result: best F1 for English: 89.16% 
+
+****** Current best results which I found:
+
+Current best result for EN: 91.67% -> /Users/gune00/dfki/MDPFrameWork/MDNER/McKanzie-2013.pdf
+
+Current best result for DE: 81.60% -> dictionary-based approach (using tries, 10 million entries)
+
+**************************************************************************************
+Testing development of NER using LibLinear and MDP
+**************************************************************************************
+
+First approach: create from conll-2003 NER data, conll-MDP dependency treebanks
+and use MDParser without changes !
+
+Motivation:
+Use dependency trees instead of CRF with the assumption that it better captures hierarchical NEs, as
+provided by Konvens-2014.
+
+Currently:
+The only changes I do for MDP are in classes:
+de.dfki.lt.mdparser.features.FeatureExtractor -> which is harmless, because I am adding methods.
+de.dfki.lt.mdparser.features.CovingtonFeatureModel -> which is the place for integrating the new features
+
+Classes defined de.dfki.lt.mdparser.test:
+NERTrainerTest.java
+NERCompleteTest.java
+NERParserTest.java
+
+********** TESTS with using MDP as it is !
+
+training and test conversion from conll NER trebanks to NER dependency treebanks:
+/MDP/src/de/dfki/lt/nep/ConllNERmapper.java
+
+Approach for creating dependency like grammar:
+a.) link each token directly to root
+b.) for sequences of tagged NERs create right branching mod/dep trees, such that head is linked to root.
+
+Resulting files are in:
+/Users/gune00/data/conll/conll03-NER/mdptest/
+
+TESTS with ENGLISH: cd /Users/gune00/data/conll/conll03-NER
+
+ERRORS:
+Strange: high number of phrases
+DOCSTART is tagged as I-ORG -> corrected when creating conll result file
+Why empty class (in eng.testb.ner) ?
+   : precision:   0.00%; recall:   0.00%; FB1:   0.00
+
+Experiments with encoding: In: ISO-8859-1, Out: ISO-8859-1
+
+Baseline for testa file:
+lt-pool-161:conll03-NER gune00$ ./bin/baseline eng.train eng.testa | ./bin/conlleval 
+defined(%hash) is deprecated at ./bin/baseline line 113.
+	(Maybe you should just omit the defined()?)
+processed 51578 tokens with 5942 phrases; found: 4948 phrases; correct: 3876.
+accuracy:  84.76%; precision:  78.33%; recall:  65.23%; FB1:  71.18
+              LOC: precision:  78.26%; recall:  82.91%; FB1:  80.52
+             MISC: precision:  88.38%; recall:  79.18%; FB1:  83.52
+              ORG: precision:  69.70%; recall:  63.46%; FB1:  66.43
+              PER: precision:  80.84%; recall:  41.91%; FB1:  55.20
+              
+Experiments with a.) and testa file
+
+lt-pool-161:conll03-NER gune00$ ./bin/conlleval < mdptest/eng.testa.ner 
+processed 51578 tokens with 5942 phrases; found: 6968 phrases; correct: 4289.
+accuracy:  92.25%; precision:  61.55%; recall:  72.18%; FB1:  66.44
+              LOC: precision:  63.32%; recall:  78.28%; FB1:  70.01
+             MISC: precision:  78.79%; recall:  67.68%; FB1:  72.81
+              ORG: precision:  42.18%; recall:  65.18%; FB1:  51.22
+              PER: precision:  73.81%; recall:  73.45%; FB1:  73.63
+              
+Experiments with b.) and testa file: 
+
+lt-pool-161:conll03-NER gune00$ ./bin/conlleval < mdptest/eng.testa.ner 
+processed 51578 tokens with 5942 phrases; found: 5665 phrases; correct: 4483.
+accuracy:  95.30%; precision:  79.14%; recall:  75.45%; FB1:  77.25
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  83.80%; recall:  79.15%; FB1:  81.41
+             MISC: precision:  84.63%; recall:  65.08%; FB1:  73.57
+              ORG: precision:  68.84%; recall:  69.35%; FB1:  69.09
+              PER: precision:  80.38%; recall:  81.38%; FB1:  80.87
+              
+Baseline for testb file:
+
+lt-pool-161:conll03-NER gune00$ ./bin/baseline eng.train eng.testb | ./bin/conlleval 
+defined(%hash) is deprecated at ./bin/baseline line 113.
+	(Maybe you should just omit the defined()?)
+processed 46666 tokens with 5648 phrases; found: 3998 phrases; correct: 2875.
+accuracy:  83.18%; precision:  71.91%; recall:  50.90%; FB1:  59.61
+              LOC: precision:  74.19%; recall:  78.42%; FB1:  76.25
+             MISC: precision:  76.09%; recall:  67.09%; FB1:  71.31
+              ORG: precision:  71.43%; recall:  52.08%; FB1:  60.24
+              PER: precision:  57.04%; recall:  14.29%; FB1:  22.85
+              
+Experiments with b.) and testb file: -> would be second-worse result!
+
+lt-pool-161:conll03-NER gune00$ ./bin/conlleval < mdptest/eng.testb.ner 
+processed 46666 tokens with 5648 phrases; found: 5477 phrases; correct: 3954.
+accuracy:  93.82%; precision:  72.19%; recall:  70.01%; FB1:  71.08
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  80.07%; recall:  77.82%; FB1:  78.93
+             MISC: precision:  71.03%; recall:  54.13%; FB1:  61.44
+              ORG: precision:  62.67%; recall:  62.85%; FB1:  62.76
+              PER: precision:  74.53%; recall:  76.19%; FB1:  75.35
+
+ENGLISH training with eng.traintesta.conll:
+
+lt-pool-221:mdptest gune00$ ../bin/conlleval < eng.testb.ner 
+processed 46666 tokens with 5648 phrases; found: 5476 phrases; correct: 3961.
+accuracy:  93.82%; precision:  72.33%; recall:  70.13%; FB1:  71.22
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  80.76%; recall:  77.76%; FB1:  79.23
+             MISC: precision:  71.21%; recall:  54.27%; FB1:  61.60
+              ORG: precision:  62.83%; recall:  63.09%; FB1:  62.96
+              PER: precision:  74.17%; recall:  76.38%; FB1:  75.26
+
+Using the memory version of the trainer:
+lt-pool-221:mdptest gune00$ ../bin/conlleval < eng.testb.ner 
+processed 46666 tokens with 5648 phrases; found: 5483 phrases; correct: 4082.
+accuracy:  94.44%; precision:  74.45%; recall:  72.27%; FB1:  73.34
+              LOC: precision:  83.15%; recall:  78.72%; FB1:  80.87
+             MISC: precision:  81.06%; recall:  56.70%; FB1:  66.72
+              ORG: precision:  64.00%; recall:  67.31%; FB1:  65.61
+              PER: precision:  75.21%; recall:  77.49%; FB1:  76.33
+
+Using eng.train.conll and mem:
+processed 46666 tokens with 5648 phrases; found: 5453 phrases; correct: 4003.
+accuracy:  94.12%; precision:  73.41%; recall:  70.87%; FB1:  72.12
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  79.53%; recall:  79.20%; FB1:  79.36
+             MISC: precision:  77.62%; recall:  55.84%; FB1:  64.95
+              ORG: precision:  64.63%; recall:  63.15%; FB1:  63.89
+              PER: precision:  74.62%; recall:  76.75%; FB1:  75.67
+
+              
+TESTS with GERMAN:
+
+Training crashes, building the model with createAndTrainWithSplittingFromDisk!
+
+The problem with the crash is caused by a LibLInear model file where feature vectors are missing
+although the number of classes is correct. Could it be a problem when computing the integer form ?
+
+It seems that they are caused by encoding problems, so when training with 
+	de.dfki.lt.mdparser.parser.Trainer.createAndTrainWithSplittingFromMemory(String, String, String, String, String, String) 
+it works !
+
+Baseline for testa:
+
+lt-pool-208:conll03-NER gune00$ ./bin/baseline deu.train deu.testa | ./bin/conlleval 
+defined(%hash) is deprecated at ./bin/baseline line 113.
+	(Maybe you should just omit the defined()?)
+processed 51645 tokens with 4833 phrases; found: 3388 phrases; correct: 1260.
+accuracy:  84.73%; precision:  37.19%; recall:  26.07%; FB1:  30.65
+              LOC: precision:  62.14%; recall:  45.72%; FB1:  52.68
+             MISC: precision:  77.25%; recall:  35.64%; FB1:  48.78
+              ORG: precision:  15.35%; recall:  20.55%; FB1:  17.57
+              PER: precision:  26.79%; recall:   7.49%; FB1:  11.71
+
+Only with sentences having a NE-tag:
+lt-pool-208:conll03-NER gune00$ ./bin/conlleval < mdptest/deu.testa.ner 
+processed 39282 tokens with 4833 phrases; found: 3164 phrases; correct: 1965.
+accuracy:  90.63%; precision:  62.10%; recall:  40.66%; FB1:  49.14
+              LOC: precision:  53.86%; recall:  56.65%; FB1:  55.22
+             MISC: precision:  79.03%; recall:  14.55%; FB1:  24.58
+              ORG: precision:  75.59%; recall:  38.92%; FB1:  51.38
+              PER: precision:  60.71%; recall:  47.54%; FB1:  53.32
+
+
+lt-pool-208:conll03-NER gune00$ ./bin/conlleval < mdptest/deu.testa.ner 
+processed 51645 tokens with 4833 phrases; found: 3071 phrases; correct: 1917.
+accuracy:  92.71%; precision:  62.42%; recall:  39.66%; FB1:  48.51
+              LOC: precision:  53.50%; recall:  57.58%; FB1:  55.46
+             MISC: precision:  81.13%; recall:  12.77%; FB1:  22.07
+              ORG: precision:  77.53%; recall:  36.99%; FB1:  50.08
+              PER: precision:  61.87%; recall:  46.32%; FB1:  52.98
+
+GERMAN training with deu.traintesta.conll:
+
+lt-pool-221:mdptest gune00$ ../bin/conlleval < deu.testb.ner 
+processed 52098 tokens with 3673 phrases; found: 2490 phrases; correct: 1705.
+accuracy:  94.65%; precision:  68.47%; recall:  46.42%; FB1:  55.33
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  55.88%; recall:  50.53%; FB1:  53.07
+             MISC: precision:  70.71%; recall:  20.90%; FB1:  32.26
+              ORG: precision:  69.70%; recall:  32.73%; FB1:  44.54
+              PER: precision:  79.62%; recall:  66.03%; FB1:  72.19
+
+
+*********************** JUNE, 2014
+Upos testing phase: training with train and testa
+
+lt-pool-101:conll03-NER gune00$ ./bin/conlleval < mdptest/eng.upos.testb.ner 
+processed 46666 tokens with 5648 phrases; found: 4368 phrases; correct: 3530.
+accuracy:  93.16%; precision:  80.82%; recall:  62.50%; FB1:  70.49
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  93.51%; recall:  70.86%; FB1:  80.63
+             MISC: precision:  79.21%; recall:  54.27%; FB1:  64.41
+              ORG: precision:  74.17%; recall:  56.71%; FB1:  64.28
+              PER: precision:  75.81%; recall:  63.39%; FB1:  69.05
+              
+lt-pool-101:conll03-NER gune00$ ./bin/conlleval < mdptest/deu.upos.testb.ner 
+processed 52098 tokens with 3673 phrases; found: 1813 phrases; correct: 1380.
+accuracy:  93.96%; precision:  76.12%; recall:  37.57%; FB1:  50.31
+              LOC: precision:  77.94%; recall:  36.52%; FB1:  49.74
+             MISC: precision:  74.59%; recall:  20.60%; FB1:  32.28
+              ORG: precision:  73.84%; recall:  35.06%; FB1:  47.54
+              PER: precision:  76.42%; recall:  49.62%; FB1:  60.17
+
+*********************** JUNE, 2014
+
+It works and generates a German model, but actually f-measure is far too low !              
+
+**************************************************************************************
+Extend feature set for MDP
+**************************************************************************************
+
+New feature functions:
+	basically I have to re-define/adapt class  /MDP/src/de/dfki/lt/mdparser/features/CovingtonFeatureModel.java
+	and de.dfki.lt.mdparser.features.FeatureExtractor (, which basically defines the methods for the templates)
+	that uses additional NER-specific features and is called in appropriate trainer and parser classes.
+	I might also define a own trainer class, which is a copy of the current trainer class and only uses what is needed.
+	
+	it is created inside trainer as:
+		Alphabet alphaParser = new Alphabet();
+			only creates hash-map
+		FeatureExtractor fe = new FeatureExtractor();
+			specifies the methods for the templates
+		
+		if (algorithm.equals("covington")) {
+			fm = new CovingtonFeatureModel(alphaParser, fe);
+			pa = new CovingtonAlgorithm();
+		}
+
+NOTE:
+- the input AND output to the MD parser is a 2-Dim array s which corresponds SEMANTICALLY to a conll table for a sentence!
+	"ID		FORM	LEMMA	CPOSTAG	POSTAG	FEATS 	HEAD 	DEPREL 	PHEAD 	PDEPREL 	PRED 	ARG1 	ARG2"
+	s[0] 	s[1]  	s[2]   	s[3]	s[4]    s[5]   	s[6]  	s[7]    s[8]   	s[9]     	s[10]  	s[11]  	s[12] 
+
+- In training data and de.dfki.lt.nep.ConllNERmapper.fillEnglishTrainingSentence(String[][], int, String[]) 
+	I am creating an array with 9 columns and following interpretation:
+	"ID		FORM	LEMMA	CPOSTAG	CHUNK	FEATS 	HEAD 	NE-type NE-type-predicted"
+	s[0] 	s[1]  	s[2]   	s[3]	s[4]    s[5]   	s[6]  	s[7]
+	10		German	_		JJ		I-NP	_	 	0		I-MISC	null
+- The parser returns a conll array of form
+	1	RODGAU	Rodgau	NE	I-NC	_	0	I-LOC	_	I-LOC	_	null
+	and the computed NE-type in field s[7] is added and the end of the gold-file column s[8] as predicted NE-type
+
+Basically, I have to define new templates for NER and add them to the FeatureExtractor.
+Create a new "covingtonNer" property so that the trainer will use a new class CovingtonNerFeatureModel
+where these new templates are instantiated as static/dynamic features.
+
+Following the features that are defined by MDP and those preferred by Konvens2012 and sentenceSplitter.
+I can then also check, whether I need to use all MDP features.
+
+****************************************************************
+
+JUNE, 2014
+What feature templates and instances do I need, and which do I have, and which do I need to implement ?
+
+word-context feature ala Konvens2012:
+templateWFwindow(j,1) -> wj-1, wj, wj+1
+
+templateWFsuffix4(j) -> suffix of length 4 from j
+
+-> for word wj, create all affixies and create feature for each
+
+templateWFshape(j) -> map word to a shap like Bill -> Xxx
+
+-> previous dependency relation features 
+	-> check whether tempplates are already defined
+
+****************************************************************
+
+TESTING WITH EnglishPos WITH memorized version: traintesta.conll
+
+suffix-4-1 DYNAMISCH:
+lt-pool-181:conll03-NER gune00$ ./bin/conlleval < mdptest/eng.testb.ner 
+accuracy:  95.06%; precision:  77.34%; recall:  75.19%; FB1:  76.25
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  86.43%; recall:  79.80%; FB1:  82.98
+             MISC: precision:  75.92%; recall:  67.81%; FB1:  71.63
+              ORG: precision:  70.01%; recall:  68.15%; FB1:  69.07
+              PER: precision:  76.67%; recall:  80.89%; FB1:  78.72
+
+-> BRINGS: ~ 3% F
+              
+suffix-4-1 + prefix-4-1
+accuracy:  95.15%; precision:  76.81%; recall:  75.05%; FB1:  75.92
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  85.53%; recall:  77.58%; FB1:  81.36
+             MISC: precision:  79.09%; recall:  69.52%; FB1:  74.00
+              ORG: precision:  69.57%; recall:  69.36%; FB1:  69.46
+              PER: precision:  75.35%; recall:  80.71%; FB1:  77.93
+              
+suffix-4-1 + prefix-4-1 +  window
+accuracy:  95.00%; precision:  76.70%; recall:  74.50%; FB1:  75.59
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  87.87%; recall:  76.44%; FB1:  81.76
+             MISC: precision:  79.55%; recall:  69.80%; FB1:  74.36
+              ORG: precision:  68.51%; recall:  68.75%; FB1:  68.63
+              PER: precision:  74.30%; recall:  80.46%; FB1:  77.26
+
+suffix-4-1 + prefix-4-1 +  window left
+accuracy:  95.20%; precision:  77.71%; recall:  77.02%; FB1:  77.36
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  87.11%; recall:  81.41%; FB1:  84.16
+             MISC: precision:  77.58%; recall:  69.52%; FB1:  73.33
+              ORG: precision:  71.33%; recall:  70.86%; FB1:  71.10
+              PER: precision:  75.44%; recall:  82.07%; FB1:  78.61
+              
+-> BRINGS: ~ 4% F
+
+features defined as static: suffix-4-1 + prefix-4-1 +  window left
+accuracy:  95.23%; precision:  78.18%; recall:  76.75%; FB1:  77.46
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  86.74%; recall:  81.18%; FB1:  83.86
+             MISC: precision:  78.04%; recall:  69.37%; FB1:  73.45
+              ORG: precision:  71.69%; recall:  70.44%; FB1:  71.06
+              PER: precision:  76.71%; recall:  81.88%; FB1:  79.21
+              
+suffix-4-1 + prefix-4-1 +  window left + shape:
+
+accuracy:  95.33%; precision:  78.18%; recall:  77.58%; FB1:  77.88
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  86.81%; recall:  82.49%; FB1:  84.60
+             MISC: precision:  77.58%; recall:  69.52%; FB1:  73.33
+              ORG: precision:  72.77%; recall:  70.14%; FB1:  71.43
+              PER: precision:  75.67%; recall:  83.67%; FB1:  79.47  
+              
+-> BRINGS: ~ 4.5% F
+
+suffix-4-1 + window left
+accuracy:  95.25%; precision:  79.17%; recall:  76.89%; FB1:  78.01
+
+-> BRINGS: ~ 4.6% F
+
+****************************************************************
+
+TESTING with GermanPos: traintesta.conll
+
+suffix 4-1 DYNAMISCH:
+lt-pool-181:conll03-NER gune00$ ./bin/conlleval < mdptest/deu.testb.ner 
+processed 52098 tokens with 3673 phrases; found: 2695 phrases; correct: 2014.
+accuracy:  95.37%; precision:  74.73%; recall:  54.83%; FB1:  63.25
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  71.94%; recall:  59.71%; FB1:  65.26
+             MISC: precision:  71.28%; recall:  30.00%; FB1:  42.23
+              ORG: precision:  68.37%; recall:  41.66%; FB1:  51.77
+              PER: precision:  80.83%; recall:  73.05%; FB1:  76.75
+
+suffix-4-1 + window left
+accuracy:  95.50%; precision:  75.78%; recall:  56.14%; FB1:  64.50
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  74.29%; recall:  62.80%; FB1:  68.06
+             MISC: precision:  69.57%; recall:  31.04%; FB1:  42.93
+              ORG: precision:  69.61%; recall:  41.79%; FB1:  52.22
+              PER: precision:  81.65%; recall:  73.72%; FB1:  77.48
+              
+suffix-4-1 + prefix-4-1
+accuracy:  95.21%; precision:  71.03%; recall:  59.60%; FB1:  64.81
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  70.93%; recall:  62.22%; FB1:  66.29
+             MISC: precision:  63.56%; recall:  47.91%; FB1:  54.64
+              ORG: precision:  62.57%; recall:  44.11%; FB1:  51.75
+              PER: precision:  79.69%; recall:  73.89%; FB1:  76.68
+
+suffix-4-1 + prefix-4-1 +  window
+accuracy:  95.30%; precision:  72.16%; recall:  59.49%; FB1:  65.21
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  72.69%; recall:  61.45%; FB1:  66.60
+             MISC: precision:  63.75%; recall:  46.72%; FB1:  53.92
+              ORG: precision:  63.81%; recall:  44.24%; FB1:  52.25
+              PER: precision:  79.96%; recall:  74.81%; FB1:  77.30
+-> BRINGS ~ 10% F
+              
+suffix-4-1 + prefix-4-1 +  window left
+accuracy:  95.83%; precision:  76.05%; recall:  60.52%; FB1:  67.40
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  72.77%; recall:  66.09%; FB1:  69.27
+             MISC: precision:  72.47%; recall:  45.97%; FB1:  56.26
+              ORG: precision:  71.22%; recall:  44.50%; FB1:  54.78
+              PER: precision:  82.82%; recall:  74.23%; FB1:  78.29
+              
+-> BRINGS ~ 12% F
+
+features defined as static: suffix-4-1 + prefix-4-1 +  window left
+accuracy:  95.83%; precision:  76.17%; recall:  60.90%; FB1:  67.69
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  72.49%; recall:  66.18%; FB1:  69.19
+             MISC: precision:  73.29%; recall:  46.27%; FB1:  56.72
+              ORG: precision:  71.43%; recall:  44.63%; FB1:  54.94
+              PER: precision:  82.98%; recall:  75.06%; FB1:  78.82
+              
+suffix-4-1 + prefix-4-1 +  window left + shape
+accuracy:  95.96%; precision:  76.52%; recall:  62.29%; FB1:  68.68
+                 : precision:   0.00%; recall:   0.00%; FB1:   0.00
+              LOC: precision:  73.10%; recall:  66.96%; FB1:  69.89
+             MISC: precision:  72.75%; recall:  48.21%; FB1:  57.99
+              ORG: precision:  70.86%; recall:  45.92%; FB1:  55.73
+              PER: precision:  83.82%; recall:  76.74%; FB1:  80.12
+              
+-> BRINGS ~ 13.3 % F 
+
+*************
+
+Current fazit:
+
+EN-POS: suffix-4-1 +  window left -> 4.5% F 
+		suffix-4-1 + prefix-4-1 +  window left -> ~4F 
+		
+DE-POS: suffix-4-1 + prefix-4-1 +  window left + shape 
+	-> ~13.3% improvment compared to "just MDP"
+	-> This is already much better than what Klakow got when adding WikiPedia
+
+
+Including shape features brings some increase, but more for DE than for EN.
+
+Window right does not bring anything, because it seems already computed via wfjp1.
+Window-both also already covered by other features available and subsumes window right.
+
+So, what puzzles me is that the spelling features do not bring anything for DE and EN.
+
+FOR GERMAN:
+- Compared to Klakow: better in PERS and ORGS (but only with clustering)
+
+HOWEVER: it seems reasonable to define its own MDNer project, if any. 
+BUT: it might be usefull to check with Konvens data, because of embedded NEs.
+
+
+*************
+NEXT: HIERIX
+
+Run some tests on other data:
+ out of domain tests: europarl from Sebastian Pado: /Users/gune00/data/conll/padoDE
+ -> already on CONLL-2003 format -> difference: no I/B prefix !
+ 
+ -> steps:
+ 	1. make a conllmdp file for the test files -> see training cases
+ 	2. do testing
+ 	3. create final output
+ 	4. run script
+ 
+ BioNLP
+ -> need to run POS-tagger and adapt to conll-2003 format
+
+OntoNotesRelease
+	also used by Finkel & Manning for joint NER and Parsing
+
+Features:
+	previous predicted tags
+		return the dependency label of the j-i element of current element j
+		define merging accordingly for checking j-i-1, j-i
+		-> HURTS !!!
+	
+	NemexA lookup
+		here, similarity is used as basis for membership
+		define NE-type specific gazetters
+		find optimal threshold
+		Idea would be: words with enough ngram overlap inherit type information
+		Probaly combine: of wf matches with  PERS and LOC then bad
+	lemma
+		MORPHIX stems ?
+	clusters: 
+		a cluster here is based on collocation
+		check whether wf occurs in a cluster
+		use cluster names as feature value
+		-> I assume this means: 
+			if a lot of labeled PERS occur in a cluster, then the whole cluster is about persons
+			
+**************************************************************************************
+Corpus formats
+**************************************************************************************
+
+FORMAT of NER corpora:
+- data/conll/CONLL-2002: Sprachen ES and NE
+	For ES:
+		WF NE
+		Brasil B-LOC
+	For NE:
+		WF POS NE
+		Duitsland N B-LOC
+	
+- CONLL-2003: Sprachen DE und EN
+	 WF POS CHUNK NE	
+	 LONDON NNP I-NP I-LOC
+
+- CONLL-2004-sem. Sprache EN
+	training and development can be created based on available files 
+
+- data/BioNLPdata/NLPBA-NER-2004
+	format as for CONLL-2002 ES
+	
+- KONVENS-2014: DE
+	IDX WF NE NE-contained
+	21 Troia B-OTH B-LOC
+	22 - I-OTH O
+	23 Traum I-OTH O
+	24 und I-OTH O
+	25 Wirklichkeit I-OTH O
+	
+- Also create training/test files with distant supervision approaches.
+	
+THUS:
+	- adapt readers for different format and internalize as done in, e.g.,
+		de.dfki.lt.nep.ConllNERmapper.fillEnglishTrainingSentence(String[][], int, String[])
+	- use specific language-flags, e.g., EN-2003 for EN conll-2003 format etc.
+	- select script
+		currently used in MDNer is from conll03-ner
+		also possible is konvens-2014
+
+
+
+	

@@ -1,0 +1,66 @@
+GN: April, 2012
+
+The information flow:
+
+1. MDP processes a file up to tagging result
+
+- de.dfki.lt.mdparser.test.MDParser.tagText(String, String, String)
+	- initializes the tagger
+	- tokenizes text and splits text into an array of sentences
+	- calls tagger on each sentence
+	- stores tagged sentences into a list
+- de.dfki.lt.mdparser.test.MDPServer.parseText(String, String, String)
+	- calls tagText() above
+	- calls specific parser
+- de.dfki.lt.mdparser.test.MDParser.main(String[])
+	- reads file 
+	- initializes all settings for system and parser
+	- if mode=tag only calls tagText()
+	- and writes output to file
+
+2. MDP maintains an 3-dim array for a input file which is used as general 
+   chart of all processes
+
+Remarks:
+
+- first trial could be to use mode=tag and call UPOS models
+  -> DONE on 19th June, see GN-README.TXT
+  
+- training with UPOS treebanks -> works for English & German & Danish
+  - more testing needed
+  - MDPServer and MDPClient currently check languages "german" and "english" 
+  	-> must be updated -> simple trick helps! -> just use any language flag, but consistently
+
+- parsing: 
+	on local machine it can run with test/MDParser.java and property file props.xml
+	directly from Eclipse IDE and -Xmx1g
+  
+- define chunkText() analog to parseText()
+- is it possible to call parseSentence() directly; maybe define separate main()
+
+
+About the tagger:
+
+MDParser.tagText(): (also a single sentence version tagSentence() exists)
+ - if property is set to "text" then call tagger
+	- tokenizes and sentence-splits complete text into a list of lists of strings
+	- call SVEN-tagger with loaded models
+	- returns tagged sentence as string of form "Im:APPRART  Model-Reformland:NN  Lateinamerikas:NE  fiel:VVFIN"
+	- split string and store in array of tagged token strings
+ - if input format is CONLL then create same internal result form of tagged token string
+ - create string which contains CONLL format of tagged sentences
+ 
+ - this means that in the variable sentencesArray[] all tagged sentences are stored as arrays of 
+ 	strings where each string is of form "word:pos"
+ - actually in the static variable tokenizedOutput[][][], all tagged sentences are stored
+ - this variable is used by the parser
+ 	
+ About the parser:
+ 
+ MDParser.parseText() and parseSentence():
+ 
+ - initializes feature model and parser to use
+ - loops over all sentences in variable tokenizedOutput[][][]
+ - on each tagged sentence, the selected parser is called
+ 
+ 

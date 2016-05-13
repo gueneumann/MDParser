@@ -1,0 +1,113 @@
+GN, JUNE, 2012
+
+UPOS-MDP for applications - next steps
+
+1. Evaluation of current EN/DE UPOS systems
+	- automatic data analysis ?
+	- statistics with R ?
+	- other representations
+
+2. Create UPOS POS-taggers for other languages
+   for details check /Users/gune00/dfki/TIM-Tools/SvenTagger and /home/neumann/src/SvenTagger
+   
+2.1. POS tagger and Parser trained for Danish
+ 	- does not work (but below), Client/Server only supports DE and EN
+ 	- this is only important to make sure that POS-tagger models are loaded
+ 	- it seems that only MDPserver.java has to be changed to init correct tagger
+
+-> simple solution: 
+ 	use german language value, but make sure that pathes are selected for Danish or other language
+ 	actually, language flag is not important, if only a single model is used
+ 		
+2.2. Simple testing via class test.MDParser.java and props file props.xml:
+     - change important values for attributes in props.xml accordingly:
+     	- modelsFile, modelFilePOSTaggerEnglish, inputFile, outputFile
+     	- eventually check output format and mode (parser or tagger only) and taggedFile
+     
+     - run MDParser with -Xmx1g
+     
+2.3. The above stuff works, so use some more UPOS languages
+
+
+OCTOBER, 2014:
+
+new UPOS-ULABEL treebank versions is here: /Users/gune00/data/MLDP/universal_treebanks_v2.0/
+
+create UPOS tagger models:
+- SvmTagger code and corpora in /Users/gune00/dfki/TIM-Tools/SvenTagger
+
+- Steps: example EN
+	- copy CONLL train/devel/test files to /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora
+	
+	- transform CONLL to SVM corpus format: 
+		awk -f ../corpusTools/extract.awk en-universal-test.conll > en-test-utag.svm
+		
+	- train models: cd /Users/gune00/dfki/TIM-Tools/SvenTagger/SVMTool/bin
+		perl SVMTlearn config.short-upos-english -v 2
+		
+	- copy model files to /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/models/UPOS/english/
+	- copy model files to /Users/gune00/dfki/workspaceKepler/MDP/resources/tagger/UposModels/english
+	
+	- create SVM test file: cd /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora
+		awk -f ../corpusTools/extract-wf.awk en-test-utag.svm > en-test-utag.svm.in
+		
+	- testing and evaluating model files: cd /Users/gune00/dfki/TIM-Tools/SvenTagger/SVMTool/bin
+		./SVMTagger -V 2 -S LRL -T 0 /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/Models/UPOS/english/ENGLISH < /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/en-test-utag.svm.in  > /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/en-test-utag.svm.out	
+		./SVMTeval 0 /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/Models/UPOS/english/ENGLISH  /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/en-test-utag.svm /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/en-test-utag.svm.out
+	
+	- result for EN UPOS:
+		* ================= ACCURACY PER PART-OF-SPEECH ===========================================
+       POS             HITS           TRIALS    ACCURACY         MFT
+		* -----------------------------------------------------------------------------------------
+         .             7314             7316    99.9727%    99.9453%
+       ADJ             3646             4032    90.4266%    83.3829%
+       ADP             6252             6301    99.2223%    92.0489%
+       ADV             2067             2328    88.7887%    81.1856%
+      CONJ             1362             1373    99.1988%    99.3445%
+       DET             5132             5171    99.2458%    95.7842%
+      NOUN            16777            17035    98.4855%    91.7816%
+       NUM             1919             1924    99.7401%    94.1268%
+      PRON             1690             1696    99.6462%    99.6462%
+       PRT             1456             1524    95.5381%    95.2756%
+      VERB             7800             7951    98.1009%    91.6488%
+         X               12               33    36.3636%    33.3333%
+	* ================= OVERALL ACCURACY ======================================================
+            HITS           TRIALS          ACCURACY               MFT
+	* -----------------------------------------------------------------------------------------
+           55427            56684          97.7824%          92.7369%
+	* =========================================================================================
+	
+- Steps: example DE:
+	- train models: cd /Users/gune00/dfki/TIM-Tools/SvenTagger/SVMTool/bin
+		perl SVMTlearn config.short-upos-german -v 2
+	
+	- copy model files to /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/models/UPOS/german/
+	- copy model files to /Users/gune00/dfki/workspaceKepler/MDP/resources/tagger/UposModels/german
+
+	- create SVM test file: cd /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora
+		awk -f ../corpusTools/extract-wf.awk de-test-utag.svm > de-test-utag.svm.in
+	
+	- testing and evaluating model files: cd /Users/gune00/dfki/TIM-Tools/SvenTagger/SVMTool/bin
+		./SVMTagger -V 2 -S LRL -T 0 /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/Models/UPOS/german/GERMAN < /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/de-test-utag.svm.in  > /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/de-test-utag.svm.out	
+		./SVMTeval 0 /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/Models/UPOS/german/GERMAN  /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/de-test-utag.svm /Users/gune00/dfki/TIM-Tools/SvenTagger/corpora/UPOS_Corpora/de-test-utag.svm.out
+	
+	* ================= ACCURACY PER PART-OF-SPEECH ===========================================
+       POS             HITS           TRIALS    ACCURACY         MFT
+	* -----------------------------------------------------------------------------------------
+         .             2379             2380    99.9580%    99.9580%
+       ADJ              950             1044    90.9962%    66.1877%
+       ADP             1531             1556    98.3933%    95.9512%
+       ADV              967             1267    76.3220%    75.0592%
+      CONJ              579              653    88.6677%    84.5329%
+       DET             1472             1508    97.6127%    99.2042%
+      NOUN             4143             4191    98.8547%    69.1243%
+       NUM              255              270    94.4444%    78.8889%
+      PRON              903             1076    83.9219%    74.4424%
+       PRT              280              307    91.2052%    73.6156%
+      VERB             2024             2065    98.0145%    83.7772%
+         X                1               22     4.5455%     4.5455%
+	* ================= OVERALL ACCURACY ======================================================
+            HITS           TRIALS          ACCURACY               MFT
+	* -----------------------------------------------------------------------------------------
+           15484            16339          94.7671%          82.1960%
+	* =========================================================================================

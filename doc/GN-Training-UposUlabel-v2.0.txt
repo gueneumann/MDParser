@@ -1,0 +1,115 @@
+Usage of Training with MDP with universal dependency treebanks
+
+Details by GN: 
+Start: 25th October, 2013, Current: July, 2014
+
+Universal Dependency Treebanks version 2.0:
+	http://universaldependencies.github.io/docs/
+	https://github.com/ryanmcd/uni-dep-tb
+
+1. Treebansk files
+	/Users/gune00/dfki/data/MLDP/universal_treebanks_v1.0
+
+2. UPOS models are used for coarse-grain tag set
+	models and property files for application in /Users/gune00/dfki/MDPFrameWork/MDPTest
+
+GN: July, 2014 -> changed parse and train test so that files are used as arguments.
+
+3. English universal EN
+	-  in CompleteTest.java 
+  		String trainFile = "/Users/gune00/data/MLDP/universal_treebanks_v1.0/en/en-universal-train.conll";
+		String goldFile = "/Users/gune00/data/MLDP/universal_treebanks_v1.0/en/en-universal-test.conll";
+		String modelFile = "modelsEnglishUposUlabelTest.zip";
+  
+  	Time to parse: 0.369
+	Average number of configurations per sentence: 44
+	Parent accuracy: 0.8780079034648225
+	Label accuracy:  0.8603485992519935
+	Training time: 138 seconds.
+	Parsing time: 2 seconds.
+	Parsing time: 2694 milliseconds.
+	
+	Results are a better than in ACL paper: 83.33 vs. 78.54
+	
+	Using additional spelling features as used by MDNER: -> helps LAS
+	
+	Time to parse: 0.442
+	Average number of configurations per sentence: 44
+	Parent accuracy: 0.883353327217557
+	Label accuracy:  0.8675463975725073
+	Training time: 182 seconds.
+	Parsing time: 2 seconds.
+	Parsing time: 2764 milliseconds.
+	
+4. German grammar: UPOS and ULABEL
+
+   	String trainFile = "/Users/gune00/data/MLDP/universal_treebanks_v1.0/de/de-universal-train.conll";
+	String goldFile = "/Users/gune00/data/MLDP/universal_treebanks_v1.0/de/de-universal-test.conll";
+	String modelFile = "modelsGermanUposUlabelTest.zip";
+   
+   	Time to parse: 0.121
+	Average number of configurations per sentence: 29
+	Parent accuracy: 0.7425791052083971
+	Label accuracy:  0.6701144500887447
+	Training time: 7 seconds.
+	Parsing time: 0 seconds.
+	Parsing time: 389 milliseconds.
+	
+	Results are a better than in ACL paper: 74.86 vs. 64.84
+	
+	Using additional spelling features as used by MDNER: -> helps LAS
+	
+	Time to parse: 0.128
+	Average number of configurations per sentence: 29
+	Parent accuracy: 0.7398861619438154
+	Label accuracy:  0.6721953607931942
+	Training time: 8 seconds.
+	Parsing time: 0 seconds.
+	Parsing time: 433 milliseconds.
+
+JULY, 2014: NEW VERSION AVAILABLE
+
+Standard labeling:
+String trainFile = "/Users/gune00/data/MLDP/universal_treebanks_v2.0/std/en/en-universal-train.conll";
+String goldFile = "/Users/gune00/data/MLDP/universal_treebanks_v2.0/std/en/en-universal-test.conll";
+String modelFile = "modelsEnglishUposUlabelv2std.zip";
+
+Time to parse: 0.331
+Average number of configurations per sentence: 44
+Parent accuracy: 0.8765965704608002
+Label accuracy:  0.8586373579846165
+Training time: 148 seconds.
+Parsing time: 2 seconds.
+Parsing time: 2565 milliseconds.
+
+String trainFile = "/Users/gune00/data/MLDP/universal_treebanks_v2.0/std/de/de-universal-train.conll";
+String goldFile = "/Users/gune00/data/MLDP/universal_treebanks_v2.0/std/de/de-universal-test.conll";
+String modelFile = "modelsGermanUposUlabelv2std.zip";
+
+Time to parse: 0.144
+Average number of configurations per sentence: 30
+Parent accuracy: 0.764795887141196
+Label accuracy:  0.7032866148479099
+Training time: 54 seconds.
+Parsing time: 1 seconds.
+Parsing time: 1116 milliseconds.
+
+Content head labeling:
+String trainFile = "/Users/gune00/data/MLDP/universal_treebanks_v2.0/ch/de/de-universal-ch-train.conll";
+String goldFile = "/Users/gune00/data/MLDP/universal_treebanks_v2.0/ch/de/de-universal-ch-test.conll";
+String modelFile = "modelsGermanUposUlabelv2ch.zip";
+
+Time to parse: 0.136
+Average number of configurations per sentence: 30
+Parent accuracy: 0.7438643735846747
+Label accuracy:  0.6857212803721158
+Training time: 63 seconds.
+Parsing time: 1 seconds.
+Parsing time: 1233 milliseconds.
+ 
+January, 2016:
+**************
+
+NOTE: I get different numbers then Albert Weichselbraun and Norman Süsstrunk ( mainMDParserAndere-2015.pdf)
+EN: ich: 87,7 (85,9), die: 83.9 (80.6)
+DE: ich: 76,5 (70,3), die: 78.6 (72.2)

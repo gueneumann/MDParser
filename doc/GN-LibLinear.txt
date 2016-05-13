@@ -1,0 +1,423 @@
+GN on 6th December 2013:
+
+Training and application with Java library LibLinear: 
+http://liblinear.bwaldvogel.de/ which is based on C++ LibLinear
+http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+
+GN: new version is: dfki/MDPFramewWork/MDPLibLinear
+
+*******************************************************************************
+General usage of API (from http://liblinear.bwaldvogel.de/ & https://github.com/bwaldvogel/liblinear-java):
+
+	Problem problem = new Problem();
+	problem.l = ... // number of training examples
+	problem.n = ... // number of features
+	problem.x = ... // feature nodes
+	problem.y = ... // target values
+
+	SolverType solver = SolverType.L2R_LR; // -s 0
+	double C = 1.0;    // cost of constraints violation
+	double eps = 0.01; // stopping criteria; influences number of iterations performed, the higher the less
+
+	Parameter parameter = new Parameter(solver, C, eps);
+	Model model = Linear.train(problem, parameter);
+	File modelFile = new File("model");
+	model.save(modelFile);
+	// load model or use it directly
+	model = Model.load(modelFile);
+
+	Feature[] instance = { new FeatureNode(1, 4), new FeatureNode(2, 2) };
+	double prediction = Linear.predict(model, instance);
+
+About training data input format for Liblinear:
+- 	each line is actually an integer representation of a feature vector instance occurrence, e.g.,
+
+-	1 8:1 9:1 10:1 11:1 ...  134:1 135:1 136:1
+	- First element is a class label (1=N, 2=Y, in case of sentence splitter), and then N feature-value-index:value
+	- Feature-value-index is just the individual index of a feature:value combination
+	- value is a real number and indicates feature-value-index relevance; 
+	- if only binary features are used (which is the case in MDP), then 1 indicates present feature.
+		All non-present features (non-observed) have value 0.
+THUS: all files together define a matrix where each raw denotes a feature-value and each column a feature.
+
+Note: the lines encode token level, not type level ! This is the basis for the counting in the learner.
+	
+Thus a major step is to define the classes and feature vectors, and to create an integer representation.
+
+For this, an alphabet has to be defined that keeps all these encodings.
+
+Note also, that MDParser trainer and the sentence splitter use same CONLL file format and share
+most of the code of the interface between MDP and Liblinear.
+
+This MDP-based Liblinear interface also supports parallel processing of split models.
+So, if I can work out this interface, adaptation to other learning tasks should be easy possible.
+
+About model files:
+alphabet: 
+	defines an enumeration of each label and its combination with i or j
+	defines a mapping from each different feature-value pair to an integer
+splitA:
+	keeps a splitting of the complete training data into N different files
+	splitA/i.txt: defines a mapping from integer encoding to feature-value 
+	splitModel/i.txt: keeps weights/label matrix
+
+
+*******************************************************************************
+****** About LibLinear multi-classifier in MDParser *******
+
+Used solver is multi-class SVMM by Crammer and Singer (2000). Details of implementation in:
+/Users/gune00/dfki/MDPFrameWork/MDPLibLinear/liblinear.pdf
+
+SolverType solver = SolverType.MCSVM_CS; 
+double C = 0.1;    // cost of constraints violation
+double eps = 0.3; // stopping criteria
+
+NOTE!
+Actually the LibLinear settings as defined in de.dfki.lt.mdparser.parser.CompactiseWorkerThread
+are used when working on split training files in which case also parallel processors are used
+private Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.1);
+
+For parallel iteration processing:
+http://homepages.engineering.auckland.ac.nz/~parallel/ParallelIT/index.html
+NOTE: This library has GPL license !
+
+
+******* Training de.dfki.lt.mdparser.parser.Trainer
+
+- contains the functionality for creating the training data and learning the model from it
+- model is split into subsets
+	- based on instances of specific features
+	- necessary parameter: minimum size of training data for a subset
+	- models are stored in files not memory
+
+The steps are:
+1.	internalize conll training file: de.dfki.lt.mdparser.data.Data.Data(String, boolean)
+	- reads in CONLL files
+		"ID		FORM	LEMMA	CPOSTAG	POSTAG	FEATS 	HEAD 	DEPREL 	PHEAD 	PDEPREL 	PRED 	ARG1 	ARG2"
+		s[0] 	s[1]  	s[2]   	s[3]	s[4]    s[5]   	s[6]  	s[7]    s[8]   	s[9]     	s[10]  	s[11]  	s[12] 
+		
+	- when training, sets 8 and 9 to "-"
+	- when not training (testing) sets: 6-9 to "-"
+	- seems to ignore all elements > 9
+	
+	
+2.	generate N label-specific training files:
+	create feature vectors for each training data
+	integer encode them and store them into label-specific training file
+3.	Split the files into M training files
+4.	Do training for each training file
+
+Steps 1. and 2. are single-processor pipelines
+Steps 3. and 4. are applied on N-processors in parallel.
+	
+******* Feature modeling de.dfki.lt.mdparser.features.CovingtonFeatureModel:
+features (see below):
+-  1-13: 	lexical
+- 14-17:	dependency labels
+- 	 18:	distance 
+- 19-27:	combining -> via merge template; 
+						concatenation of two feature instances computed by the previous templates
+
+Max lookahead: 3
+Memoization: for most features (because they can be used in different configurations)
+
+******* Postprocessing of feature model de.dfki.lt.mdparser.model.ModelEditor:
+
+Removes all features that have 0 weight for all classes from model files and 
+adjusts alphabet accordingly.
+
+******* Structure of model files:
+Line 1: contains the name of the learning algorithm, in our case it is MCSVM_CS. 
+Line 2: contains the number of different classes (the dependency labels) for which the weights were learned.
+Line 3: lists the indexes of the classes. 
+Line 4: contains the number of features for which at least one non-zero weight is present.
+Line 5: contains the information about the chosen bias, which is the constant added to each feature vector. 
+		In MDParser it is always set to -1, which means that the bias is not used. 
+Line 7: and onwards the model contains the weights for the features. 
+		Every feature has exactly n weights corresponding to the n classes.
+
+******* Structure of alphabet:
+- Maps the line number integer encoding of a feature to its feature name.
+- a unique alphabet file for each split file
+- two parts (separated by newline)
+	1. integer encoding of class index and operation
+		1 shift, 2 terminate, 3 i#NMOD, 4 j#PMOD, 5 j#NMOD, 6 j#P, ...
+	2. integer code for feature
+		7457 wfj=New or 35788 wfjp1=reviving
+		
+******* ABOUT Templates and Features
+
+According to AV:
+Templates are functions: for a input (a word), exactly one output (suffix) is generated.
+Thus, if I need many suffixes, I need many templates.
+
+Difference between static and dynamic features, according to AV:
+In principle, the difference is not important for the results, but static features
+lead to improved runtime, because they are memoized features, i.e., only computed once.
+Dynamic feature are dependent on point of time of  processing state.
+
+
+
+******* List of all features templates used in MDP (extracted from PhD text):
+
+j = current word
+i = left word
+
+1. 	wfj 	= returns the word form of the token j
+2. 	pj  	= returns the part of speech of the token j
+3. 	wfjp1 	= returns the word form of the token j + 1
+4. 	pjp1 	= returns the part of speech of the token j + 1
+5. 	wfjp2 	= returns the word form of the token j + 2
+6. 	pjp2 	= returns the part of speech of the token j + 2
+7. 	wfjp3 	= returns the word form of the tokenj + 3
+8. 	pjp3 	= returns the part of speech of the token j + 3
+9. 	wfi 	= returns the word form of the token i
+10. pi 		= returns the part of speech of the token i
+11. pip1 	= returns the part of speech of the token i + 1
+12. wfhi 	= returns the word form of the head of the token i
+13. phi 	= returns the part of speech of the head of the token i
+14. depi 	= returns the dependency label of the head of the token i
+15. depldi 	= returns the dependency label of the left-most dependent of the token i
+16. deprdi 	= returns the dependency label of the right-most dependent of the token i
+17. depldj 	= returns the dependency label of the left-most dependent of the token j
+18. dist 	= returns the distance between the tokens j and i 
+			For i = 0 the feature returns 0, for the distance 1 the feature returns 1, for distances 2
+			or 3 the feature returns 2, for distances 4 or 5 the value 3 is returned, for
+			distances 6, 7, 8 or 9 the value 4 and for all other distances the value 5 is returned
+			
+19. merge2(pi,pip1)				= returns the concatenation of pi and pip1 features
+20. merge2(wfi,pi)				= returns the concatenation of wfi and pi features
+21. merge3(pjp1,pjp2,pjp3)		= returns the concatenation of pjp1, pjp2 and pjp3 features
+22. merge2(depldj,pj)			= returns the concatenation of depldj and pj features
+23. merge3(pi,deprdi,depldi)	= returns the concatenation of pi, deprdi and depldi features
+24. merge2(depi,wfhi)			= returns the concatenation of depi and wfhi features
+25. merge3(phi,pjp1,pip1)		= returns the concatenation of phi, pjp1 and pip1 features
+26. merge3(wfj,wfi,pjp3)		= returns the concatenation of wfj, wfi and pjp3 features
+27. merge3(dist,pj,wfjp1)		= returns the concatenation of dist, pj and pjp1 features
+
+******* Feature templates of MDP 
+
+are defined in de.dfki.lt.mdparser.features.FeatureExtractor.templatePos(int, String, Sentence)
+and are applied (implicitely) on 2-DIM CONLL array:
+"ID		FORM	LEMMA	CPOSTAG	POSTAG	FEATS 	HEAD 	DEPREL 	PHEAD 	PDEPREL 	PRED 	ARG1 	ARG2"
+s[0] 	s[1]  	s[2]   	s[3]	s[4]    s[5]   	s[6]  	s[7]    s[8]   	s[9]     	s[10]  	s[11]  	s[12] 
+
+NOTE: 
+	de.dfki.lt.mdparser.data.Data.Data(String, boolean) uses private infosize=12;
+	
+
+NOTE: the feature templates basically define how the columns of a CONLL table are to be interpreted ! 
+	Can be important for joint learning
+
+NOTE: elements in dep tree are counted from 1, where elements in sentence array from 0 !
+	means: token j in dep tree is index j-1 in sentence array !
+	
+The following defined templates are used
+de.dfki.lt.mdparser.features.FeatureExtractor.templatePos(j, String, Sentence):
+	returns POS  of token j (sentence[j-1][3]) 	-> pj | pjp1-3
+	
+de.dfki.lt.mdparser.features.FeatureExtractor.templateWf(j, String, Sentence)
+	returns WF of element j (sentence[j-1][1])	-> wfj | wfjp1-3
+
+de.dfki.lt.mdparser.features.FeatureExtractor.templateDepRel(int, String, Sentence, boolean)
+	returns dependency relation of head of i sent.getSentArray()[i-1][9] -> depi
+
+de.dfki.lt.mdparser.features.FeatureExtractor.templateDistance(int, int)
+	returns distance class for tokens j and i
+	
+******* Difference of Feature Templates used in Implementation:
+
+see comments in de.dfki.lt.mdparser.features.CovingtonFeatureModel.initializeStaticFeaturesCombined(Sentence, boolean)
+
+	
+******* Instantiation of Feature templates of MDP 
+
+This is done in class de.dfki.lt.mdparser.features.CovingtonFeatureModel 
+which extends the abstract class FeatureModel.
+
+Per sentence it creates:
+static feature vectors
+	assign names to features,  and create feature/value pairs by means of the templates 
+	and return pairs of strings of (name, value) 
+dynamic feature vectors
+	create feature/value pairs depending on parser state
+
+Static features are created in the initialization of the trainer when the input feature vectors
+for liblinear are build from CONLL dependency trees.
+Here, static features means that for those features the feature-value string is only computed one
+and cached later when the parser is "applied" on the training cases.
+During the processing of the dynamic features in method CovingtonFeatureModel.applyCombined(), which
+is applied on each single training sentence, the static features are simply retrieved, and eventually
+combined in dynamic merge functions!
+Since the cache of static features is a vector, the order in which the static features are cached
+is VERY IMPORTANT, because cache indices are used in the dynamic merge functions.
+	
+
+****** About MDP liblinear training implementation *********
+
+de.dfki.lt.mdparser.parser.Trainer.createAndTrainWithSplittingFromDisk(
+	algorithm, -> "The parsing strategy, i.e., covington
+	inputFile, -> "The training file"
+	splitModelsDir, -> the folder of the split models
+	alphabetFileParser,alphabetFileLabeler,splitFile -> temp/xxx
+	)
+	
+- it transforms the CONLL input file into a list of sentences
+- initializes covington feature model and parser
+- creates folders splitA (alphabet), splitO (labels), splitF
+- initializes the alphabet data structure which is incrementally built up
+	during training to create the int-feature name map
+- selects the feature templates
+
+- for each sentence calls the parser without model but complete dependency structure from training example
+  to compute the list of configurations in form of feature vectors based on feature model functions defined in 
+  de.dfki.lt.mdparser.features.CovingtonFeatureModel & 
+  de.dfki.lt.mdparser.features.FeatureExtractor
+
+- for the label (the name of the operation performed) of each feature vector a specific 
+	file in splitO/ is created and the feature vectors are stored in integer form.
+- GN: it means that I have now label many different files which contain the feature vectors that have been
+  created/instantiated by applying the parser and the feature model functions on the training example.
+
+- a feature vector fv consists of a feature list, an weight array, an integer representation and a label (its name)
+	de.dfki.lt.mdparser.features.FeatureVector
+	
+- the Covington parser creates for each training example in training modus the list of configurations, where
+	each configuration is represented as a feature vector
+	
+ 	de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm.processCombined(Sentence, FeatureModel, boolean noLabels=false)
+	- it first initializes the de.dfki.lt.mdparser.features.CovingtonFeatureModel with the sentences
+	- for all possible pairs (i,j), all possible permissible states are determined, and for each
+		the feature vector is constructed and the name of the label which encodes the operation that is associated with
+		the feature vector
+
+****** Distributed calling of Liblinear trainer based on available processors of machine !
+
+GN:	In principle, a map-reduce implementation should also be possible !!
+
+- After having created the label-many split0 files, they are distributed
+	to m-many processes (using the package pariterator)
+- The resulting split files are stored in splitF/
+- And then adjusted and copied in split/
+
+- Then process each file in split/ in parallel:
+- compactifize training file and sort feature index and store new file in splitC
+- do training and create model files in splitModels
+- and alphabet files in splitA
+- and edit the files finally
+ 
+*******************************************************************************
+****** About LibLinear in Sentence Splitter *******
+
+- Code in package de.dfki.lt.sentenceSplitter
+- Test functions in de.dfki.lt.mdparser.test
+
+- NOTE: It uses a number of methods and data structure from MDP just to 
+  avoid re-implementation; I think, for my planned NER, I can do it as well, and hence
+  might be able to also use/join information from dependency parsing, e.g., specific labels;
+
+- Classes shared with MDP:
+	- FeatureVector
+	- Feature
+	- featureExtractor
+		mainly used for calling merge-functions
+	- Alphabet
+	- Data
+	- Sentence
+  
+
+****** Trainer de.dfki.lt.sentenceSplitter.SSTrainer
+
+- Used solver and parameters: new Parameter(SolverType.L1R_LR, 1, 0.01);
+	- a binary classifier with classes y, n
+	- L1 regularized logistic regression
+	
+- Takes as input a conll file and POS-tagger models
+- Creates additional external features files
+	- used for isMemberOfList features
+- Creates a single model file m.txt and alphabet ssalpha.txt
+
+------ Major steps performed:
+
+- Selects and initializes learner with parameters
+- extracts features from training file
+- builds feature vector and alphabet file
+- creates integer encoded training data file used by learner to learn
+	- each individual feature-value gets a unique index
+- reads in this training file as problem for the learner
+- calls learner
+- save model file
+
+de.dfki.lt.sentenceSplitter.SSTrainer.createTrainingData(String):
+- here the training data file ("temp"ss.txt") is created which is the input for the learner
+- the conll file is firstly mapped to a set of MDP sentence objects (2DIM arrays)
+- it processes the training file and creates a number of helper files which contains specific list of elements
+  from the training file, e.g., elements of a specific POS-class, suffix from tokens etc.
+  
+de.dfki.lt.sentenceSplitter.SSFeatureModel.apply(boolean, int, List<String>, List<String>, List<Set<String>>, Alphabet)
+- for each token it then computes a feature vector using class SSFeatureModel:
+	- This defines the feature vector basically by enumerating all feature functions
+	- i denotes the token for which the feature vector is constructed and tokens is a reference
+	  to the context defined by all other tokens.
+	- Then for each feature vector cell, the corresponding feature is named and its value is computed.
+	- the feature functions are defined in class de.dfki.lt.sentenceSplitter.SSFeatureExtractor
+		- the actually data structure of a feature vector is the same as for MDP
+
+de.dfki.lt.sentenceSplitter.SSTrainer.readProblem(String)
+- this receives the integer encoded training data file and creates a problem object from it
+- with this problem object training can now start
+- a problem needs to know (from general API):
+	problem.l = ... // number of training examples
+	problem.n = ... // number of features
+	problem.x = ... // feature nodes
+	problem.y = ... // target values
+ 
+
+****** Classifier de.dfki.lt.sentenceSplitter.SSPredictor
+
+- Takes as input inputfile, POS-tagger models, and SS models
+- Computes a list of sentences from a list of tokens using above models
+- computes a list of tokens from the input file and 
+- a parallel list of POS-tags using the tagger
+- uses both lists for applying the feature model
+- de.dfki.lt.sentenceSplitter.SSPredictor.predict(List<String>)
+  - if current token is in endSet then:
+  - create its feature representations and calls LibLinear to predict the class
+  - if class is Y then make a new sentence object else continue
+
+Code in SSTrainer:
+
+Original:
+				// It computes a specific index for each feature:value combination !
+				if (label.equals("y")) {
+					// System.out.println(" --- " + fv.getIntegerRepresentation(alpha, false));
+					bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
+				}
+				bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
+Precision: 0.7625418060200669
+Recall: 0.6386554621848739
+F-Measure: 0.6951219512195123	
+
+				// It computes a specific index for each feature:value combination !
+				if (label.equals("y")) {
+					// System.out.println(" --- " + fv.getIntegerRepresentation(alpha, false));
+					bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
+				}
+				// bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
+Precision: 0.7548387096774194
+Recall: 0.6554621848739496
+F-Measure: 0.7016491754122939
+
+				// It computes a specific index for each feature:value combination !
+				if (label.equals("y")) {
+					// System.out.println(" --- " + fv.getIntegerRepresentation(alpha, false));
+					// bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
+				}
+				bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
+Precision: 0.7633333333333333
+Recall: 0.6414565826330533
+F-Measure: 0.6971080669710807
+
+
+				
+
