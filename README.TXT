@@ -2,13 +2,22 @@ READ Me file for installing and running MDParser
 
 Author: Günter Neumann, date: 12/02/2013
 
-UPDATES: May, 2016
-
 Contact:
 Prof. Dr. Günter Neumann, Principal Researcher & Research Fellow
 LT-Lab, DFKI GmbH Campus D3 2, Stuhlsatzenhausweg 3, 66123 Saarbrücken, Germany
 neumann@dfki.de                       Phone:  +49 681 85775 5298
 http://www.dfki.de/~neumann           Fax  :  +49 681 85775 5338
+
+NOTES
+______
+
+UPDATES: May, 2016
+
+Note: the below is outdated. The repository only contains the source code.
+No data for training and testing are exploited!
+
+I also created a Maven pom file and updated MDParser to the newest java version for liblinear
+
 
 
 Description:
