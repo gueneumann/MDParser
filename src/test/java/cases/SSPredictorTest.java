@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.List;
 
-import de.dfki.lt.data.Data;
-import de.dfki.lt.sentenceSplitter.SSPredictor;
+import de.dfki.lt.mdparser.data.Data;
+import de.dfki.lt.mdparser.sentenceSplitter.SSPredictor;
 
 public class SSPredictorTest {
 	public static void main(String[] args) throws IOException {

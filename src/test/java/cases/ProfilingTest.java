@@ -14,11 +14,10 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 import de.bwaldvogel.liblinear.*;
-
-import de.dfki.lt.archive.Archivator;
-import de.dfki.lt.data.Data;
-import de.dfki.lt.features.Alphabet;
-import de.dfki.lt.parser.Parser;
+import de.dfki.lt.mdparser.archive.Archivator;
+import de.dfki.lt.mdparser.data.Data;
+import de.dfki.lt.mdparser.features.Alphabet;
+import de.dfki.lt.mdparser.parser.Parser;
 
 public class ProfilingTest {
 	public static void main(String[] args) throws IOException {

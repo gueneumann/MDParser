@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 
-import de.dfki.lt.model.ModelAnalyser;
+import de.dfki.lt.mdparser.model.ModelAnalyser;
 
 public class ModelAnalyserTest {
 	

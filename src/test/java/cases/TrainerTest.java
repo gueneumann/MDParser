@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 import de.bwaldvogel.liblinear.*;
-import de.dfki.lt.parser.Trainer;
+import de.dfki.lt.mdparser.parser.Trainer;
 
 public class TrainerTest {
 	public static void main(String[] args) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {

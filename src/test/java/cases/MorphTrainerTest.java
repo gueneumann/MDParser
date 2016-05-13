@@ -4,9 +4,9 @@ package cases;
 import java.io.IOException;
 
 import de.bwaldvogel.liblinear.InvalidInputDataException;
-import de.dfki.lt.data.Data;
-import de.dfki.lt.parser.Trainer;
-import de.dfki.lt.pil.MorphTrainer;
+import de.dfki.lt.mdparser.data.Data;
+import de.dfki.lt.mdparser.parser.Trainer;
+import de.dfki.lt.mdparser.pil.MorphTrainer;
 
 public class MorphTrainerTest {
 

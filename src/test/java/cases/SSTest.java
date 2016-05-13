@@ -5,8 +5,8 @@ import java.io.File;
 import java.io.IOException;
 
 import de.bwaldvogel.liblinear.InvalidInputDataException;
-import de.dfki.lt.model.ModelEditor;
-import de.dfki.lt.sentenceSplitter.SSEval;
+import de.dfki.lt.mdparser.model.ModelEditor;
+import de.dfki.lt.mdparser.sentenceSplitter.SSEval;
 
 public class SSTest {
 	public static void main(String[] args) throws IOException, InvalidInputDataException {

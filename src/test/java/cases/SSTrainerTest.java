@@ -4,7 +4,7 @@ package cases;
 import java.io.IOException;
 
 import de.bwaldvogel.liblinear.InvalidInputDataException;
-import de.dfki.lt.sentenceSplitter.SSTrainer;
+import de.dfki.lt.mdparser.sentenceSplitter.SSTrainer;
 
 public class SSTrainerTest {
 	public static void main(String[] args) throws IOException, InvalidInputDataException {

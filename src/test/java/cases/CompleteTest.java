@@ -6,8 +6,8 @@ import java.lang.reflect.Array;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-import de.dfki.lt.archive.Archivator;
 import de.bwaldvogel.liblinear.*;
+import de.dfki.lt.mdparser.archive.Archivator;
 
 public class CompleteTest {
 

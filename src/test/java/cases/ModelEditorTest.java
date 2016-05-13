@@ -4,8 +4,8 @@ package cases;
 import java.io.File;
 import java.io.IOException;
 
-import de.dfki.lt.archive.Archivator;
-import de.dfki.lt.model.ModelEditor;
+import de.dfki.lt.mdparser.archive.Archivator;
+import de.dfki.lt.mdparser.model.ModelEditor;
 
 public class ModelEditorTest {
 	public static void main(String[] args) throws IOException {

@@ -2,7 +2,7 @@ package cases;
 
 import java.io.IOException;
 
-import de.dfki.lt.archive.Archivator;
+import de.dfki.lt.mdparser.archive.Archivator;
 
 public class ArchivatorTest {
 	public static void main(String[] args) throws IOException {

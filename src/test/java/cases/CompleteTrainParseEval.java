@@ -4,8 +4,8 @@ package cases;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
-import de.dfki.lt.archive.Archivator;
 import de.bwaldvogel.liblinear.*;
+import de.dfki.lt.mdparser.archive.Archivator;
 
 public class CompleteTrainParseEval {
 

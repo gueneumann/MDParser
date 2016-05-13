@@ -10,7 +10,7 @@ import java.util.StringTokenizer;
 import com.schmeier.posTagger.focus.Focus;
 import com.schmeier.posTagger.tagger.Tagger;
 
-import de.dfki.lt.outputformat.XMLString;
+import de.dfki.lt.mdparser.outputformat.XMLString;
 import edu.northwestern.at.morphadorner.corpuslinguistics.sentencesplitter.DefaultSentenceSplitter;
 import edu.northwestern.at.morphadorner.corpuslinguistics.sentencesplitter.SentenceSplitter;
 import edu.northwestern.at.morphadorner.corpuslinguistics.tokenizer.DefaultWordTokenizer;

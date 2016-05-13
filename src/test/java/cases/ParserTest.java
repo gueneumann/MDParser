@@ -3,11 +3,11 @@ package cases;
 
 import java.io.IOException;
 
-import de.dfki.lt.archive.Archivator;
-import de.dfki.lt.data.Data;
-import de.dfki.lt.eval.Eval;
-import de.dfki.lt.features.Alphabet;
-import de.dfki.lt.parser.Parser;
+import de.dfki.lt.mdparser.archive.Archivator;
+import de.dfki.lt.mdparser.data.Data;
+import de.dfki.lt.mdparser.eval.Eval;
+import de.dfki.lt.mdparser.features.Alphabet;
+import de.dfki.lt.mdparser.parser.Parser;
 
 public class ParserTest {
 	
