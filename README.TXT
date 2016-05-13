@@ -2,6 +2,8 @@ READ Me file for installing and running MDParser
 
 Author: Günter Neumann, date: 12/02/2013
 
+UPDATES: May, 2016
+
 Contact:
 Prof. Dr. Günter Neumann, Principal Researcher & Research Fellow
 LT-Lab, DFKI GmbH Campus D3 2, Stuhlsatzenhausweg 3, 66123 Saarbrücken, Germany
