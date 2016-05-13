@@ -15,7 +15,9 @@ January, 2016:
 
 New maven project:
 - make a maven project MDParser
+-> DONE
 - make it on github
+-> DONE
 - log file
 - properties for training with MDParser and POS
 - github wiki docu
@@ -33,7 +35,7 @@ New maven project:
 	
 Liblinear properties:
 - new liblinear version
-- why does MCSVM_CS work so well for MDP (and not for GNT)?
+-> DONE
 
 Improve MDP:
 
