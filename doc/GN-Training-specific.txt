@@ -1,83 +1,71 @@
 Usage of Training with MDP with specific treebanks
 
-Details by GN: 
-Start: 4th December, 2014
+Data is also under
+/home/neumann/excitement/data/MLDP/
 
-1. Treebansk files
-	/Users/gune00/dfki/data/MLDP/universal_treebanks_v1.0
+Details by GN:, May, 2016
 
-2. English  EN
-	-  in CompleteTest.java 
-  		String trainFile = "resources/input/english-train.conll";
-		String goldFile = "resources/input/english-devel.conll";
-		String modelFile = "modelEnglish.zip";
-  
-		Time to read models: 2762 milliseconds.
-		No. of threads: 8
-		No. of sentences: 1334
-		Time to parse: 274.0
-		Speed (sent/s): 4868.613138686132
-		Number of configurations: 63563
-		Average number of configurations per sentence: 47
-		Parent accuracy: 0.8840805562215296
-		Label accuracy:  0.8603752097818269
-		Training time: 135751 milliseconds.
-		Parsing time: 3533 milliseconds.
-		
-		With ONE thread
-		No. of threads: 1
-		No. of sentences: 1334
-		Time to parse: 625.0
-		Speed (sent/s): 2134.4
-		Number of configurations: 63885
-		Average number of configurations per sentence: 47
-		Parent accuracy: 0.8840505873891153
-		Label accuracy:  0.8604051786142412
-		Training time: 137536 milliseconds.
-		Parsing time: 3968 milliseconds.
-		
-	-	parsing only
-		"resources/input/english-devel.conll";
-		"modelEnglish.zip";
-		
-		NOTE:	it is unclear why loading a model and parsing takes more time
-				without training phase done before ?
-				Problems with threads ?
-		
-		Time to read models: 4297 milliseconds.
-		No. of threads: 8
-		No. of sentences: 1334
-		Time to parse: 872.0
-		Speed (sent/s): 1529.8165137614678
-		Number of configurations: 63523
-		Average number of configurations per sentence: 47
-		Parent accuracy: 0.8841704627187725
-		Label accuracy:  0.8606449292735555
-		
-		Time to read models: 4308 milliseconds.
-		No. of threads: 1
-		No. of sentences: 1334
-		Time to parse: 797.0
-		Speed (sent/s): 1673.7766624843161
-		Number of configurations: 63883
-		Average number of configurations per sentence: 47
-		Parent accuracy: 0.8841704627187725
-		Label accuracy:  0.8606449292735555
-	
+English  EN
+	-train resources/input/ptb3-std-training.conll
+	-model ptp3.zip
+	-test resources/input/ptb3-std-test.conll
+  		
+	Parent accuracy: 0.8904746484085863
+	Label accuracy:  0.8587774488033555
+	Complete Parsing time: 4586 milliseconds.	
 
 	Compared to ChenManning, EMNLP, 2014:
-	UAS  	= 92.2
-	LAS  	= 91.1
+	UAS  	= 92.2, LAS  	= 91.1
 	Speed	= 1013 sent/sec
-
-Trainingssätze: 39278
-
-  	
 	
-4. German DE
+	Google, Andor et al., May, 2016
+	UAS		= 94,41		LAS	= 92,55
+	
+->	diff of MDP:
+	UAS		= 05,36		LAS	= 06,66
+		
+German DE
 
-   	String trainFile = "resources/input/german_tiger_train.conll";
-	String goldFile = "resources/input/german_tiger_test.conll";
-	String modelFile = "modelGerman.zip";
+   	-train resources/input/german_tiger_train.conll
+	-model tiger.zip
+	-test resources/input/german_tiger_test.conll
    
-   	
+	Parent accuracy: 0.8528275377590446
+	Label accuracy:  0.8162978573937478
+	Complete Parsing time: 4136 milliseconds.
+	
+	Google, Andor et al., May, 2016, using conll2009 german data
+	UAS		= 90,91		LAS	= 89,15
+
+->	diff of MDP:
+	UAS		= 05,63		LAS	= 07,52
+
+Perform tests with conll2009 EN and DE to get direct comparison
+	
+	EN conll:
+	-train /Users/gune00/data/MLDP/2009/en-train-2009.conll
+	-model en-2009.zip
+	-test  /Users/gune00/data/MLDP/2009/en-test-2009.conll
+	
+	Parent accuracy: 0.8881510506969971
+	Label accuracy:  0.8607739787780012
+
+	
+	
+	Google, Andor et al., May, 2016
+	UAS		= 93,22		LAS	= 91,23
+->	diff of MDP:
+	UAS		= 04,4		LAS	= 05,15
+	
+	DE conll:
+	-train /Users/gune00/data/MLDP/2009/de-train-2009.conll
+	-model de-2009.zip
+	-test /Users/gune00/data/MLDP/2009/de-test-2009.conll
+	
+	Parent accuracy: 0.8434317879956992
+	Label accuracy:  0.803459616722535
+	
+	Google, Andor et al., May, 2016
+	UAS		= 90,91		LAS	= 89,15
+->	diff of MDP:
+	UAS		= 06,57		LAS	= 08,80

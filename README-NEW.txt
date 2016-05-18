@@ -3,7 +3,7 @@ GN, May, 2016
 Migration to Maven and Git:
 
 Copy local jar files to repository:
-cd MDP/lib
+cd MDParser/lib
 
 Mac/unix
 mvn3 deploy:deploy-file  -Durl=file:///Users/gune00/.m2/repository/ -Dfile=pariterator-0.9.2.jar -DgroupId=pi.parallel -DartifactId=par.iterator -Dpackaging=jar -Dversion=0.9.2

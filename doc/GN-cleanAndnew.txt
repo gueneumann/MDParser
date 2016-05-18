@@ -1,0 +1,4 @@
+GN, May, 2016:
+
+1.	defined Maven project and git
+

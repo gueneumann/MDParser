@@ -12,7 +12,7 @@ import de.dfki.lt.mdparser.data.Data;
 
 public class DataReaderTest {
 	public static void main(String[] args) throws IOException {
-		Data d = new Data("PIL/train/train-htb-ver0.5.auto.utf8.conll", true); 
+		Data d = new Data("/Users/gune00/data/MLDP/2009/en-train-2009.conll", true); 
 	//	Data d = new Data("input/english.train", true);
 		countDifLabels(d);
 	}
