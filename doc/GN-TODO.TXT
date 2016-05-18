@@ -16,26 +16,34 @@ January, 2016:
 New maven project:
 - make a maven project MDParser
 -> DONE
+
 - make it on github
 -> DONE
+
+- make sure to use same version for liblinear for GNT and MDP
+-> DONE
+
+HIERIX
+- clean code
+
+
 - log file
 - properties for training with MDParser and POS
 - github wiki docu
-- clean code
+
+- apply MDParser for SRL
 
 - integrate learned models into jar-FILE -> usefull for using GNT with FLINK
 	- create runtime-specific jar file with all dependencies and resources to run a tagger
 	- create MODEL-specific jar files -> in order to restrict size of jar
 
-- make sure to use same version for liblinear for GNT and MDP
+
 - integrate GNT 
+		
 	- POS tagger
+
 	- NER tagger
 	
-	
-Liblinear properties:
-- new liblinear version
--> DONE
 
 Improve MDP:
 

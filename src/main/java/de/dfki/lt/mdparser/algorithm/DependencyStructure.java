@@ -1,10 +1,8 @@
 package de.dfki.lt.mdparser.algorithm;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
@@ -17,8 +15,6 @@ public class DependencyStructure {
 	private HashMap<Integer, Set<Integer>> dependents;
 	private int rootPosition;
 	private int size;
-	private int startIndex;
-	
 	public DependencyStructure(int size) {
 		dependencies = new HashSet<Dependency>(40);
 		heads = new int[size+1];	
@@ -36,11 +32,6 @@ public class DependencyStructure {
 	public int getSize() {
 		return this.size;
 	}
-	
-	public void setStartIndex(int si) {
-		this.startIndex = si;
-	}
-	
 	public HashMap<Integer, Set<Integer>> getDependents() {
 		return this.dependents;
 	}
@@ -224,18 +215,6 @@ public class DependencyStructure {
 			}
 		}
 		return true;
-	}
-	
-	public DependencyStructure clone() {
-		DependencyStructure newDependencyStructure =  new DependencyStructure(this.getSize()-1);
-		Iterator<Dependency> iter = this.getDependencies().iterator();
-		while (iter.hasNext()) {
-			Dependency curDep = iter.next();
-			Dependency newDep = new Dependency(curDep.getDependent(), curDep.getHead(), curDep.getLabel());
-			newDependencyStructure.addDependency(newDep);
-		}
-		newDependencyStructure.setRootPosition(this.rootPosition);
-		return newDependencyStructure;
 	}
 	
 	public String toString() {

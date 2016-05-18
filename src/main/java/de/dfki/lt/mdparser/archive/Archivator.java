@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,11 +35,8 @@ public class Archivator {
 		this.archiveMap = new HashMap<String,InputStream>();
 		this.checkDirs(dirs);
 		setAlphabetParser("temp/alphaParser.txt");
-	//gds	setAlphabetLabeler("temp/alphaLabeler.txt");
 		setSplitFile("temp/split.txt");
-	//gds	setSplitLFile("temp/splitL.txt");
 		setSplitModelsDir("splitModels");
-	//gds	setSplitModelsLDir("splitModelsL");
 		setSplitAlphabetsDir("splitA");
 	}
 	
@@ -57,41 +53,19 @@ public class Archivator {
 		}
 	}
 	
-	public void delTemp(String[] dirs) {
-		for (int i=0; i < dirs.length;i++) {
-			File curDir = new File(dirs[i]);
-			if (curDir.listFiles().length == 0) {
-				curDir.delete();
-			}
-		}
-		
-	}
-
 	public void delTemp() {
 		File f = new File(splitFile);
 		f.delete();
-	//gds	f = new File(splitLFile);
-	//gds	f.delete();
-	//gds	f = new File(alphabetLabeler);
-	//gds	f.delete();
 		f = new File(alphabetParser);
 		f.delete();
 		File[] files = new File(splitModelsDir).listFiles();
 		for (int i=0; i < files.length;i++) {
 			files[i].delete();
 		}
-/*		files = new File(splitModelsLDir).listFiles();
-		for (int i=0; i < files.length;i++) {
-			files[i].delete();
-		}*/
 		files = new File("split").listFiles();
 		for (int i=0; i < files.length;i++) {
 			files[i].delete();
 		}
-	/*gds	files = new File("splitL").listFiles();
-		for (int i=0; i < files.length;i++) {
-			files[i].delete();
-		}*/
 		f = new File("temp");
 		if (f.listFiles().length == 0) {
 			f.delete();
@@ -103,18 +77,12 @@ public class Archivator {
 		 FileOutputStream dest = new FileOutputStream(archiveName);
 		 ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(dest));
 		 List<String> filesToPack = new ArrayList<String>();
-	//gds	 filesToPack.add(alphabetLabeler);
 		 filesToPack.add(alphabetParser);
 		 filesToPack.add(splitFile);
-		//gds filesToPack.add(splitLFile);
 		 File[] models = new File(splitModelsDir).listFiles();
 		 for (int i=0; i < models.length; i++) {
 			 filesToPack.add(models[i].getPath());
 		 }
-	/*gds	 models = new File(splitModelsLDir).listFiles();
-		 for (int i=0; i < models.length; i++) {
-			 filesToPack.add(models[i].getPath());
-		 }*/
 		 File[] alphabets = new File(splitAlphabetsDir).listFiles();
 		 for (int i=0; i < alphabets.length;i++) {
 			 filesToPack.add(alphabets[i].getPath());
@@ -216,8 +184,5 @@ public class Archivator {
 
 	public String getSplitAlphabetsDir() {
 		return splitAlphabetsDir;
-	}
-
-	
-	
+	}	
 }

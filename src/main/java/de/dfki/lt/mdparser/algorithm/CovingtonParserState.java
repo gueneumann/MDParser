@@ -32,8 +32,6 @@ public class CovingtonParserState extends ParserState {
 	public void checkPermissibility() {
 		l1Permissible = curDep1.isPermissible(curDepStruct, true);
 		l2Permissible = curDep2.isPermissible(curDepStruct, true);
-		//	l1Permissible = curDep1.isPermissible(curDepStruct, false);
-		//	l2Permissible = curDep2.isPermissible(curDepStruct, false);
 		if (l1Permissible || l2Permissible) {
 			isPermissible = true;
 		}

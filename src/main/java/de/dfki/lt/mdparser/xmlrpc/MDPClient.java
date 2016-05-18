@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -24,24 +23,24 @@ import de.dfki.lt.mdparser.outputformat.StanfordOutput;
 import de.dfki.lt.mdparser.outputformat.TripleOutput;
 
 public class MDPClient {
-	
+
 	private XmlRpcClient client;
-	
+
 	/**
 	 * Constructs a client.
 	 * @param serverUrl <code>String</code> value for the server address.
 	 * @throws MalformedURLException if the URL is malformed.
 	 */
 	public MDPClient(String serverUrl) throws MalformedURLException  {
-        XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();        
-        config.setServerURL(new URL(serverUrl));
-        config.setEnabledForExceptions(true);
-        config.setConnectionTimeout(60*100);
-        config.setReplyTimeout(60 * 1000);	        
-        client = new XmlRpcClient();
-        client.setConfig(config);
+		XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();        
+		config.setServerURL(new URL(serverUrl));
+		config.setEnabledForExceptions(true);
+		config.setConnectionTimeout(60*100);
+		config.setReplyTimeout(60 * 1000);	        
+		client = new XmlRpcClient();
+		client.setConfig(config);
 	}
-	
+
 	public  static String readFileToString(String textFile, String inputFormat) throws IOException {
 		FileInputStream in = new FileInputStream(textFile);
 		InputStreamReader ir = new InputStreamReader(in, "UTF8");
@@ -56,7 +55,7 @@ public class MDPClient {
 		}
 		return sb.toString();
 	}
-	
+
 
 	public static void printStringToFile(String string, String fileOutput) throws IOException {
 		FileOutputStream out = new FileOutputStream(fileOutput);
@@ -65,23 +64,23 @@ public class MDPClient {
 		fw.write(string);
 		fw.close();
 	}
-	
+
 	public String tagText(Vector<String> v) throws XmlRpcException {
 		return (String) client.execute("parser.tagText",v);
 	}
-	
+
 	public String tagSentence(Vector<String> v) throws XmlRpcException {
 		return (String) client.execute("parser.tagSentence",v);
 	}
-	
+
 	public String parseSentence(Vector<String> v) throws XmlRpcException {
 		return (String) client.execute("parser.parseSentence",v);
 	}
 	public String parseText(Vector<String> v) throws XmlRpcException {
 		return (String) client.execute("parser.parseText",v);
 	}
-	
-	
+
+
 	public static void main(String[] args) throws IOException, XmlRpcException {
 		Properties props = new Properties();
 		FileInputStream in = null;
@@ -107,51 +106,52 @@ public class MDPClient {
 		else if (inputType.equals("dir")) {
 			allFiles = new File(fileName).listFiles();
 		}
-		for (int i=0; i < allFiles.length;i++) {
-			fileName = allFiles[i].getPath();
-			String outputFile = props.getProperty("outputFile");
-			String taggedFile = props.getProperty("taggedFile");
-			if (inputType.equals("dir")) {
-				outputFile = String.format("%s/%04d.txt",outputFile,i);
-				taggedFile = String.format("%s/%04d_morph.txt",taggedFile,i);
-			}
-			Vector<String> v = new Vector<String>();
-			String inputString = readFileToString(fileName,inputFormat);
-			v.add(inputString);
-			v.add(language);
-			v.add(inputFormat);
-			String taggedSentence = "";//mdpClient.parseSentence(v);
-			String parsed = "";
-			String mode = props.getProperty("mode");
-			if (mode.equals("parse")) {
-				parsed = mdpClient.parseText(v);
-				String outputFormat = props.getProperty("outputFormat");
-				String output = "";
-				if (outputFormat.equals("stanford")) {
-					String stanfordMorphString = new StanfordOutput(parsed).getTaggedOutput();
-					String stanfordParsedString = new StanfordOutput(parsed).getParsedOutput();
-					printStringToFile(stanfordMorphString, taggedFile);
-					printStringToFile(stanfordParsedString, outputFile);
+
+		if (allFiles != null)
+			for (int i=0; i < allFiles.length;i++) {
+				fileName = allFiles[i].getPath();
+				String outputFile = props.getProperty("outputFile");
+				String taggedFile = props.getProperty("taggedFile");
+				if (inputType.equals("dir")) {
+					outputFile = String.format("%s/%04d.txt",outputFile,i);
+					taggedFile = String.format("%s/%04d_morph.txt",taggedFile,i);
 				}
-				else {
-					if (outputFormat.equals("conll")) {
-						output = new ConllOutput(parsed).getOutput();
+				Vector<String> v = new Vector<String>();
+				String inputString = readFileToString(fileName,inputFormat);
+				v.add(inputString);
+				v.add(language);
+				v.add(inputFormat);
+				String parsed = "";
+				String mode = props.getProperty("mode");
+				if (mode.equals("parse")) {
+					parsed = mdpClient.parseText(v);
+					String outputFormat = props.getProperty("outputFormat");
+					String output = "";
+					if (outputFormat.equals("stanford")) {
+						String stanfordMorphString = new StanfordOutput(parsed).getTaggedOutput();
+						String stanfordParsedString = new StanfordOutput(parsed).getParsedOutput();
+						printStringToFile(stanfordMorphString, taggedFile);
+						printStringToFile(stanfordParsedString, outputFile);
 					}
-					else if (outputFormat.equals("conllxml")) {
-						output = new ConllXMLOutput(parsed).getOutput();
+					else {
+						if (outputFormat.equals("conll")) {
+							output = new ConllOutput(parsed).getOutput();
+						}
+						else if (outputFormat.equals("conllxml")) {
+							output = new ConllXMLOutput(parsed).getOutput();
+						}
+						else if (outputFormat.equals("triple")) {
+							output = new TripleOutput(parsed).getOutput();
+						}
+						printStringToFile(output, outputFile);
 					}
-					else if (outputFormat.equals("triple")) {
-						output = new TripleOutput(parsed).getOutput();
-					}
-					printStringToFile(output, outputFile);
 				}
+				else if (mode.equals("tag")) {
+					parsed = mdpClient.tagText(v);
+					printStringToFile(parsed, taggedFile);
+				}
+
 			}
-			else if (mode.equals("tag")) {
-				parsed = mdpClient.tagText(v);
-				printStringToFile(parsed, taggedFile);
-			}
-			
-		}
 	}
 
 	private static void checkProps(Properties props) {
@@ -218,7 +218,7 @@ public class MDPClient {
 			if (mode.equals("tag")) {
 				String taggedFile = props.getProperty("taggedFile");
 				File file = new File(taggedFile);
-			    if (file.isDirectory()) {
+				if (file.isDirectory()) {
 					System.out.println("Specified value for the property 'taggedFile' is a directory (should be a file)");
 					System.exit(0);
 				}

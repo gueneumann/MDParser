@@ -2,21 +2,17 @@ package de.dfki.lt.mdparser.eval;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 
 public class Eval {
-	
-	
+
+
 	int correctParents;
 	int correctLabels;
 	int correctParentsAndLabels;
@@ -24,18 +20,13 @@ public class Eval {
 	int totalPunct;
 	int total;
 	int unattached;
-	
-	private HashSet<String> punctuationSet;
-	
+
 	private HashMap<String,Integer> posIndexMap;
 	private HashMap<String,Integer> labelIndexMap;
 	private String[] labelsArray;
 	private int[] posCounts;
-	private int[] labelCounts;
 	private int[] posCorrectCounts;
-	private int[] labelCorrectCounts;
-	
-	
+
 	public Eval(String goldStandardFile, String parsedFile, int headIndexGold, int headIndexParsed, int labelIndexGold, int labelIndexParsed) throws IOException {
 		FileInputStream in = new FileInputStream(goldStandardFile);
 		InputStreamReader ir = new InputStreamReader(in,"UTF8");
@@ -48,26 +39,35 @@ public class Eval {
 		while ((lineGold = frGold.readLine())!= null) {
 			lineParsed = frParsed.readLine();
 			if (lineGold.length() > 0) {
-			//	System.out.println(lineParsed);
+				//	System.out.println(lineParsed);
 				String[] parsedArray = lineParsed.split("\\s");
 				String[] goldArray = lineGold.split("\\s");
 				if (!parsedArray[headIndexParsed].equals("_"))
-			//	System.out.println(parsedArray[headIndexParsed]+" "+(goldArray[headIndexGold]+" --> "+parsedArray[1]+" "+goldArray[1]));
-				if (parsedArray[headIndexParsed].equals(goldArray[headIndexGold])) {
-					correctParents++;
-					if (parsedArray[labelIndexParsed].equals(goldArray[labelIndexGold])) {
-						correctLabels++;
+					//	System.out.println(parsedArray[headIndexParsed]+" "+(goldArray[headIndexGold]+" --> "+parsedArray[1]+" "+goldArray[1]));
+					if (parsedArray[headIndexParsed].equals(goldArray[headIndexGold])) {
+						correctParents++;
+						if (parsedArray[labelIndexParsed].equals(goldArray[labelIndexGold])) {
+							correctLabels++;
+						}
 					}
-				}
 				total++;
 			}
 		}
 		frGold.close();
 		frParsed.close();
-		
+
 	}
 	
-	public void createLabelIndexMap(String trainingDataFile, int labelIndexGold) throws IOException {
+	public double getParentsAccuracy() {
+		return Double.valueOf(this.correctParents) / Double.valueOf(this.total);
+	}
+
+	public double getLabelsAccuracy() {
+		return Double.valueOf(this.correctLabels) / Double.valueOf(this.total);
+	}
+
+	// GN: the parts below is not used
+	private void createLabelIndexMap(String trainingDataFile, int labelIndexGold) throws IOException {
 		FileInputStream in = new FileInputStream(trainingDataFile);
 		InputStreamReader ir = new InputStreamReader(in,"UTF8");
 		BufferedReader frGold = new BufferedReader(ir);
@@ -84,6 +84,8 @@ public class Eval {
 				}
 			}
 		}
+		// GN: added this
+		frGold.close();
 		labelIndexMap.put("mk1", curLabelIndex);
 		curLabelIndex++;
 		labelsArray = new String[labelIndexMap.size()];
@@ -94,7 +96,7 @@ public class Eval {
 			labelsArray[index] = label;
 		}
 	}
-	public void computeLabelConfusionMatrix(String goldStandardFile, String parsedFile, int headIndexGold, 
+	private void computeLabelConfusionMatrix(String goldStandardFile, String parsedFile, int headIndexGold, 
 			int headIndexParsed, int labelIndexGold, int labelIndexParsed, String outputFile) throws IOException {
 		FileInputStream in = new FileInputStream(goldStandardFile);
 		InputStreamReader ir = new InputStreamReader(in,"UTF8");
@@ -112,7 +114,7 @@ public class Eval {
 				String[] goldArray = lineGold.split("\\s");
 				String curLabelGold = goldArray[labelIndexGold];
 				String curLabelParsed = parsedArray[labelIndexParsed];
-			//	System.out.println(labelIndexMap+" "+curLabelGold);
+				//	System.out.println(labelIndexMap+" "+curLabelGold);
 				int curLabelGoldIndex = labelIndexMap.get(curLabelGold);
 				int curLabelParsedIndex = labelIndexMap.get(curLabelParsed);
 				String headGold = goldArray[headIndexGold];
@@ -164,30 +166,24 @@ public class Eval {
 		}
 		fw.close();
 	}
-	
-	
-	public double getAttachedParentsAccuracy() {
+
+
+	private double getAttachedParentsAccuracy() {
 		return Double.valueOf(this.correctParents) / Double.valueOf(this.total-this.unattached);
 	}
-	public double getParentsAccuracy() {
-		return Double.valueOf(this.correctParents) / Double.valueOf(this.total);
-	}
 	
-	public double getLabelsAccuracy() {
-		return Double.valueOf(this.correctLabels) / Double.valueOf(this.total);
-	}
-	
-	public double getLabeledParentsAccuracy() {
+
+	private double getLabeledParentsAccuracy() {
 		return Double.valueOf(this.correctParentsAndLabels) / Double.valueOf(this.total);
 	}
-	public double getAttachedPercentage() {
+	private double getAttachedPercentage() {
 		return (Double.valueOf(this.total)-Double.valueOf(this.unattached))/Double.valueOf(this.total);
 	}
-	
-	public double getPunctAccuracy() {
+
+	private double getPunctAccuracy() {
 		return Double.valueOf(this.correctPunct) / Double.valueOf(this.totalPunct);
 	}
-	public void printOutPosAccuracyMap(String outputFile) throws IOException {
+	private void printOutPosAccuracyMap(String outputFile) throws IOException {
 		FileOutputStream out = new FileOutputStream(outputFile);
 		OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
 		BufferedWriter fw = new BufferedWriter(or);
@@ -196,7 +192,7 @@ public class Eval {
 			String curPos = iter.next();
 			Integer curIndex = this.posIndexMap.get(curPos);
 			Double curPosAccuracy = Double.valueOf(this.posCorrectCounts[curIndex])/
-									Double.valueOf(this.posCounts[curIndex]);
+					Double.valueOf(this.posCounts[curIndex]);
 			if (curPosAccuracy == 0) {
 				curPosAccuracy = 1.0;
 			}
@@ -205,8 +201,8 @@ public class Eval {
 		}
 		fw.close();
 	}
-	
-	public void computeAverageProbabilityForCorrectAndWrongDependencies(String parsedFile, int headIndex, int goldStandardHeadIndex, 
+
+	private void computeAverageProbabilityForCorrectAndWrongDependencies(String parsedFile, int headIndex, int goldStandardHeadIndex, 
 			int labelIndex, int goldStandardLabelIndex) throws IOException {
 		FileInputStream in = new FileInputStream(parsedFile);
 		InputStreamReader ir = new InputStreamReader(in,"UTF8");
@@ -230,24 +226,23 @@ public class Eval {
 				}
 			}
 		}
+		fr.close();
 		System.out.println("Average probability for correct dependencies: "+avgProbCor/totalCor);
 		System.out.println("Average probability for wrong dependencies: "+avgProbWrong/totalWrong);
 	}
-	
-	public double getUAS() {
+
+	private double getUAS() {
 		return Double.valueOf(this.correctParents) / Double.valueOf(this.total);
 	}
-	
-	
-	
+
+
+	// GN: not called; actually only Eval() constructor is called
 	public static void main(String[] args) throws IOException {
-	//	Eval ev = new Eval("input/english.devel", "temp/malt2.conll", 6, 6, 7, 7);
 		Eval ev = new Eval("PIL/devel/devel-htb-ver0.5.my.utf8.conll", "temp/parsed.txt", 6, 6, 7, 7);
 		ev.createLabelIndexMap("PIL/train/train-htb-ver0.5.gold.utf8.conll", 7);
-	//	Eval ev = new Eval("unlocal/mst.out", "unlocal/mst2.out", 6, 6, 7, 7);
 		ev.computeLabelConfusionMatrix("PIL/devel/devel-htb-ver0.5.my.utf8.conll", "temp/parsed.txt", 6, 6, 7,7, "temp/pos.txt");
 		System.out.println(ev.getParentsAccuracy());
-	
+
 	}
 
 }

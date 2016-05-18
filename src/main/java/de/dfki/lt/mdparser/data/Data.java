@@ -58,8 +58,7 @@ public class Data {
 		fr.close();
 		this.sentences = new Sentence[sentences.size()];
 		for (int i = 0; i < sentences.size();i++) {
-			this.sentences[i] = sentences.get(i);	
-			
+			this.sentences[i] = sentences.get(i);		
 		}
 	}
 		

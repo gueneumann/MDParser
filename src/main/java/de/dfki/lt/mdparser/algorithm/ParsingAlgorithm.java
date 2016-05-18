@@ -1,14 +1,10 @@
 package de.dfki.lt.mdparser.algorithm;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import de.bwaldvogel.liblinear.*;
 import de.dfki.lt.mdparser.data.Sentence;
-import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.parser.Parser;
@@ -75,8 +71,7 @@ public abstract class ParsingAlgorithm {
 					curMax = val;
 				}
 				
-			}
-			
+			}		
 		}
 		return curMaxLabel;
 	}

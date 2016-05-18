@@ -1,8 +1,5 @@
 package de.dfki.lt.mdparser.algorithm;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.Stack;
 
 public class Dependency {
@@ -193,12 +190,6 @@ public class Dependency {
 	}
 	
 	public boolean isPermissible(DependencyStructure depStruct, boolean projective) {
-	/*	DependencyStructure modifiedDepStruct = new DependencyStructure(depStruct.getSize()+1);
-		for (Iterator<Dependency> depIter = depStruct.getDependencies().iterator(); depIter.hasNext();) {
-			Dependency curDependency = depIter.next();
-			modifiedDepStruct.addDependency(curDependency);
-		}
-		modifiedDepStruct.addDependency(this);*/
 	//	System.out.println("single head: "+this.isSingleHead(depStruct)+" not reflexive: "+this.isNotReflexive()+" not introducing cycle: " +
 	//			notIntroducingCycle(depStruct)+ " is not improper root "+this.isNotImproperRoot() +" is projective "+this.isProjective(depStruct));
 		int[] heads = depStruct.getHeads();

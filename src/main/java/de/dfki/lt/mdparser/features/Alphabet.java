@@ -9,19 +9,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 public class Alphabet {
 	
-	private List<HashMap<String,Integer>> valueToIndexMapList;
 	private HashMap<String,Integer> valueToIndexMap;
 	private String[] indexToValueArray;
-	private List<HashMap<Integer,String>> indexToValueArrayList;
 	private int maxIndex;
-//	private List<Integer> maxIndexList;
 	
 	private HashMap<String,Integer> labelIndexMap;
 	private String[] indexLabelArray;
@@ -29,7 +24,6 @@ public class Alphabet {
 	
 	public Alphabet() {
 		setValueToIndexMap(new HashMap<String,Integer>(1000000));
-	//	maxIndexList = new ArrayList<Integer>();
 		labelIndexMap = new HashMap<String,Integer>(100);
 		maxIndex = 1;
 		maxLabelIndex = 1;
@@ -99,7 +93,6 @@ public class Alphabet {
 				else if (c == 1) {
 					lineArray = line.split(" ");					
 					this.valueToIndexMap.put(lineArray[1], Integer.valueOf(lineArray[0]));
-				//	indexToValueArray[maxIndex] = lineArray[1];
 					this.maxIndex++;
 				}		
 			}
@@ -112,8 +105,6 @@ public class Alphabet {
 	public Integer getFeatureIndex(String value) {
 		return this.valueToIndexMap.get(value);
 	}
-	
-	
 	
 	public void setValueToIndexMap(HashMap<String,Integer> valueToIndexMap) {
 		this.valueToIndexMap = valueToIndexMap;

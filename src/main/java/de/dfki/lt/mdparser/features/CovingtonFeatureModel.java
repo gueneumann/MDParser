@@ -1,9 +1,7 @@
 package de.dfki.lt.mdparser.features;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import de.dfki.lt.mdparser.algorithm.CovingtonParserState;
 import de.dfki.lt.mdparser.algorithm.ParserState;
@@ -37,7 +35,7 @@ public class CovingtonFeatureModel extends FeatureModel {
 
 
 
-	//new multithreading
+	// new multithreading
 	// GN: The reason why j and i are considered is based on the parsing strategy:
 	//     For each current word j, check whether there exists a word i to the left, 
 	//     so that there is a dependency relation between i and j (either (j,i) or (i,j)
@@ -212,7 +210,7 @@ public class CovingtonFeatureModel extends FeatureModel {
 
 	// GN on JULY, 2014: 
 	// Added special features used for parsing NER
-	public void initializeStaticFeaturesCombinedMDNer(Sentence curSent, boolean train) {
+	private void initializeStaticFeaturesCombinedMDNer(Sentence curSent, boolean train) {
 		// GN:   keeps i-features and j-features separately. What is third dimension used for ?
 		Feature[][][] staticFeatures = new Feature[2][curSent.getSentArray().length+1][];
 		String[][] curSentArray = curSent.getSentArray();
@@ -409,56 +407,62 @@ public class CovingtonFeatureModel extends FeatureModel {
 		return fvParser;
 	}
 
-	// GN: only applied with StackAlgorithm
+	@Override
 	public List<FeatureVector> apply(ParserState state, boolean train, boolean noLabels) {
-		List<FeatureVector> fvList = new ArrayList<FeatureVector>(2);
-		CovingtonParserState st = (CovingtonParserState) state;
-		Sentence curSent = st.getCurSent();
-		int j = st.getJ();
-		int i = st.getI();
-		FeatureVector fvParser = new FeatureVector(train);	
-		FeatureVector fvLabeler = new FeatureVector(train);	
-		FeatureExtractor fe = this.getFeatureExtractor();
-		Alphabet alphaParser = this.getAlphabetParser();
-		Alphabet alphaLabeler = this.getAlphabetLabeler();	
-		Feature[][][] staticFeatures = curSent.getStaticFeatures(); // new
-		Feature[] curStaticFeaturesJ = staticFeatures[0][j];
-		for (int k=0; k < curStaticFeaturesJ.length;k++) {
-			Feature f = curStaticFeaturesJ[k];
-			fvParser.addFeature(f,alphaParser,train);
-			fvLabeler.addFeature(f, alphaLabeler, train);
-		}	
-
-		Feature[] curStaticFeaturesI = staticFeatures[1][i];
-		for (int k=0; k < curStaticFeaturesI.length;k++) {
-			Feature f = curStaticFeaturesI[k];
-			fvParser.addFeature(f,alphaParser,train);
-			fvLabeler.addFeature(f, alphaLabeler, train);
-		}		
-
-		Feature dist = fe.templateDistance(j,i);
-		fvParser.addFeature(dist, alphaParser, train);
-		fvLabeler.addFeature(dist, alphaLabeler, train);		
-
-		int hi = st.getCurDepStruct().getHeads()[i];
-		Feature wfhi = fe.templateWf(hi, "wfhi", curSent);
-		fvParser.addFeature(wfhi, alphaParser, train);
-		fvLabeler.addFeature(wfhi, alphaLabeler, train);
-
-
-		Feature fphi = fe.templatePos(hi, "phi", curSent);
-		fvParser.addFeature(fphi, alphaParser, train);
-		fvLabeler.addFeature(fphi, alphaLabeler, train);
-
-		if (!noLabels) {
-			Feature fdepi = fe.templateDepRel(i,"depi",curSent,train);
-			fvParser.addFeature(fdepi,alphaParser,train);
-			fvLabeler.addFeature(fdepi,alphaParser,train);
-		}
-
-
-		fvList.add(fvParser);
-		fvList.add(fvLabeler);
-		return fvList;
+		// TODO Auto-generated method stub
+		return null;
 	}
+
+	// GN: only applied with StackAlgorithm
+//	public List<FeatureVector> apply(ParserState state, boolean train, boolean noLabels) {
+//		List<FeatureVector> fvList = new ArrayList<FeatureVector>(2);
+//		CovingtonParserState st = (CovingtonParserState) state;
+//		Sentence curSent = st.getCurSent();
+//		int j = st.getJ();
+//		int i = st.getI();
+//		FeatureVector fvParser = new FeatureVector(train);	
+//		FeatureVector fvLabeler = new FeatureVector(train);	
+//		FeatureExtractor fe = this.getFeatureExtractor();
+//		Alphabet alphaParser = this.getAlphabetParser();
+//		Alphabet alphaLabeler = this.getAlphabetLabeler();	
+//		Feature[][][] staticFeatures = curSent.getStaticFeatures(); // new
+//		Feature[] curStaticFeaturesJ = staticFeatures[0][j];
+//		for (int k=0; k < curStaticFeaturesJ.length;k++) {
+//			Feature f = curStaticFeaturesJ[k];
+//			fvParser.addFeature(f,alphaParser,train);
+//			fvLabeler.addFeature(f, alphaLabeler, train);
+//		}	
+//
+//		Feature[] curStaticFeaturesI = staticFeatures[1][i];
+//		for (int k=0; k < curStaticFeaturesI.length;k++) {
+//			Feature f = curStaticFeaturesI[k];
+//			fvParser.addFeature(f,alphaParser,train);
+//			fvLabeler.addFeature(f, alphaLabeler, train);
+//		}		
+//
+//		Feature dist = fe.templateDistance(j,i);
+//		fvParser.addFeature(dist, alphaParser, train);
+//		fvLabeler.addFeature(dist, alphaLabeler, train);		
+//
+//		int hi = st.getCurDepStruct().getHeads()[i];
+//		Feature wfhi = fe.templateWf(hi, "wfhi", curSent);
+//		fvParser.addFeature(wfhi, alphaParser, train);
+//		fvLabeler.addFeature(wfhi, alphaLabeler, train);
+//
+//
+//		Feature fphi = fe.templatePos(hi, "phi", curSent);
+//		fvParser.addFeature(fphi, alphaParser, train);
+//		fvLabeler.addFeature(fphi, alphaLabeler, train);
+//
+//		if (!noLabels) {
+//			Feature fdepi = fe.templateDepRel(i,"depi",curSent,train);
+//			fvParser.addFeature(fdepi,alphaParser,train);
+//			fvLabeler.addFeature(fdepi,alphaParser,train);
+//		}
+//
+//
+//		fvList.add(fvParser);
+//		fvList.add(fvLabeler);
+//		return fvList;
+//	}
 }
