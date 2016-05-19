@@ -4,13 +4,18 @@ Defined Maven project and git
 
 1. remove unnecessary code
 
-de.dfki.lt.mdparser.data		-> DONE
-de.dfki.lt.mdparser.archive		-> DONE
-de.dfki.lt.mdparser.xmlrpc		-> DONE
 de.dfki.lt.mdparser.algorithm	-> DONE
+de.dfki.lt.mdparser.archive		-> DONE
+de.dfki.lt.mdparser.data		-> DONE
 de.dfki.lt.mdparser.eval		-> DONE
-	a lot from that file is not used
-	only the constructor new Eval(X);
-de.dfki.lt.mdparser.parser		-> HIERIX
+de.dfki.lt.mdparser.features	-> DONE
+de.dfki.lt.mdparser.model		-> DONE
+de.dfki.lt.mdparser.outputformat-> DONE	
+de.dfki.lt.mdparser.parser		-> DONE
+de.dfki.lt.mdparser.sentenceSplitter -> DONE
+de.dfki.lt.mdparser.xmlrpc		-> DONE
 
-de.dfki.lt.mdparser.features	-> NotYet
+
+2.	Integrate GNT
+
+3. 	Do training and testing with GNT

@@ -1,12 +1,9 @@
 package de.dfki.lt.mdparser.sentenceSplitter;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +29,7 @@ public class SSEval {
 					sb = new StringBuilder();
 				}
 			}
+			fr.close();
 		}
 		return res;
 	}
@@ -45,6 +43,7 @@ public class SSEval {
 		while ((line = fr.readLine())!= null) {
 			res.add(line);
 		}
+		fr.close();
 		return res;
 	}
 	public static void main(String[] args) throws IOException {
@@ -66,8 +65,6 @@ public class SSEval {
 	}
 	private void eval(List<String> input, List<String> result) {
 		double correct = 0.0;
-		double incorrect = 0.0;
-
 		for (int i=0; i < result.size();i++) {
 			String curSent = result.get(i);
 			if (input.contains(curSent)) {

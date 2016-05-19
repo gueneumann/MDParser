@@ -2,7 +2,6 @@ package de.dfki.lt.mdparser.features;
 
 import java.util.List;
 
-import de.dfki.lt.mdparser.algorithm.CovingtonParserState;
 import de.dfki.lt.mdparser.algorithm.ParserState;
 import de.dfki.lt.mdparser.data.Sentence;
 

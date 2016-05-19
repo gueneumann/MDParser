@@ -35,7 +35,7 @@ public class SplitWorkerThread extends Thread {
 		this.splitMap = splitMap;
 	}
 
-	
+
 	public void run() {
 		while (pi.hasNext()) {
 			File element = pi.next();
@@ -43,18 +43,19 @@ public class SplitWorkerThread extends Thread {
 			FileInputStream in = null;
 			try {
 				in = new FileInputStream(element);
+				
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			BufferedInputStream bis = new BufferedInputStream(in, 8000);
 			InputStreamReader ir = null;
 			try {
 				ir = new InputStreamReader(bis,"UTF8");
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				
+			} catch (UnsupportedEncodingException e1) {
+				e1.printStackTrace();
 			}
+
 			BufferedReader fr = new BufferedReader(ir);
 			String line;
 			try {
@@ -63,13 +64,9 @@ public class SplitWorkerThread extends Thread {
 					String splitVal = "";
 					Integer splitIndex = 0;
 					int fIndex = 1;
-			//		System.out.println(line);
-				//	System.out.println(cont);
 					while (splitVal.equals("")) {							
 						int index = Integer.valueOf(lineArray[fIndex].split(":")[0]);		
-				//		System.out.println(posMap.containsKey(index));
 						String pos = posMap.get(index);
-				//		System.out.println(pos);
 						if (pos != null) {
 							splitVal = pos;
 							splitIndex = index;
@@ -88,26 +85,21 @@ public class SplitWorkerThread extends Thread {
 					curBw.append(line+"\n");
 				}
 			} catch (NumberFormatException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			try {
 				fr.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 		System.out.println("    Thread "+id+" has finished.");
 	}
-	
+
 }

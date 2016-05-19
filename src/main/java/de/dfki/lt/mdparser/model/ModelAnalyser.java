@@ -10,8 +10,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
 
 import de.bwaldvogel.liblinear.*;
 import de.dfki.lt.mdparser.features.Alphabet;
@@ -49,6 +47,7 @@ public class ModelAnalyser {
 			}
 		//	System.out.println(feature+" "+templateName+" "+sum);
 		}
+		fr.close();
 		System.out.println(usefulnessMap);
 	}
 	
@@ -107,6 +106,7 @@ public class ModelAnalyser {
 			}
 			sb.append("\n");
 		}
+		fr.close();
 		FileOutputStream out = new FileOutputStream(curFile);
 		OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
 		BufferedWriter fw = new BufferedWriter(or);
@@ -173,6 +173,7 @@ public class ModelAnalyser {
 			//	System.out.println("="+sum);
 				}
 			}
+			fr.close();
 		}
 		System.out.println("Less < 0 "+c);
 		Iterator<String> iter = usefulnessMap.keySet().iterator();

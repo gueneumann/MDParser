@@ -5,29 +5,16 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.BreakIterator;
-import java.text.RuleBasedCollator;
-import java.text.spi.BreakIteratorProvider;
 import java.util.ArrayList;
-import java.util.InvalidPropertiesFormatException;
 import java.util.List;
-import java.util.Locale;
 import java.util.Properties;
 import java.util.StringTokenizer;
-import java.util.Vector;
-
-import org.apache.xmlrpc.webserver.WebServer;
-
-import com.ibm.icu.text.RuleBasedBreakIterator;
 import com.schmeier.posTagger.focus.Focus;
 import com.schmeier.posTagger.tagger.Tagger;
 
@@ -64,16 +51,6 @@ public class MDParser {
 	 */
 	private int posIndex;
 
-	/**
-	 * Index of the column for the head in the output file.
-	 */
-	private int headIndex;
-
-	/**
-	 * Index of the column for the label in the output file.
-	 */
-	private int labelIndex;
-	
 	private SentenceSplitter sentenceSplitter;
 	private WordTokenizer wordTokenizer;
 	
@@ -112,14 +89,11 @@ public class MDParser {
 	public MDParser(Properties props) throws IOException {
 		wordFormIndex = 1;
 		posIndex = 4;
-		headIndex = 6;
-		labelIndex = 7;
 		String mode = props.getProperty("mode");
 		if (!mode.equals("train")) {
 			wordTokenizer = new DefaultWordTokenizer();
 			sentenceSplitter = new DefaultSentenceSplitter();
 			language = props.getProperty("language");				
-			FileInputStream in = null;
 			String[] dirs = {"split","splitA","splitF","splitO","splitC","splitModels","temp"};
 			
 			
@@ -160,39 +134,6 @@ public class MDParser {
 			System.err.println("... DONE!");
 		}
 	}
-	/*
-	private static List<String> splitSentences(String source) { 
-
-
-		List<String> result = new ArrayList<String>(); 
-
-		ICU4JBreakIteratorSentenceSplitter sp = new ICU4JBreakIteratorSentenceSplitter();
-		List<List<String>> res = sp.extractSentences(source);
-		System.out.println(res);
-		
-		
-	//	BreakIteratorTokeniser iterator = new BreakIteratorTokeniser(source, Locale.GERMAN);
-		BreakIterator iterator = BreakIterator.getWordInstance(Locale.GERMAN);
-	//	BreakIterator iterator = BreakIterator.getSentenceInstance(Locale.GERMAN);
-		System.out.println("source: "+source);
-		iterator.setText(source); 
-
-
-		int start = iterator.first();  
-
-		for (int end = iterator.next();  
-
-		    end != BreakIterator.DONE;  
-
-		    start = end, end = iterator.next()) {  
-
-		  result.add(source.substring(start,end));  
-
-		} 
-
-		
-		return result;  
-		}*/
 	
 	public static String readFileToString(String textFile, String inputFormat) throws IOException {
 		FileInputStream in = new FileInputStream(textFile);
@@ -206,6 +147,7 @@ public class MDParser {
 				sb.append("\n");
 			}
 		}
+		fr.close();
 		return sb.toString();
 	}
 	
@@ -562,7 +504,6 @@ public class MDParser {
 				taggedFile = String.format("%s/%04d_morph.txt",taggedFile,i);
 			}
 			String inputString = readFileToString(fileName,inputFormat);
-			String taggedSentence = "";
 			String parsed = "";
 			String mode = props.getProperty("mode");
 			System.err.println("------ Tag and Parse input file ...");

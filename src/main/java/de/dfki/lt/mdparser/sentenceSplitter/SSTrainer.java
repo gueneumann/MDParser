@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import com.schmeier.posTagger.focus.Focus;
 import com.schmeier.posTagger.tagger.Tagger;
 
 import de.bwaldvogel.liblinear.FeatureNode;
@@ -62,7 +60,7 @@ public class SSTrainer {
 		this.nonEndFile = modelFiles[6];
 		this.abbrFile = modelFiles[7];
 		this.firstFile = modelFiles[8];
-		
+
 		tagger = new Tagger(modelFiles[9]);
 		tagger.init();
 	}
@@ -78,9 +76,6 @@ public class SSTrainer {
 		FileOutputStream out = new FileOutputStream(trainingDataFile);
 		OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
 		BufferedWriter bw = new BufferedWriter(or);
-		int yc = 0;
-		int tc = 0;
-
 		// GN: collect information from training file and store in separate files
 		// later used as helper for defining features, and are applied in templates
 		createLowerCaseWordsList(conllInputFile, lowerCaseWordsFile);
@@ -97,7 +92,6 @@ public class SSTrainer {
 
 		//GN: Read in again and store as sets which will be passed to feature model creator
 		Set<String> lowCaseSet = readWords(lowerCaseWordsFile);
-		Set<String> lowCasePosSet = readWords(neWordsFile);
 		Set<String> neSet = readWords(neWordsFile);
 		Set<String> endSet = readWords(endFile);
 		Set<String> nonEndSet = readWords(nonEndFile);
@@ -168,13 +162,13 @@ public class SSTrainer {
 				// GN: add integer coding of feature vector to trainingDataFile ("temp/ss.txt")
 				// It computes a specific index for each feature:value combination !
 				// DOES not make sense and leads to a little poorer result
-//				if (label.equals("y")) {
-//					// System.out.println(" --- " + fv.getIntegerRepresentation(alpha, false));
-//					bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
-//				}
-//				if (label.equals("y")) {
-//					System.out.println(" --- " + fv.getIntegerRepresentation(alpha, false));
-//				}
+				//				if (label.equals("y")) {
+				//					// System.out.println(" --- " + fv.getIntegerRepresentation(alpha, false));
+				//					bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
+				//				}
+				//				if (label.equals("y")) {
+				//					System.out.println(" --- " + fv.getIntegerRepresentation(alpha, false));
+				//				}
 				bw.append(fv.getIntegerRepresentation(alpha, false)+"\n");
 			}
 		}
@@ -212,37 +206,7 @@ public class SSTrainer {
 		bw.close();
 
 	}
-
-	public static String tag(String in, Tagger t) {
-		Focus focus = new Focus();
-		StringTokenizer str = new StringTokenizer(in);
-		while(str.hasMoreTokens()) {
-			String word = str.nextToken();
-			focus.add(word);
-		}
-		t.run(focus);
-		return focus.toString();
-	}
-
-	private List<String> posTag(List<String> tokens) throws IOException {
-		List<String> posTags = new ArrayList<String>(tokens.size());
-		StringBuilder sb = new StringBuilder();
-		for (int i=0; i < tokens.size();i++) {
-			sb.append(tokens.get(i)+" ");
-		}
-		long start = System.currentTimeMillis();
-		String taggedInput = tag(sb.toString(), tagger);
-		System.out.println(System.currentTimeMillis()-start);
-		String[] array = taggedInput.split("  ");
-		for (int i=0; i < array.length;i++) {
-			String unit = array[i];
-			int splitPoint = unit.lastIndexOf(":");
-			posTags.add(unit.substring(splitPoint+1,unit.length()));
-		}
-
-		return posTags;
-	}
-
+	
 	public void train() throws IOException, InvalidInputDataException {
 		// GN: Read in the created training data file, whereby alpha is not needed here !
 		// GN: NOTE: readProblemm is defined below !
@@ -459,6 +423,7 @@ public class SSTrainer {
 		while ((line = fr.readLine())!= null) {
 			set.add(line);
 		}
+		fr.close();
 		return set;
 	}
 
@@ -516,9 +481,9 @@ public class SSTrainer {
 				} else {
 					x = new FeatureNode[m];
 				}
-				
+
 				int indexBefore = 0;
-				
+
 				// GN: now loop through the feature:value pairs
 				for (int j = 0; j < m; j++) {
 
@@ -540,7 +505,7 @@ public class SSTrainer {
 					token = st.nextToken();
 					try {
 						double value = atof(token);
-						
+
 						// Add a feature/value node at j-position in the x
 						x[j] = new FeatureNode(index, value);
 					} catch (NumberFormatException e) {
@@ -577,13 +542,13 @@ public class SSTrainer {
 
 
 			// GN: bias is set to -1 !
-			
+
 			if (bias >= 0) {
 				// GN: assert should be gone !
 				assert prob.x[i][prob.x[i].length - 1] == null;
-				
+
 				prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, bias);
-				
+
 			} else {
 				// GN: assert should be gone !
 				assert prob.x[i][prob.x[i].length - 1] != null;

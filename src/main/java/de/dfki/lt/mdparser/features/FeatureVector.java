@@ -1,10 +1,8 @@
 package de.dfki.lt.mdparser.features;
 
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,10 +16,10 @@ public class FeatureVector {
 	private List<Feature> fList;
 	private String standardRepresentation;
 	private String integerRepresentation;
-	
+
 	private String label;
 	private double[] probArray;
-	
+
 	public FeatureVector(boolean train) {
 		fList = new ArrayList<Feature>(40);
 	}
@@ -31,7 +29,7 @@ public class FeatureVector {
 			alpha.addFeature(f.getFeatureString());
 		}
 	}
-	
+
 	public void updateFeature(String featureName, String newValue) {
 		for (int i=fList.size()-1; i >= 0; i--) {
 			Feature f = fList.get(i);
@@ -43,7 +41,7 @@ public class FeatureVector {
 			}
 		}
 	}
-	
+
 	public Feature getFeature(String featureName) {
 		for (int i=0; i < fList.size(); i++) {
 			Feature f = fList.get(i);
@@ -53,7 +51,7 @@ public class FeatureVector {
 		}
 		return null;
 	}
-		
+
 	public void setStandardRepresentation(String standardRepresentation) {
 		this.standardRepresentation = standardRepresentation;
 	}
@@ -81,12 +79,12 @@ public class FeatureVector {
 			}
 			if (fIndex == null) {
 				fIndex = alpha.getFeatureIndex(f.getFeatureString());	
-			//	System.out.println(fIndex);
-			/*	fIndex = f.getValue().hashCode()*(i+1);
+				//	System.out.println(fIndex);
+				/*	fIndex = f.getValue().hashCode()*(i+1);
 				if (fIndex < 0) {
 					fIndex *= -1;
 				}*/
-		//		System.out.println("old: "+alpha.getFeatureIndex(f.getFeatureString())+" new: "+fIndex);
+				//		System.out.println("old: "+alpha.getFeatureIndex(f.getFeatureString())+" new: "+fIndex);
 			}
 			if (fIndex != null) {
 				indexList.add(fIndex);
@@ -99,67 +97,6 @@ public class FeatureVector {
 			sb.append(fIndex);
 			sb.append(":");
 			sb.append(1);
-		}
-
-		this.integerRepresentation = sb.toString();
-		return integerRepresentation;
-	}
-	
-	public String getIntegerRepresentationInt(HashMap<Integer,String> overlapMap,HashMap<Integer,String> posMap,Alphabet alpha, boolean labels) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-		StringBuilder sb = new StringBuilder();
-		List<Integer> indexList = new ArrayList<Integer>();
-		sb.append(alpha.getLabelIndexMap().get(label));
-		for (int i = 0; i < fList.size();i++) {
-			Feature f = fList.get(i);	
-			Integer fIndex = null;
-		/*	if (labels)  {
-				fIndex = f.getIndexLabeler();
-			}
-			else {
-				fIndex = f.getIndexParser();
-			}*/
-			if (fIndex == null) {
-			//	fIndex = alpha.getFeatureIndex(f.getFeatureString());	
-			//	System.out.println(fIndex);
-				String fs = f.getValue();
-				
-				fIndex = f.getValue().hashCode()*(i+1)*97;
-				if (fIndex < 0) {
-					fIndex *= -1;
-				}			
-				String fString = overlapMap.get(fIndex);
-				if (fString == null) {
-					overlapMap.put(fIndex, f.getFeatureString());
-				}
-				else {
-					if (!f.getFeatureString().equals(fString)) {
-			//			System.out.println("OVERLAP "+fString+" vs "+f.getFeatureString());
-					}
-				}
-				if (f.getName().equals("pj")) {
-					posMap.put(fIndex,f.getValue());
-				}
-		//		System.out.println("old: "+alpha.getFeatureIndex(f.getFeatureString())+" new: "+fIndex);
-			}
-			if (fIndex != null) {
-				indexList.add(fIndex);
-			}
-		}
-		Collections.sort(indexList);
-		Set<Integer> added = new HashSet<Integer>();
-		for (int i = 0; i < indexList.size();i++) {
-			Integer fIndex = indexList.get(i);
-			if (!added.contains(fIndex)) {
-				sb.append(" ");
-				sb.append(fIndex);
-				sb.append(":");
-				sb.append(1);
-				added.add(fIndex);
-			}
-		//	else {
-		//		System.out.println("Overlap");
-		//	}
-
 		}
 
 		this.integerRepresentation = sb.toString();
@@ -178,14 +115,14 @@ public class FeatureVector {
 				fIndex =  f.getIndexParser();
 			}
 			if (fIndex == null) {
-			//	System.out.println(f.getFeatureString()+" "+f.getValue().hashCode()*i);
-			/*	fIndex = f.getValue().hashCode()*(i+1);
+				//	System.out.println(f.getFeatureString()+" "+f.getValue().hashCode()*i);
+				/*	fIndex = f.getValue().hashCode()*(i+1);
 				if (fIndex < 0) {
 					fIndex *= -1;
 				}*/
 				fIndex = alpha.getFeatureIndex(f.getFeatureString());
 			}
-			
+
 			if (fIndex != null) {
 				indexList.add(fIndex);
 			}
@@ -201,45 +138,6 @@ public class FeatureVector {
 		}
 		return fnArray;
 	}
-
-public FeatureNode[] getLiblinearRepresentationInt(boolean train, boolean labels, Alphabet alpha) {
-	List<Integer> indexList = new ArrayList<Integer>(40);
-	for (int i = 0; i < fList.size();i++) {
-		Feature f = fList.get(i);	
-		Integer fIndex = null;
-		if (labels) {
-			fIndex = f.getIndexLabeler();
-		}
-		else {
-			fIndex =  f.getIndexParser();
-		}
-		if (fIndex == null) {
-		//	System.out.println(f.getFeatureString()+" "+f.getValue().hashCode()*i);
-			fIndex = f.getValue().hashCode()*(i+1)*97;
-			if (fIndex < 0) {
-				fIndex *= -1;
-			}
-			fIndex = alpha.getFeatureIndex(String.valueOf(fIndex));
-		//	fIndex = alpha.getFeatureIndex(f.getFeatureString());
-		}
-		
-		if (fIndex != null) {
-			indexList.add(fIndex);
-		}
-	}
-	if (train) {
-		Collections.sort(indexList);
-	}
-	FeatureNode[] fnArray = new FeatureNode[indexList.size()];
-	for (int i = 0; i < indexList.size();i++) {
-		Integer fIndex = indexList.get(i);
-		FeatureNode fn = new FeatureNode(fIndex,1);
-		fnArray[i] = fn;
-	}
-	return fnArray;
-}
-
-	
 	
 	public void setfList(List<Feature> fList) {
 		this.fList = fList;
@@ -258,11 +156,11 @@ public FeatureNode[] getLiblinearRepresentationInt(boolean train, boolean labels
 	public void setProbArray(double[] probArray) {
 		this.probArray = probArray;	
 	}
-	
+
 	public double[] getProbArray() {
 		return this.probArray;
 	}
-	
+
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(label);

@@ -79,6 +79,7 @@ public class SSPredictor {
 				}
 			}
 		}
+		fr.close();
 		return sb.toString();
 	}
 	
@@ -116,45 +117,6 @@ public class SSPredictor {
 		}
 		return posTags;
 	}
-	
-/*	private List<String> fix(List<String> tok1) {
-		List<String> newTok = new ArrayList<String>();
-		for (int i=0; i < tok1.size();i++) {
-			String tok = tok1.get(i);
-			String nextTok = "null";
-			if (i+1 < tok1.size()) {
-				nextTok = tok1.get(i+1);
-			}
-			if (tok.equals("Sen") && nextTok.equals(".") ) {
-				newTok.add(tok+".");
-				i++;
-			}
-			else if (tok.equals("Sept") && nextTok.equals(".")) {
-				newTok.add(tok+".");
-				i++;
-			}
-			else if (tok.equals("Nov") && nextTok.equals(".")) {
-				newTok.add(tok+".");
-				i++;
-			}
-			else if (tok.equals("No") && nextTok.equals(".")) {
-				newTok.add(tok+".");
-				i++;
-			}
-			else if (tok.equals("Dec") && nextTok.equals(".")) {
-				newTok.add(tok+".");
-				i++;
-			}
-		/*	else if (tok.length() < 3 && nextTok.equals(".")) {
-				newTok.add(tok+".");
-				i++;
-			}
-			else {
-				newTok.add(tok);
-			}
-		}
-		return newTok;
-	}*/
 
 	private Set<String> readWords(String inputFile) throws IOException {
 		FileInputStream in = new FileInputStream(inputFile);
@@ -165,6 +127,7 @@ public class SSPredictor {
 		while ((line = fr.readLine())!= null) {
 			set.add(line);
 		}
+		fr.close();
 		return set;
 	}
 	
@@ -183,7 +146,6 @@ public class SSPredictor {
 		List<List<String>> result = new ArrayList<List<String>>();
 		List<String> curSent = new ArrayList<String>();
 		SSFeatureModel fm = new SSFeatureModel();
-		double prob = 0.0;
 		List<Set<String>> sets = new ArrayList<Set<String>>();
 		boolean end = false;
 		sets.add(lowCaseSet);sets.add(neSet);sets.add(endSet);
@@ -200,7 +162,6 @@ public class SSPredictor {
 				if (label.equals("y")) {
 					end = true;
 				}
-				prob = probs[1];	
 				if (end) {
 					result.add(curSent);
 					curSent = new ArrayList<String>();
