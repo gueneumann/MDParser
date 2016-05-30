@@ -49,8 +49,6 @@ Perform tests with conll2009 EN and DE to get direct comparison
 	
 	Parent accuracy: 0.8881510506969971
 	Label accuracy:  0.8607739787780012
-
-	
 	
 	Google, Andor et al., May, 2016
 	UAS		= 93,22		LAS	= 91,23
