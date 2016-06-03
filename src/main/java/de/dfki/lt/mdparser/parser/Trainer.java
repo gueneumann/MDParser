@@ -38,6 +38,7 @@ public class Trainer {
 
 	private double    bias             = -1;
 	private Problem   prob             = null;
+	// solver, penalty C, epsilon Eps
 	private Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
 	private int totalConfigurations;
 

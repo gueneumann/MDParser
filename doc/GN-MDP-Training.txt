@@ -16,141 +16,6 @@ A NOTE from AV from JULY, 2014:
 	sind das auch immer wichtige Schrauben gewesen, 
 	denn die Trainingsdaten für Parsing sind extrem groß und für andere Tasks hat man oft den umgekehrten Fall, dass man zu wenig Daten hat.
 
-REMARK:
-It seems that 1%F has been lost with EN/DE POS !
-
-1. Create UPOS treebanks or use original POS grammars
-	- sources are in /Users/gune00/dfki/data/MLDP
-	- UPOS files are then in /Users/gune00/dfki/data/MLDP/Conll2Utags
-	- then load MLDP system in SBCL
-	- create UPOS files as described /Users/gune00/dfki/src/Lisp/mldp/map-conll-to-utag.txt
-	- UPOS treebanks are in /Users/gune00/dfki/data/MLDP/Conll2Utags
-	
-2. Create grammar models:
-  
-3. English UPOS grammars
- 
- 	String trainFile = "resources/UposInput/english-train.conll.utag";
-	String goldFile = "resources/UposInput/english-devel.conll.utag";
-	String modelFile = "modelsEnglishUposTest.zip";
-  
-  	Time to parse: 0.231
-	Average number of configurations per sentence: 47
-	Parent accuracy: 0.8806940781587149
-	Label accuracy:  0.8566291057300408
-	Training time: 136 seconds.
-	Parsing time: 2 seconds.
-	Parsing time: 2274 milliseconds.
-	
-	Using additional spelling features as used by MDNER: -> it hurts !
-	
-	Time to parse: 0.253
-	Average number of configurations per sentence: 47
-	Parent accuracy: 0.8696655478302565
-	Label accuracy:  0.8452109805801966
-	Training time: 173 seconds.
-	Parsing time: 2 seconds.
-	Parsing time: 2315 milliseconds.
-
-
-4. English POS grammars
-
-	String trainFile = "resources/input/english-train.conll";
-	String goldFile = "resources/input/english-devel.conll";
-	String modelFile = "modelsEnglishTest.zip";
-   
-   Time to parse: 0.208
-	Average number of configurations per sentence: 47
-	Parent accuracy: 0.8839007432270439
-	Label accuracy:  0.8603452409494126
-	Training time: 133 seconds.
-	Parsing time: 3 seconds.
-	Parsing time: 3626 milliseconds.
-	
-	With features according to AV Thesis:
-		Parent accuracy: 0.884949652361544
-		Label accuracy:  0.8613641812514985
-		
-	-> versus: 89,7% parent accuracy, page 89, Thesis text
-	
-	Using additional spelling features as used by MDNER: -> it hurts !
-	
-	Time to parse: 0.305
-	Average number of configurations per sentence: 47
-	Parent accuracy: 0.8775473507552146
-	Label accuracy:  0.8541117238072404
-	Training time: 152 seconds.
-	Parsing time: 4 seconds.
-	Parsing time: 4064 milliseconds.
-		
-5. 	German grammar: UPOS grammars
-
-	String trainFile = "resources/UposInput/german_tiger_train.conll.utag";
-	String goldFile = "resources/UposInput/german_tiger_test.conll.utag";
-	String modelFile = "modelsGermanUposTest.zip";
-   
-   	Time to parse: 0.079
-	Average number of configurations per sentence: 29
-	Parent accuracy: 0.8349139445029856
-	Label accuracy:  0.7969792764313313
-	Training time: 116 seconds.
-	Parsing time: 2 seconds.
-	Parsing time: 2818 milliseconds.
-	
-	Using additional spelling features as used by MDNER: -> it hurts !
-	
-	Time to parse: 0.076
-	Average number of configurations per sentence: 29
-	Parent accuracy: 0.8268352651914296
-	Label accuracy:  0.7855637513171759
-	Training time: 141 seconds.
-	Parsing time: 3 seconds.
-	Parsing time: 3176 milliseconds.
-
-5. 	German grammar: POS grammars
-	
-    String trainFile = "resources/input/german_tiger_train.conll";
-	String goldFile = "resources/input/german_tiger_test.conll";
-	String modelFile = "modelsGermanTest.zip";
-	
-	Time to parse: 0.07
-	Average number of configurations per sentence: 29
-	Parent accuracy: 0.8547593958552863
-	Label accuracy:  0.8166491043203372
-	Training time: 109 seconds.
-	Parsing time: 4 seconds.
-	Parsing time: 4471 milliseconds.
-	
-	With features according to AV Thesis:
-		Parent accuracy: 0.8542325254654022
-		Label accuracy:  0.8159466104671584
-	
-	-> versus: 87,7% parent accuracy, page 89, Thesis text
-	
-	Using additional spelling features as used by MDNER: -> it hurts !
-	
-	Time to parse: 0.083
-	Average number of configurations per sentence: 29
-	Parent accuracy: 0.8342114506498068
-	Label accuracy:  0.7952230417983842
-	Training time: 143 seconds.
-	Parsing time: 4 seconds.
-	Parsing time: 4250 milliseconds.
-		
-6. Danish with the faster training method:
-
-	UposInput/danish_ddt_train.conll.utag
-	UposInput/danish_ddt_test.conll.utag
-   	modelsDanishUpos.zip
-   	
-   	Time to parse: 0.191
-	Number of configurations: 10939
-	Average number of configurations per sentence: 33
-	0.8224538619275461
-	0.7670881749829118
-	Training time: 44
-	Parsing time: 1 seconds.
-	Parsing time: 1054 milliseconds.
 	
 NOTES on DIRS:
 
@@ -166,5 +31,20 @@ However, during application the variable is still necessary but initialized as e
 	String[] dirs = {};
 	Archivator arch = new Archivator(modelFile,dirs);	
 			
+LibLinear settings used in:
 
- 
+de.dfki.lt.mdparser.parser.Trainer:
+
+	private double    bias             = -1;
+	private Problem   prob             = null;
+	// solver, penalty C, epsilon Eps
+	private Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
+	
+de.dfki.lt.mdparser.parser.CompactiseWorkerThread
+	private Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
+	
+-> overwrites value parameter initialized in trainer !
+
+Trainingsdaten:
+-	aktuell habe ich nur positive Trees
+-	brauche ich negative ? Wo kommen die her ?
