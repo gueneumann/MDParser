@@ -1,5 +1,8 @@
 Usage of Training with MDP with specific treebanks
 
+Check exactly, how others did evaluation:
+- without evaluation of punctuation symbols
+
 Data is also under
 /home/neumann/excitement/data/MLDP/
 
