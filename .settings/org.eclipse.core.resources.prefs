@@ -1,7 +1,8 @@
 eclipse.preferences.version=1
 encoding//src/main/java=UTF-8
+encoding//src/main/java/de/dfki/lt/mdparser/caller/CompleteTrainParseEval.java=UTF-8
+encoding//src/main/java/de/dfki/lt/mdparser/caller/MDPtrainer.java=UTF-8
 encoding//src/main/java/de/dfki/lt/mdparser/features/CovingtonFeatureModel.java=UTF-8
 encoding//src/test/java=UTF-8
-encoding//src/test/java/cases/CompleteTrainParseEval.java=UTF-8
 encoding//src/test/java/cases/SimpleRunSentenceExample.java=UTF-8
 encoding/<project>=UTF-8

@@ -31,7 +31,14 @@ public class Data {
 		List<Sentence> sentences = new ArrayList<Sentence>(40000);
 		while ((line = fr.readLine()) != null) {
 			if (line.length() > 0) {
-				curSent.add(line);
+				// GN: added by GN on 30.06.2015:
+				// if first element is not a single number, but contains an interval - as it is the case for Universal grammars
+				// ignore such a line
+				if (!line.split("\t")[0].contains("-")){
+					curSent.add(line);
+				}
+				else
+					System.err.println("Skip: " + line);
 			}
 			else {
 				String[][] sentArray = new String[curSent.size()][infoSize];

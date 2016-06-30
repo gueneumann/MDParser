@@ -1,4 +1,4 @@
-package cases;
+package de.dfki.lt.mdparser.caller;
 
 
 import java.io.IOException;
@@ -6,6 +6,8 @@ import java.lang.reflect.Array;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
+import cases.ParserTest;
+import cases.TrainerTest;
 import de.bwaldvogel.liblinear.*;
 import de.dfki.lt.mdparser.archive.Archivator;
 

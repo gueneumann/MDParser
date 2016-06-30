@@ -1,9 +1,11 @@
-package cases;
+package de.dfki.lt.mdparser.caller;
 
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
+import cases.ParserTest;
+import cases.TrainerTest;
 import de.bwaldvogel.liblinear.*;
 import de.dfki.lt.mdparser.archive.Archivator;
 
@@ -23,7 +25,7 @@ public class CompleteTrainParseEval {
 		System.out.println("Use 'mdpTrainTest.jar -train <trainfile> -model <modelFile> -test <goldFile>'");
 		System.out.println("	To train a new model using <trainFile> and save it in <modelFile>, and test it with <goldFile>.");
 		System.out.println("	<trainFile> and <goldFile> must specified in CONLL format!");
-		System.out.println("	<modelFile> must will be a ZIP file!");
+		System.out.println("	<modelFile> must be a ZIP file!");
 		System.out.println("Use 'mdpTrainTest.jar -train <trainfile> -model <modelFile>");
 		System.out.println("	To train a new model using <trainFile> and save it in <modelFile>");
 		System.out.println("Use 'mdpTrainTest.jar -model <modelFile> -test <goldFile>'");
