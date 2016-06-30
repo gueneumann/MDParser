@@ -37,9 +37,15 @@ public class Eval {
 		BufferedReader frParsed = new BufferedReader(ir2);
 		String lineParsed;
 		while ((lineGold = frGold.readLine())!= null) {
+			// XXX
+			// GN: added by GN on 30.06.2015:
+			// if first element is not a single number, but contains an interval - as it is the case for Universal grammars
+			// ignore such a line
+			if (!((lineGold.length() > 0) &
+					(lineGold.split("\t")[0].contains("-")))){
 			lineParsed = frParsed.readLine();
 			if (lineGold.length() > 0) {
-				//	System.out.println(lineParsed);
+				System.out.println("Compare: " + lineGold + "\n         " + lineParsed);
 				String[] parsedArray = lineParsed.split("\\s");
 				String[] goldArray = lineGold.split("\\s");
 				if (!parsedArray[headIndexParsed].equals("_"))
@@ -52,6 +58,7 @@ public class Eval {
 					}
 				total++;
 			}
+		}
 		}
 		frGold.close();
 		frParsed.close();

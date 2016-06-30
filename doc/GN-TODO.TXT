@@ -68,6 +68,8 @@ From paper "Optimizing Dependency Parsing Throughput“
 	(for potential dependency n_i -> n_j and n_j -> n_i) 
 -	We also perform a final optimization step on the trained model which eliminates features with a weight of zero.
 
+-> probably in processCombined()
+
 Comments from Alexander:
 
 Hallo Herr Neumann,
