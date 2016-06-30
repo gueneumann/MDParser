@@ -17,8 +17,16 @@ public class MDPrunner {
 	private String resultFile = "temp/1.conll";
 	private Parser parser = new Parser();
 	private Data data = null;
+	private Eval evaluator = null;
 
 	// Getters and setters
+	
+	public Eval getEvaluator() {
+		return evaluator;
+	}
+	public void setEvaluator(Eval evaluator) {
+		this.evaluator = evaluator;
+	}
 	public String getResultFile() {
 		return resultFile;
 	}
@@ -42,7 +50,7 @@ public class MDPrunner {
 
 	// Methods
 
-	public void conllFileParsing(String conllFile, String resultFile, String modelFile) 
+	public void conllFileParsingAndEval(String conllFile, String resultFile, String modelFile) 
 			throws IOException{
 		this.parser = new Parser();
 		this.data = new Data(conllFile, false);
@@ -55,20 +63,17 @@ public class MDPrunner {
 		parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex()-1);
 
 
-		long s3 = System.currentTimeMillis();
 		parser.parseCombined(algorithm, data, arch, alphabetParser, false);
 
-		long s4 = System.currentTimeMillis();
-		System.out.println("Parsing msec: " + (s4-s3));
 		this.getData().printToFile(resultFile);
 		this.evalParser(conllFile, resultFile);
 
 	}
 	
 	public void evalParser(String conllFile, String resultFile) throws IOException{
-		Eval ev = new Eval(conllFile, resultFile, 6, 6, 7, 7);
-		System.out.println("Parent accuracy: " + ev.getParentsAccuracy());
-		System.out.println("Label accuracy:  " + ev.getLabelsAccuracy());
+		evaluator = new Eval(conllFile, resultFile, 6, 6, 7, 7);
+		System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
+		System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
 	}
 
 
@@ -78,7 +83,7 @@ public class MDPrunner {
 		String resultFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test-result.conll";
 		String modelFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-MDPmodel.zip";
 
-		mdpRunner.conllFileParsing(conllFile, resultFile, modelFile);
+		mdpRunner.conllFileParsingAndEval(conllFile, resultFile, modelFile);
 
 	}
 }

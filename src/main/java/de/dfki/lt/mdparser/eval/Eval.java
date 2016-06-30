@@ -45,11 +45,11 @@ public class Eval {
 					(lineGold.split("\t")[0].contains("-")))){
 			lineParsed = frParsed.readLine();
 			if (lineGold.length() > 0) {
-				System.out.println("Compare: " + lineGold + "\n         " + lineParsed);
+				//System.out.println("Compare: " + lineGold + "\n         " + lineParsed);
 				String[] parsedArray = lineParsed.split("\\s");
 				String[] goldArray = lineGold.split("\\s");
 				if (!parsedArray[headIndexParsed].equals("_"))
-					//	System.out.println(parsedArray[headIndexParsed]+" "+(goldArray[headIndexGold]+" --> "+parsedArray[1]+" "+goldArray[1]));
+					//System.out.println(parsedArray[headIndexParsed]+" "+(goldArray[headIndexGold]+" --> "+parsedArray[1]+" "+goldArray[1]));
 					if (parsedArray[headIndexParsed].equals(goldArray[headIndexGold])) {
 						correctParents++;
 						if (parsedArray[labelIndexParsed].equals(goldArray[labelIndexGold])) {
@@ -73,7 +73,7 @@ public class Eval {
 		return Double.valueOf(this.correctLabels) / Double.valueOf(this.total);
 	}
 
-	// GN: the parts below is not used
+	// GN: the parts below are  not used
 	private void createLabelIndexMap(String trainingDataFile, int labelIndexGold) throws IOException {
 		FileInputStream in = new FileInputStream(trainingDataFile);
 		InputStreamReader ir = new InputStreamReader(in,"UTF8");

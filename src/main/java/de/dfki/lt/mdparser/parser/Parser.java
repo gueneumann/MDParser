@@ -1,14 +1,11 @@
 package de.dfki.lt.mdparser.parser;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,7 +30,7 @@ import de.dfki.lt.mdparser.features.StackFeatureModel;
 
 public class Parser {
 
-	private long time;
+	public static long time;
 
 	private double[] weightsParser;
 	private int numberOfClassesParser;
@@ -56,7 +53,7 @@ public class Parser {
 		readSplitModels(arch);
 		//	readSplitAlphabets(arch);
 		long end = System.currentTimeMillis();
-		System.out.println("Time to read models: "+(end-st)+" milliseconds.");
+		System.out.println("Time to read model (msec): " + (end-st));
 		//gds	readSplitModelsL(arch);
 		FeatureExtractor fe = new FeatureExtractor();
 		Sentence[] sentences = d.getSentences();
@@ -107,7 +104,7 @@ public class Parser {
 		long end2 = System.currentTimeMillis();
 		time+= end2-start;
 		System.out.println("No. of threads: " + threadCount);
-		System.out.println("Time to parse: "+Double.valueOf(time));
+		System.out.println("Time to parse (msec): " + Double.valueOf(time));
 		System.out.println("Speed (sent/s): " + (sentences.length*1000)/Double.valueOf(time));
 		System.out.println("Number of configurations: "+pa.getNumberOfConfigurations());
 		System.out.println("Average number of configurations per sentence: "+pa.getNumberOfConfigurations()/sentences.length);
@@ -243,13 +240,5 @@ public class Parser {
 
 	public HashMap<String,Alphabet> getSplitAlphabetsMap() {
 		return splitAlphabetsMap;
-	}
-
-	public void setTime(long time) {
-		this.time = time;
-	}
-
-	public long getTime() {
-		return time;
 	}
 }
