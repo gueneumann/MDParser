@@ -62,6 +62,7 @@ public class CompactiseWorkerThread extends Thread {
 			
 			// GN: and save the training files
 			try {
+				System.out.println("Save: "+splitModelsDir+"/"+element.getName());
 				m.save(new File(splitModelsDir+"/"+element.getName()));
 			} catch (IOException e) {
 				e.printStackTrace();

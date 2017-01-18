@@ -427,7 +427,7 @@ public class Trainer {
 		File[] models = new File(splitModelsDir).listFiles();
 		alpha.createIndexToValueArray();
 		for (int i=0; i < models.length; i++) {
-			System.out.println(models[i]);
+			System.out.println("Model file: " + models[i]);
 			Model model = Linear.loadModel(models[i]);
 			double[] wArray = model.getFeatureWeights();
 			String alphaName = splitA+"/"+models[i].getName();
@@ -517,6 +517,7 @@ public class Trainer {
 		for (int i=1; i < alphaParser.getMaxLabelIndex();i++) {
 			bw.append(i+" "+indexLabelArray[i]+"\n");
 		}
+		// GN: seems to cause problem in training with algorithm=stack
 		bw.append("\n");
 		String[] indexToValue = alphaParser.getIndexToValueArray();
 		boolean notFinished = true;

@@ -111,9 +111,9 @@ public class StackAlgorithm extends ParsingAlgorithm {
 		StackParserState curState = new StackParserState(stack,buffer,sentence,curDepStruct);
 		while (!curState.isTerminal()) {
 			FeatureVector fv = fm.applyCombined(curState, true, noLabels);	
-			System.out.print(curState.getStackToken(0)+" "+curState.getBufferToken(0)+" "+maxi+" "+stack+" "+buffer+" ");
+			// System.out.print(curState.getStackToken(0)+" "+curState.getBufferToken(0)+" "+maxi+" "+stack+" "+buffer+" ");
 			String label = findOutCorrectLabel2Combined(curState.getStack(), curState.getBufferToken(0), sentArray);
-			System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
+			// System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
 			fv.setLabel(label);
 			String labelTrans = "";
 			if (label.contains("#")) {

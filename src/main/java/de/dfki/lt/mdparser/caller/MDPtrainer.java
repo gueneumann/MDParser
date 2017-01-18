@@ -23,6 +23,17 @@ public class MDPtrainer {
 	String splitFile = "temp/split.txt";
 	String alphabetFileParser = "temp/alphaParser.txt";
 	String alphabetFileLabeler = "temp/alphaLabeler.txt";
+	
+	public String getAlgorithm() {
+		return this.algorithm;
+	}
+	public void setAlgorithm(String algorithm) {
+		this.algorithm = algorithm;
+	}
+
+
+	public MDPtrainer(){
+	}
 
 
 	public static void createNew(String[] dirs) {
@@ -33,7 +44,6 @@ public class MDPtrainer {
 				d.mkdir();
 			}
 		}
-
 	}
 
 	public static void deleteOld(String[] dirs) {
@@ -44,7 +54,6 @@ public class MDPtrainer {
 					boolean b = files[k].delete();
 					if (!b)
 						System.out.println("Failed to delete "+files[k]);
-
 				}
 			}
 		}
@@ -58,7 +67,7 @@ public class MDPtrainer {
 
 		Archivator arch = new Archivator(archiveName,dirs);
 		Trainer trainer = new Trainer();
-		
+
 		long s1 = System.currentTimeMillis();
 
 		trainer.createAndTrainWithSplittingFromDisk(algorithm,trainFile,
@@ -78,6 +87,7 @@ public class MDPtrainer {
 
 	public static void main(String[] args) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
 		MDPtrainer mdpTrainer = new MDPtrainer();
-		mdpTrainer.trainer("resources/input/german_tiger_train.conll", "de-model.zip");
+		//mdpTrainer.setAlgorithm("stack");
+		mdpTrainer.trainer("resources/input/ptb3-std-training.conll", "ptb3-std.zip");
 	}
 }

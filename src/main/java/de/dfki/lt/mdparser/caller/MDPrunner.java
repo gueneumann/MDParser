@@ -39,6 +39,13 @@ public class MDPrunner {
 	public void setData(Data data) {
 		this.data = data;
 	}
+	
+	public String getAlgorithm() {
+		return this.algorithm;
+	}
+	public void setAlgorithm(String algorithm) {
+		this.algorithm = algorithm;
+	}
 
 	// Class instantiation
 	public MDPrunner(){
