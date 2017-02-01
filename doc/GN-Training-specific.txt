@@ -50,23 +50,55 @@ Perform tests with conll2009 EN and DE to get direct comparison
 	-model en-2009.zip
 	-test  /Users/gune00/data/MLDP/2009/en-test-2009.conll
 	
-	Parent accuracy: 0.8881510506969971
-	Label accuracy:  0.8607739787780012
-	
-	Google, Andor et al., May, 2016
-	UAS		= 93,22		LAS	= 91,23
-->	diff of MDP:
-	UAS		= 04,4		LAS	= 05,15
+	Parent accuracy: 0.89
+	Label accuracy:  0.86
+	DIFF WITH SOTA:	UAS ~4, LAS ~4,6
 	
 	DE conll:
 	-train /Users/gune00/data/MLDP/2009/de-train-2009.conll
 	-model de-2009.zip
 	-test /Users/gune00/data/MLDP/2009/de-test-2009.conll
 	
-	Parent accuracy: 0.8434317879956992
-	Label accuracy:  0.803459616722535
+	Parent accuracy: 0.84
+	Label accuracy:  0.80
+	DIFF WITH SOTA:	UAS ~7, LAS ~9
 	
-	Google, Andor et al., May, 2016
-	UAS		= 90,91		LAS	= 89,15
-->	diff of MDP:
-	UAS		= 06,57		LAS	= 08,80
+Performance results reported for MacParsey: https://arxiv.org/pdf/1603.06042v2.pdf, Google, Andor et al., May, 2016
+
+									WSJ 			Union-News 		Union-Web 	Union-QTB
+Method 							UAS		LAS 	UAS 	LAS 	UAS 	LAS 	UAS 	LAS
+Martins et al. (2013)			92.89 90.55 	93.10 91.13 	88.23 85.04 	94.21 91.54
+Zhang and McDonald (2014)		93.22 91.02 	93.32 91.48 	88.65 85.59 	93.37 90.69
+Weiss et al. (2015) 			93.99 92.05 	93.91 92.25 	89.29 86.44 	94.17 92.06
+Alberti et al. (2015) 			94.23 92.36 	94.10 92.55 	89.55 86.85 	94.74 93.04
+Our Local (B=1) 				92.95 91.02 	93.11 91.46 	88.42 85.58 	92.49 90.38
+Our Local (B=32) 				93.59 91.70 	93.65 92.03 	88.96 86.17 	93.22 91.17
+Our Global (B=32) 				94.61 92.79 	94.44 92.93 	90.17 87.54 	95.40 93.64
+Parsey McParseface (B=8) 		- - 			94.15 92.51 	89.08 86.29 	94.77 93.17
+
+Table 2: Final English dependency parsing test set results. 
+	We note that training our system using only the WSJ corpus (i.e. no
+	pre-trained embeddings or other external resources) 
+	yields 94.08% UAS and 92.15% LAS for our global model with beam 32.
+
+
+								Catalan 		Chinese 		Czech 			English 		German 		Japanese 			Spanish
+Method 						UAS 	LAS 	UAS 	LAS 	UAS 	LAS 	UAS 	LAS 	UAS 	LAS 	UAS 	LAS 	UAS 	LAS
+Best Shared Task Result 		- 87.86 		- 79.17 		- 80.38 		- 89.88 		- 87.48 		- 92.57 		- 87.64
+Ballesteros et al. (2015) 	90.22 86.42 	80.64 76.52 	79.87 73.62 	90.56 88.01 	88.83 86.10 	93.47 92.55 	90.38 86.59
+Zhang and McDonald (2014) 	91.41 87.91 	82.87 78.57 	86.62 80.59 	92.69 90.01 	89.88 87.38 	92.82 91.87 	90.82 87.34
+Lei et al. (2014) 			91.33 87.22 	81.67 76.71 	88.76 81.77 	92.75 90.00 	90.81 87.81 	94.04 91.84 	91.16 87.38
+Bohnet and Nivre (2012) 	92.44 89.60 	82.52 78.51 	88.82 83.73 	92.87 90.60 	91.37 89.38 	93.67 92.63 	92.24 89.60
+Alberti et al. (2015) 		92.31 89.17 	83.57 79.90 	88.45 83.57 	92.70 90.56 	90.58 88.20 	93.99 93.10 	92.26 89.33
+Our Local (B=1) 			91.24 88.21 	81.29 77.29 	85.78 80.63 	91.44 89.29 	89.12 86.95 	93.71 92.85 	91.01 88.14
+Our Local (B=16) 			91.91 88.93 	82.22 78.26 	86.25 81.28 	92.16 90.05 	89.53 87.4 		93.61 92.74 	91.64 88.88
+Our Global (B=16) 			92.67 89.83 	84.72 80.85 	88.94 84.56 	93.22 91.23 	90.91 89.15 	93.65 92.84 	92.62 89.95
+
+Table 3: Final CoNLL ’09 dependency parsing test set results.
+
+Training and running MDP on UD1.3: average for 51 languages
+
+Google:		UAS	81.12	LAS	75.85
+MDP:		UAS	77.54	LAS	71.51
+
+Diff:		UAS	3.58	LAS	4.34
