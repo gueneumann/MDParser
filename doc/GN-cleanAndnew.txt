@@ -16,6 +16,30 @@ GN, May, 2016:
 	de.dfki.lt.mdparser.xmlrpc		-> DONE
 
 
-2.		Integrate GNT
+2.		Integrate GNT	-> DONE
 
-3. 		Do training and testing with GNT
+3. 		Do training and testing with GNT -> DONE
+
+
+Testing code:
+
+Changes in MDParser code
+
+- use new liblinear library
+- add (int) cast to (int) Linear.predict()
+- prob.y = new int[prob.l]; -> prob.y = new double[prob.l];
+
+STATUS:
+
+- seems to work
+- first test CompleteTest.java works
+- also with newest liblinear 
+
+
+January, 2017:
+Running with algorithm="stack" causes problems in training:
+- crashes, because splitModels/1.txt seems to miss second column, in case only two labels are used here
+- then liblinear.load Model makes problem.
+- I guess it has to be some where in the code, when the FeatureVector is created
+-> maybe it is in here: 
+	de.dfki.lt.mdparser.algorithm.StackAlgorithm.processCombined(Sentence, FeatureModel, boolean)

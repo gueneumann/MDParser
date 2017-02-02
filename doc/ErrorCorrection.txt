@@ -6,4 +6,4 @@ Error analysis of MDP
 - eventually also text simplification by doing a sort of tree simplification
 - if an error analysis of gold tree and test tree from know treebanks are available
 - then try to use this as a hint how to correct trees
-- Learn, what is goingt wrong
+- Learn, what is going wrong

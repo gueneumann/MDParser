@@ -42,7 +42,9 @@ public class Eval {
 			// if first element is not a single number, but contains an interval - as it is the case for Universal grammars
 			// ignore such a line
 			if (!((lineGold.length() > 0) &
-					(lineGold.split("\t")[0].contains("-")))){
+					(lineGold.split("\t")[0].contains("-")))
+					)
+			{
 			lineParsed = frParsed.readLine();
 			if (lineGold.length() > 0) {
 				//System.out.println("Compare: " + lineGold + "\n         " + lineParsed);

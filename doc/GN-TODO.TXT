@@ -1,9 +1,3 @@
-GN: FEB, 2014
-
-MDParser as basis for MDNER -> DONE
-
-MDParser special model for question parsing
-
 GN: DECEMBER, 2014:
 
 - define main method for training, testing and evaluation
@@ -26,24 +20,11 @@ New maven project:
 HIERIX
 - clean code
 
-
 - log file
 - properties for training with MDParser and POS
 - github wiki docu
 
-- apply MDParser for SRL
-
-- integrate learned models into jar-FILE -> usefull for using GNT with FLINK
-	- create runtime-specific jar file with all dependencies and resources to run a tagger
-	- create MODEL-specific jar files -> in order to restrict size of jar
-
-
-- integrate GNT 
-		
-	- POS tagger
-
-	- NER tagger
-	
+- apply MDParser for SRL-AMR
 
 Improve MDP:
 
@@ -115,9 +96,6 @@ um dann festzustellen, dass es zu selten ist, dann würde man Zeit sparen.
 4) Muss man für beide Phasen ändern, ich glaube aber in beiden Phasen wird dieselbe Funktion genutzt, 
 d.h. im Prinzip wird es nur an einer Stelle geändert und gilt für beide Phasen.
 
-Mit freundlichen Grüßen,
-Alexander
-
 
 MDParser and Morphology
 - check how to integrate morphology and stemming
@@ -131,15 +109,3 @@ MDParser and Morphology
     - I would to create a morphix-model for disambiguation
     - then apply morphix, map to conll format, filter withnpos tagger and then
       apply model - in this caseneventually no pos tagger necessary ?
-
-Language models:
-
--	create models for all treebanks
-	-	specific
-	-	uniform
--	write java class to run script for learning all necessary models
-	-	POS tagger
-	-	dependency tagger
--	eventually call two independent jobs
--	parametrize MDParser to run different languages
--	write application wrapper to dynamically select language and run it
