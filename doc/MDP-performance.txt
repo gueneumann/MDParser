@@ -1,0 +1,64 @@
+February, 2017:
+
+English  EN
+	mdpTester.trainAndTest("resources/input/ptb3-std-training.conll", "ptb3-std.zip", 
+				"resources/input/ptb3-std-test.conll", "resources/input/ptb3-std-result.conll");
+  		
+	Parent accuracy: 0.89
+	Label accuracy:  0.86
+	Complete Parsing time: 4586 milliseconds.	
+
+	Compared to Chen & Manning, EMNLP, 2014:
+	UAS  	= 92.2, LAS  	= 91.1
+	Speed	= 1013 sent/sec
+	
+	Andor et al., May, 2016
+	UAS		= 94,41		LAS	= 92,55
+	
+->	diff of MDP:
+	UAS		= 05,41		LAS	= 06,55
+		
+German DE
+	mdpTester.trainAndTest("resources/input/german_tiger_train.conll", "tiger.zip", 
+				"resources/input/german_tiger_test.conll", "resources/input/german_tiger_result.conll");
+   
+	Parent accuracy: 0.85
+	Label accuracy:  0.82
+	Complete Parsing time: 4136 milliseconds.
+	
+	Andor et al., May, 2016, using conll2009 german data
+	UAS		= 90,91		LAS	= 89,15
+
+->	diff of MDP:
+	UAS		= 05,91		LAS	= 07,15
+
+Perform tests with conll2009 EN and DE to get direct comparison
+	
+	EN-2009
+	mdpTester.trainAndTest("resources/input/en-train-2009.conll", "en-2009.zip", 
+				"resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
+	
+	Parent accuracy: 0.89
+	Label accuracy:  0.86
+	DIFF WITH SOTA:	UAS ~6,4, LAS ~7,8
+	
+	DE-2009
+	mdpTester.trainAndTest("resources/input/de-train-2009.conll", "de-2009.zip", 
+				"resources/input/de-test-2009.conll", "resources/input/de-result-2009.conll");
+	
+	Parent accuracy: 0.84
+	Label accuracy:  0.80
+	DIFF WITH SOTA:	UAS ~8, LAS ~10
+	
+Performance results reported for MacParsey: 
+https://arxiv.org/pdf/1603.06042v2.pdf, Google, Andor et al., May, 2016
+https://arxiv.org/pdf/1611.01734.pdf, Dozat and Manning, 2017
+https://arxiv.org/abs/1701.00874, Ma and Hovy, 2017
+
+Training and running MDP on UD1.3: 
+https://github.com/tensorflow/models/blob/master/syntaxnet/universal.md
+
+Google:		UAS	81.12	LAS	75.85
+MDP:		UAS	77.54	LAS	71.51
+
+Diff:		UAS	3.58	LAS	4.34

@@ -1,4 +1,4 @@
-package standard;
+package de.dfki.lt.mdparser.utils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

@@ -56,8 +56,8 @@ public class MDPtester {
 //		mdpTester.trainAndTest("resources/input/german_tiger_train.conll", "tiger.zip", 
 //				"resources/input/german_tiger_test.conll", "resources/input/german_tiger_result.conll");
 //		
-		mdpTester.trainAndTest("resources/input/en-train-2009.conll", "en-2009.zip", 
-				"resources/input/en-test-2009.conll", "resources/input/2009/en-result-2009.conll");
+//		mdpTester.trainAndTest("resources/input/en-train-2009.conll", "en-2009.zip", 
+//				"resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
 		
 		mdpTester.trainAndTest("resources/input/de-train-2009.conll", "de-2009.zip", 
 				"resources/input/de-test-2009.conll", "resources/input/de-result-2009.conll");
