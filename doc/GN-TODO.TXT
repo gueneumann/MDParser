@@ -44,8 +44,8 @@ From paper "Optimizing Dependency Parsing Throughput“
 	(M_pos: P -> {0, …, 65535}) and dependency labels di \in D 
 	(M_dep: D -> {0, …, 65535}) to integer values. 
 	The numerical feature value n is then derived by performing bit operations on these elementary features.
--	The test for cycles and projectiveness traverse the dependency tree assuming that projectiveness 
-	is a symmetric property, then only a word pair has to be tested once rather than twice 
+-	The test for cycles and projectiveness traverse the dependency tree 
+-	assuming that projectiveness is a symmetric property, then only a word pair has to be tested once rather than twice 
 	(for potential dependency n_i -> n_j and n_j -> n_i) 
 -	We also perform a final optimization step on the trained model which eliminates features with a weight of zero.
 

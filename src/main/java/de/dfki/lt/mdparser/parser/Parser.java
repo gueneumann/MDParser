@@ -47,7 +47,7 @@ public class Parser {
 
 	private HashMap<String,Alphabet> splitAlphabetsMap;
 
-	// GN: Used in MDNer
+	// GN: de.dfki.lt.mdparser.caller.MDPrunner.conllFileParsingAndEval(String, String, String)
 	public void parseCombined(String algorithm, Data d, Archivator arch, Alphabet alphabetParser,	 boolean noLabels) throws IOException {
 		long st = System.currentTimeMillis();
 		readSplitModels(arch);

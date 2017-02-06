@@ -130,9 +130,16 @@ public class CovingtonAlgorithm extends ParsingAlgorithm{
 
 	@Override
 	// XXX GN: This one is used in training
+	
+	
 
 	public List<FeatureVector> processCombined(Sentence sent,FeatureModel fm, boolean noLabels) {
 		List<FeatureVector> fvParserList = new ArrayList<FeatureVector>();
+		
+//		System.err.println("Do training with:\n");;
+//		System.err.println(sent.toString());
+		
+		// sent is the conll structure with correct labeled dependency tree
 		String[][] sentArray = sent.getSentArray();
 		//	double rootProbabilities[] = new double[sentArray.length];
 		DependencyStructure curDepStruct = new DependencyStructure(sentArray.length);
@@ -140,8 +147,13 @@ public class CovingtonAlgorithm extends ParsingAlgorithm{
 		fm2.initializeStaticFeaturesCombined(sent,false);
 		// XXX GN: for all possible pairs (i,j) 
 		// determine all permissible states and for these its feature vector
+		
 		for (int j = 1; j < sentArray.length+1; j++) {
 			for (int i = j-1; i >= 0; i--) {
+				// Compute all possible edges from j downto i
+				
+//				System.out.println("Span: " + j + ", " + i);
+				
 				CovingtonParserState ps = new CovingtonParserState(j,i,sent,curDepStruct);
 				ps.checkPermissibility();
 				if (ps.isPermissible()) {
@@ -152,7 +164,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm{
 					// 		and create the class/label name from it (an instance of left-arc, right-arc, shift, terminate)
 					String label = findOutCorrectLabelCombined(j, i, sentArray);
 					//		label = indianLabel(label,sentArray, j,i);
-					//		System.out.println(i+" "+j+" "+label+" "+fvParser);
+//							System.out.println(i+" "+j+" "+label+" ... "+fvParser);
 					String labelTrans = "";
 					if (label.contains("#")) {
 						labelTrans = label.split("#")[0];
@@ -182,7 +194,8 @@ public class CovingtonAlgorithm extends ParsingAlgorithm{
 	}
 
 	@Override
-	// GN: Used on nereod.parser.MDPApi
+	// GN: Used in nereid.parser.MDPApi
+	// AND also called in MDPrunner via ParserWorkerThread.run
 	public void processCombined(Sentence sent, FeatureModel fm,	boolean noLabels, HashMap<String, String> splitMap) {
 		String[][] sentArray = sent.getSentArray();
 		sent.setRootPosition(-1);

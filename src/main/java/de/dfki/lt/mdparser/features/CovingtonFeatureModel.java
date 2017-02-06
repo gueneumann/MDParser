@@ -11,7 +11,6 @@ public class CovingtonFeatureModel extends FeatureModel {
 
 	private String[] mergeFeatureNames;
 
-
 	private void addStaticFeature(List<Feature> jList, Feature f, Alphabet alphaParser) {
 		Integer fIndex = alphaParser.getFeatureIndex(f.getFeatureString());
 		f.setIndexParser(fIndex);
@@ -19,12 +18,13 @@ public class CovingtonFeatureModel extends FeatureModel {
 
 	}
 
-	public CovingtonFeatureModel(Alphabet alphabetParser, Alphabet alphabetLabeler, FeatureExtractor fe) {
-		super(alphabetParser, alphabetLabeler, fe);
-	}
+//	public CovingtonFeatureModel(Alphabet alphabetParser, Alphabet alphabetLabeler, FeatureExtractor fe) {
+//		super(alphabetParser, alphabetLabeler, fe);
+//	}
 
 	public CovingtonFeatureModel(Alphabet alphabetParser, FeatureExtractor fe) {
 		super(alphabetParser, fe);
+		// WHY 11
 		mergeFeatureNames = new String[11];
 		for (int i=0; i < mergeFeatureNames.length;i++) {
 			mergeFeatureNames[i] = "m"+i;
@@ -57,12 +57,16 @@ public class CovingtonFeatureModel extends FeatureModel {
 			addStaticFeature(jList,fwfj,alphaParser);
 			Feature fcpj = fe.templateCPos(j, "cpj", curSent);
 			addStaticFeature(jList,fcpj,alphaParser);
-			//	Feature fpj_fcpj = fe.merge2(9,mergeFeatureNames,fpj,fcpj);
-			//	addStaticFeature(jList,fpj_fcpj, alphaParser);
-			//	Feature fcase = fe.templateFeat(j, "casej", curSent);
-			//	addStaticFeature(jList, fcase, alphaParser);
-			//	Feature fullMerge = fe.merge2(10, mergeFeatureNames, fpj_fcpj,fcase);
-			//	addStaticFeature(jList, fullMerge, alphaParser);
+			// Begin:
+			// GN: why uncomment ? -> templateFeat does not exist
+//				Feature fpj_fcpj = fe.merge2(9,mergeFeatureNames,fpj,fcpj);
+//				addStaticFeature(jList,fpj_fcpj, alphaParser);
+//				Feature fcase = fe.templateFeat(j, "casej", curSent);
+//				addStaticFeature(jList, fcase, alphaParser);
+//				Feature fullMerge = fe.merge2(10, mergeFeatureNames, fpj_fcpj,fcase);
+//				addStaticFeature(jList, fullMerge, alphaParser);
+			// End
+			
 			Feature wfjp1 = fe.templateWf(j+1, "wfjp1", curSent);
 			addStaticFeature(jList,wfjp1,alphaParser);
 			Feature fpjp1_fpjp2_fpjp3 = fe.merge3(0,mergeFeatureNames,fpjp1,fpjp2,fpjp3);

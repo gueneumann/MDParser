@@ -148,7 +148,7 @@ public class Trainer {
 		System.out.println("Internalize training data from: " + inputFile);
 		Data d = new Data(inputFile, true);
 		
-		// GN: alphaParser us used for the mapping of integer to feature name
+		// GN: alphaParser is used for the mapping of integer to feature name
 		//		it is incrementally built during training for all features that are added
 		//		to the model
 		Alphabet alphaParser = new Alphabet();
@@ -176,7 +176,7 @@ public class Trainer {
 		HashMap<Integer,BufferedWriter> opMap = new HashMap<Integer, BufferedWriter>();
 		HashMap<Integer,String> posMap = new HashMap<Integer,String>();
 		
-		// GN: for each training example do:
+		// GN: for each training sentence example do:
 		// NOTE: this is a sequential step
 		System.out.println("Create feature vectors for data: " + sentences.length);
 		System.out.println("Create files in split0 ");
@@ -191,6 +191,8 @@ public class Trainer {
 			//	   the result is then a list of parser states in form of feature vectors whose values are based
 			//     one the specific training example
 			List<FeatureVector> parserList = pa.processCombined(sent, fm, noLabels);
+			
+//			System.out.println(parserList.toString());
 			totalConfigurations += parserList.size();
 			
 			// GN: for each feature vector (which represents a parser state) do
@@ -203,6 +205,9 @@ public class Trainer {
 				String operation = fv.getLabel();
 				// GN: Lookup up label-index and use it to create/extend buffer
 				Integer index = alphaParser.getLabelIndexMap().get(operation);
+				// GN: create label-index many different split0 files, so that each files contains just the feature vectors
+				// of each edge feature vector and its label instance
+				// The label-index buffers are kept in a hash array
 				BufferedWriter curBw = opMap.get(index);
 				if (curBw == null) {
 					FileOutputStream out = new FileOutputStream(String.format("splitO/%03d.txt",index));
@@ -211,7 +216,9 @@ public class Trainer {
 					opMap.put(index,curBw);
 	
 				}
-				curBw.append(fv.getIntegerRepresentation(alphaParser, false)+"\n");
+				String sentenceIntegerString = fv.getIntegerRepresentation(alphaParser, false);
+//				System.out.println(sentenceIntegerString+"\n");
+				curBw.append(sentenceIntegerString+"\n");
 			}
 		}
 		
@@ -226,7 +233,7 @@ public class Trainer {
 		
 		// GN: the next code basically creates the split training files
 		// 		using a distributed approach based on the available processors
-		//		stores and adjust the split files in filder split/
+		//		stores and adjust the split files in folder split/
 		//		and finally calls the trainer on each file ion parallel
 		alphaParser.createIndexToValueArray();		
 		String[] valArray = alphaParser.getIndexToValueArray();

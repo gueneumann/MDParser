@@ -1,0 +1,68 @@
+Feb, 2017
+
+A) training
+
+Called with trainingFile.conll and archiveFile.zip
+
+1. init classes Archivator(archiveFile.zip, dirs) and Trainer()
+
+2. call trainer main class:
+	trainer.createAndTrainWithSplittingFromDisk(algorithm,trainFile,
+				splitModelsDir, alphabetFileParser,alphabetFileLabeler,splitFile);
+	with
+	trainFile = trainingFile.conll
+	String splitModelsDir = "splitModels";
+	String algorithm = "covington";
+	String splitFile = "temp/split.txt";
+	String alphabetFileParser = "temp/alphaParser.txt";
+	String alphabetFileLabeler = "temp/alphaLabeler.txt";
+	
+-	Data d = new Data(inputFile, true);
+	-	internalize CONLL data in 2-Dim sentences; max 0-12 conll columns are considered
+		-	can be changed in de.dfki.lt.mdparser.data.Data.infoSize = 12 
+			-> I changed value to 10/14; training/testing seems to work
+		-	useful for adding additional CONLL information
+		-	currently sets COLUMNs 6, 7, 8, 9 (test) and 8, 9 (train) to "_"
+		-	if other information should be used, we need adapt this here
+		
+-	FeatureExtractor fe = new FeatureExtractor();
+	-	activate the feature template functions
+	-	will later be used to create the feature vectors for specific training instances
+	-	hard-codes access of CONLL format
+	-	can be extended to use also other CONLL information or other data sources
+	
+-	select fm = new CovingtonFeatureModel(alphaParser, fe);
+	-	provides template instantiation methods for Covington parsing strategy
+	-	these are later applied on training/testing instances later
+	-	NOTE: This can be investigated to improve parser
+
+-	select parsing strategy: so far:
+	pa = new CovingtonAlgorithm()
+
+-	for each training example, call selected parser:
+	-	pa.processCombined(sent, fm, noLabels::=false);
+	
+B) Parsing algorithms
+
+B.1) Covington
+
+-	compute all possible node pairs from j:=1 downto i:=j-i
+-	for each node pair, check whether (j,label,i) or (i,label,j) is permissible
+	-		this.isSingleHead(heads) 
+			&& this.isNotReflexive() 
+			&& this.notIntroducingCycle(heads) 	-> 	checks whole subtree
+			&& this.isNotImproperRoot() 
+			&& this.isProjective(heads)			->	checks whole subtree
+	-	if permissible
+		-	create feature vector for transition
+			FeatureVector fvParser = fm2.applyCombined(ps, true, noLabels);	
+		-	get label instance: use CONLL columns 6 & 7
+			String label = findOutCorrectLabelCombined(j, i, sentArray);
+			which is an instance of: left, right, shift, terminate
+	-	training sentences is now a vector of label-edgeFeatureVectors
+	-	update alphabet index and create an integer representation of symbolic feature vector
+		-	each line a token feature vector
+		-	sentence via newline
+		-	store all in file split0/
+
+B.2) Stack

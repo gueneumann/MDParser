@@ -38,13 +38,16 @@ public class Data {
 				if (!line.split("\t")[0].contains("-")){
 					curSent.add(line);
 				}
-				// else System.err.println("Skip: " + line);
+				//else System.err.println("Skip: " + line);
 			}
 			else {
 				String[][] sentArray = new String[curSent.size()][infoSize];
 				for (int i=0; i < curSent.size();i++) {
 
 					String[] curWord = curSent.get(i).split("\\s");
+					
+
+					//System.err.println("Label: " + curWord[7]);
 					
 					for (int j=0; j < curWord.length;j++) {
 						if (!train && (j== 6 || j==7 || j==8 || j==9)) {

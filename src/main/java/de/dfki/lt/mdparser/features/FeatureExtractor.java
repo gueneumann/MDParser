@@ -17,14 +17,14 @@ public class FeatureExtractor {
 			pos = "null";
 		}
 		else {
+			// 3 -> 4th column in CONLL format -> coarse-grained POS
 			pos = sent.getSentArray()[index-1][3];
 		}		
 		Feature f = new Feature(indexName, pos);
 		return f;
 	}
 
-	// GN:	same as templatePos() -> used as static feature in 
-	//		de.dfki.lt.mdparser.features.FeatureExtractor.templateCPos(int, String, Sentence)
+	// GN:	same as templatePos() -> used as static feature
 	public Feature templateCPos(int index, String indexName, Sentence sent) {
 		String pos = "";
 		if (index <= 0) {
@@ -34,6 +34,7 @@ public class FeatureExtractor {
 			pos = "null";
 		}
 		else {
+			// 3 -> 4th column in CONLL format -> coarse-grained POS
 			pos = sent.getSentArray()[index-1][3];
 			//	String[] feats = sent.getSentArray()[index-1][4].split("\\|");
 			//	pos = feats[feats.length-1];
@@ -52,6 +53,7 @@ public class FeatureExtractor {
 			wf = "null";
 		}
 		else {
+			// 1 -> 2nd column in CONLL format -> word-form
 			wf = sent.getSentArray()[index-1][1];
 		}		
 		Feature f = new Feature(indexName, wf);
@@ -69,8 +71,10 @@ public class FeatureExtractor {
 			depRel = "none";
 		}
 		else {
+			// 9 -> 10th column used for "storing" oracle/predicted label 
+			// -> at least, seems so; because also these columns are overwritten with "_" when training is read in Data()
 			if (train) {
-				//			System.out.println(sent.getSentArray()[index-1][9]);
+//							System.out.println(sent.toString());
 				if (sent.getSentArray()[index-1][9] == null || sent.getSentArray()[index-1][9].equals("_")) {
 					depRel = "none";
 				}
@@ -87,8 +91,10 @@ public class FeatureExtractor {
 				}
 			}
 		}	
-		//	System.out.println(train+" "+depRel);
+		
 		Feature f = new Feature(indexName, depRel);
+		// System.out.println(f.toString());
+		// computes something like: deprdi=null(null), depldj=SB(null), depi=ROOT(null)
 		return f;
 	}
 	

@@ -32,7 +32,7 @@ German DE
 ->	diff of MDP:
 	UAS		= 05,91		LAS	= 07,15
 
-Perform tests with conll2009 EN and DE to get direct comparison
+Perform tests with conll2009 EN and DE
 	
 	EN-2009
 	mdpTester.trainAndTest("resources/input/en-train-2009.conll", "en-2009.zip", 
