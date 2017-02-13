@@ -70,6 +70,23 @@ public class MDPrunner {
 		System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
 		System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
 	}
+	
+	public void conllFileParsingAndLinearize(String conllFile, String resultFile, String modelFile) 
+			throws IOException{
+		this.parser = new Parser();
+		this.data = new Data(conllFile, false);
+		System.out.println("No. of sentences: "+ data.getSentences().length);
+
+		Archivator arch = new Archivator(modelFile,dirs);
+		arch.extract();
+		Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
+		parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex()-1);
+
+
+		parser.parseCombined(algorithm, data, arch, alphabetParser, false);
+
+		this.getData().testLinearizedToFile(resultFile);
+	}
 
 
 	public static void main(String[] args) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
@@ -78,7 +95,7 @@ public class MDPrunner {
 		String resultFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test-result.conll";
 		String modelFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-MDPmodel.zip";
 
-		mdpRunner.conllFileParsingAndEval(conllFile, resultFile, modelFile);
+		mdpRunner.conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
 
 	}
 }

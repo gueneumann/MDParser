@@ -9,6 +9,28 @@ public class Sentence {
 	
 	private Feature[][][] staticFeatures;
 	
+	// setters and getters
+	public void setSentArray(String[][] sentArray) {
+		this.sentArray = sentArray;
+	}
+	public String[][] getSentArray() {
+		return sentArray;
+	}
+	public void setRootPosition(int rootPosition) {
+		this.rootPosition = rootPosition;
+	}
+	public Integer getRootPosition() {
+		return rootPosition;
+	}
+
+	public void setStaticFeatures(Feature[][][] staticFeatures) {
+		this.staticFeatures = staticFeatures;
+	}
+	public Feature[][][] getStaticFeatures() {
+		return staticFeatures;
+	}
+	
+	// Init class
 	public Sentence(Integer sentSize, int infoSize) {
 		sentArray = new String[sentSize][infoSize];
 		rootPosition = -1;
@@ -17,14 +39,6 @@ public class Sentence {
 	public Sentence(String[][] sentArray) {
 		this.sentArray = sentArray;
 		rootPosition = -1;
-	}
-
-	public void setSentArray(String[][] sentArray) {
-		this.sentArray = sentArray;
-	}
-
-	public String[][] getSentArray() {
-		return sentArray;
 	}
 	
 	public String toString() {
@@ -41,22 +55,6 @@ public class Sentence {
 			sb.append("\n");
 		}
 		return sb.toString();
-	}
-
-	public void setRootPosition(int rootPosition) {
-		this.rootPosition = rootPosition;
-	}
-
-	public Integer getRootPosition() {
-		return rootPosition;
-	}
-
-	public void setStaticFeatures(Feature[][][] staticFeatures) {
-		this.staticFeatures = staticFeatures;
-	}
-
-	public Feature[][][] getStaticFeatures() {
-		return staticFeatures;
 	}
 
 }

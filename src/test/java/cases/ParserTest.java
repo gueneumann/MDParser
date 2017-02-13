@@ -23,7 +23,7 @@ public class ParserTest {
 		String archiveName = args[1];
 		
 		
-		String[] dirs = {"split","splitA","splitF","splitO","splitC","splitModels","temp"};
+		String[] dirs = {};
 		Archivator arch = new Archivator(archiveName,dirs);
 		arch.extract();
 		Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());

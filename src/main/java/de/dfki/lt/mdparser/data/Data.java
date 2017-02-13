@@ -80,7 +80,19 @@ public class Data {
 		return sentences;
 	}
 
-
+	public void testLinearizedToFile(String resultFile) {
+		for (int n=0; n < sentences.length;n++) {
+			Sentence s = sentences[n];
+			LinearizedSentence linearizedSentence = new LinearizedSentence(s);
+			
+			linearizedSentence.linearizedDependencyStructure();
+			List<String> linSenString = linearizedSentence.getLinearizedSentence();
+			
+			System.out.println(linSenString);
+		}
+	}
+	
+	
 	public void printToFile(String resultFile) throws IOException {
 		FileOutputStream out = new FileOutputStream(resultFile);
 		OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
