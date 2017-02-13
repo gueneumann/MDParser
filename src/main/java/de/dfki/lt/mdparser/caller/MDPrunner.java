@@ -12,9 +12,8 @@ import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.parser.Parser;
 
 public class MDPrunner {
-	private String[] dirs = {"split","splitA","splitF","splitO","splitC","splitModels","temp"};
+	String[] dirs = {};
 	private String algorithm = "covington";
-	private String resultFile = "temp/1.conll";
 	private Parser parser = new Parser();
 	private Data data = null;
 	private Eval evaluator = null;
@@ -26,12 +25,6 @@ public class MDPrunner {
 	}
 	public void setEvaluator(Eval evaluator) {
 		this.evaluator = evaluator;
-	}
-	public String getResultFile() {
-		return resultFile;
-	}
-	public void setResultFile(String resultFile) {
-		this.resultFile = resultFile;
 	}
 	public Data getData() {
 		return data;
@@ -51,17 +44,12 @@ public class MDPrunner {
 	public MDPrunner(){
 	}
 
-	public MDPrunner(String resultFile){	
-		this.resultFile = resultFile;
-	}
-
 	// Methods
 
 	public void conllFileParsingAndEval(String conllFile, String resultFile, String modelFile) 
 			throws IOException{
 		this.parser = new Parser();
 		this.data = new Data(conllFile, false);
-		this.resultFile = resultFile;
 		System.out.println("No. of sentences: "+ data.getSentences().length);
 
 		Archivator arch = new Archivator(modelFile,dirs);

@@ -41,12 +41,17 @@ Called with trainingFile.conll and archiveFile.zip
 
 -	for each training example, call selected parser:
 	-	pa.processCombined(sent, fm, noLabels::=false);
+
+-	now split LibLienar training file
+	HIERIX
 	
 B) Parsing algorithms
 
 B.1) Covington
 
 -	compute all possible node pairs from j:=1 downto i:=j-i
+	-	what puzzles me: sometime, I do not see all edge spans when using system.out.println()
+	
 -	for each node pair, check whether (j,label,i) or (i,label,j) is permissible
 	-		this.isSingleHead(heads) 
 			&& this.isNotReflexive() 
@@ -59,7 +64,9 @@ B.1) Covington
 		-	get label instance: use CONLL columns 6 & 7
 			String label = findOutCorrectLabelCombined(j, i, sentArray);
 			which is an instance of: left, right, shift, terminate
-	-	training sentences is now a vector of label-edgeFeatureVectors
+		-	NOTE: this realizes the actual oracle
+			-	CAN this be approved ? e.g., a different ordering
+	-	training sentence is now a vector of label-edgeFeatureVectors
 	-	update alphabet index and create an integer representation of symbolic feature vector
 		-	each line a token feature vector
 		-	sentence via newline

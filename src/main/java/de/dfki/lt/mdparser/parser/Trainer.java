@@ -231,6 +231,7 @@ public class Trainer {
 		
 		HashMap<String, BufferedWriter> splitMap = new HashMap<String, BufferedWriter>(); 
 		
+		//XXX HIERIX -MDP-howItWorks.txt
 		// GN: the next code basically creates the split training files
 		// 		using a distributed approach based on the available processors
 		//		stores and adjust the split files in folder split/
