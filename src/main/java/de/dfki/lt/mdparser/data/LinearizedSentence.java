@@ -35,7 +35,6 @@ public class LinearizedSentence {
 
 	// Init class
 
-
 	public LinearizedSentence (Sentence sentence){
 		this.setSentence(sentence);
 		this.setDs(this.fillDependencyStructure(this.getSentence()));
@@ -111,19 +110,23 @@ public class LinearizedSentence {
 	}
 
 	/**
-	 * Traverse a dependency tree top-down, depth first left to right. 
-	 * if the current node is a VerbPhraseNode then construct an extraction, else
-	 * recursively call method for the modifiers of the node;
-	 * 
-	 * For each label, which has a daughter create an opening node "(_label" and a closing node ")_label"
-	 * Also add the word
+	 * Traverse a dependency tree top-down, depth first left to right.
+	 * For each dependency relation (mod label head) create a sequence <"(_label" mod sublist ")_label">
+	 * where sublist is empty or the linearized modifier dependency nodes of the modifier.
 	 */
 
-	//TODO HIERIX
+	// TODO HIERIX
+	// In case of dependency parsing, should it not be enough to store POS/Label in linearized DP?
+	// But then, do I need a bilingual alignment between words from sentence and linearDP.
+	// I think I need this to create the dependency tree from a linearized DP.
+	// THINK: Maybe I need to create directly a partial Ctree to ensure token index conssitency
 	private void descendFromNode(Dependency dependency, String openNode, String closeNode) {
 
 		this.getLinearizedSentence().add(openNode);
-		String word = dependency.getDependentWord()+":"+dependency.getDependent();
+		String word = 
+				dependency.getDependent()
+				+":"+dependency.getDependentWord()
+				+":"+dependency.getDependentPos();
 		this.getLinearizedSentence().add(word);
 		// Modifiers are processed from left to right
 		List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
@@ -150,7 +153,7 @@ public class LinearizedSentence {
 		descendFromNode(root, "(_RT", ")_RT");
 	}
 
-	public void inverseLinearizedSentence(){
+	public void inverseLinearizedDependencyStructure(){
 		// given a linearized sentence, create the dependency structure/2-Dim sentence object
 		// the resulting sentence object should be equal with the original one
 	}

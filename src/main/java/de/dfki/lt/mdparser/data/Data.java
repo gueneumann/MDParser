@@ -80,6 +80,8 @@ public class Data {
 		return sentences;
 	}
 
+	// TODO:
+	// Create a aligned file set of pairs of <sentence, linearizedSentence>
 	public void testLinearizedToFile(String resultFile) {
 		for (int n=0; n < sentences.length;n++) {
 			Sentence s = sentences[n];

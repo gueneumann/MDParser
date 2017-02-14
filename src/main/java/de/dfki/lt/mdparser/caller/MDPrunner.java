@@ -56,8 +56,7 @@ public class MDPrunner {
 		arch.extract();
 		Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
 		parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex()-1);
-
-
+		
 		parser.parseCombined(algorithm, data, arch, alphabetParser, false);
 
 		this.getData().printToFile(resultFile);
@@ -82,7 +81,6 @@ public class MDPrunner {
 		Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
 		parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex()-1);
 
-
 		parser.parseCombined(algorithm, data, arch, alphabetParser, false);
 
 		this.getData().testLinearizedToFile(resultFile);
@@ -96,6 +94,5 @@ public class MDPrunner {
 		String modelFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-MDPmodel.zip";
 
 		mdpRunner.conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
-
 	}
 }
