@@ -109,3 +109,7 @@ MDParser and Morphology
     - I would to create a morphix-model for disambiguation
     - then apply morphix, map to conll format, filter withnpos tagger and then
       apply model - in this caseneventually no pos tagger necessary ?
+      
+FEB, 2017:
+
+Define DFKIdependencyPipeline
