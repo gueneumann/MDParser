@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import de.bwaldvogel.liblinear.*;
 import de.dfki.lt.mdparser.archive.Archivator;
 import de.dfki.lt.mdparser.parser.Trainer;
+import de.dfki.lt.mdparser.parser.TrainerMem;
 
 public class MDPtrainer {
 
@@ -84,10 +85,37 @@ public class MDPtrainer {
 		deleteOld(dirs);
 	}
 
+	public void trainerMem(String trainFile, String archiveName) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
+
+
+		deleteOld(dirs);
+		createNew(dirs);
+
+		Archivator arch = new Archivator(archiveName,dirs);
+		TrainerMem trainer = new TrainerMem();
+
+		long s1 = System.currentTimeMillis();
+
+		trainer.createAndTrainWithSplittingFromMemory(algorithm,trainFile,
+				splitModelsDir, alphabetFileParser,alphabetFileLabeler,splitFile);
+
+		long s2 = System.currentTimeMillis();
+
+		System.out.println("Complete Training time: "+((s2-s1)) +" milliseconds.");
+
+		//	ModelEditorTest.main(null);		
+		arch.pack();
+		arch.delTemp();
+
+		deleteOld(dirs);
+	}
 
 	public static void main(String[] args) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
 		MDPtrainer mdpTrainer = new MDPtrainer();
 		//mdpTrainer.setAlgorithm("stack");
+		// Run parallel version of trainier
 		mdpTrainer.trainer("resources/input/ptb3-std-training.conll", "ptb3-std.zip");
+		// Run non-parallel (in memory) version of trainer
+		//mdpTrainer.trainerMem("resources/input/ptb3-std-training.conll", "ptb3-std-nonpara.zip");
 	}
 }

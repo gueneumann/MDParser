@@ -92,7 +92,11 @@ public class MDPrunner {
 		String conllFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test.conll";
 		String resultFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test-result.conll";
 		String modelFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-MDPmodel.zip";
+		
+		conllFile = "resources/input/ptb3-std-test.conll";
+		resultFile = "resources/input/ptb3-std-test.conll-result.conll";
+		modelFile = "ptb3-std.zip";
 
-		mdpRunner.conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
+		mdpRunner.conllFileParsingAndEval(conllFile, resultFile, modelFile);
 	}
 }

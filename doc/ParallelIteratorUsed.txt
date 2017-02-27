@@ -1,0 +1,51 @@
+FEB, 2017:
+
+ParallelIterator - GNU General Public License 
+
+- http://parallel.auckland.ac.nz/ParallelIT/downloads/COPYING.txt
+
+
+<dependency>
+	<groupId>pi.parallel</groupId>
+	<artifactId>par.iterator</artifactId>
+	<version>0.9.2</version>
+</dependency>
+
+Training phase
+
+- de.dfki.lt.mdparser.parser.Trainer.createAndTrainWithSplittingFromDisk(String, String, String, String, String, String)
+
+
+Testing phase
+
+- de.dfki.lt.mdparser.parser.Parser.parseCombined(String, Data, Archivator, Alphabet, boolean)
+
+Parallel version via Trainer
+mdpTrainer.trainer("resources/input/ptb3-std-training.conll", "ptb3-std.zip");
+
+- needs less memory (usually I use 4g)
+	Complete Training time: 124844 milliseconds, which is about 2 minutes
+
+
+
+Non parallel version:
+
+
+Non-parallel version via TrainerMem:
+mdpTrainer.trainerMem("resources/input/ptb3-std-training.conll", "ptb3-std-nonpara.zip");
+
+- needs much more memory
+	- trying it with -Xmx10g -> fails in de.dfki.lt.mdparser.parser.TrainerMem.compactiseTrainingDataFiles(Alphabet, HashMap<String, List<FeatureVector>>)
+	- trying it with -Xmx12g -> Complete Training time: 1761439 milliseconds, about 30 minutes
+	
+	
+Non-parallel version of Application
+
+DONE -> de.dfki.lt.mdparser.parser.Parser.parseCombinedMem(String, Data, Archivator, Alphabet, boolean)
+
+- First tests suggest that
+	- paralleled training can be used non-parallel application 
+	- as well as also the other possible variations
+ 	- speed for application phase is similar
+ 		- makes sense because parallelization in application is on sentence level
+	 

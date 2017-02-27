@@ -25,6 +25,17 @@ public class Feature {
 		this.nameIndex = nameIndex;
 	}
 	
+	//TODO
+	// Added because of TrainierMem
+	public Feature clone() {
+		Feature f = new Feature(this.name, this.value);
+		f.featureString = this.featureString;
+		f.indexParser = this.indexParser;
+		f.indexLabeler = this.indexLabeler;
+		f.nameIndex = this.nameIndex;
+		return f;
+	}
+	
 	public void setName(String name) {
 		this.name = name;
 	}

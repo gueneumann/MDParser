@@ -17,6 +17,11 @@ New maven project:
 - make sure to use same version for liblinear for GNT and MDP
 -> DONE
 
+Feb, 2017:
+
+-> defined non-parallel versions for training and application
+-> DONE
+
 HIERIX
 - clean code
 
