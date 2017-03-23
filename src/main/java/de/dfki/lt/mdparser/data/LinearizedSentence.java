@@ -35,6 +35,10 @@ public class LinearizedSentence {
 
 	// Init class
 
+	public LinearizedSentence (DependencyStructure ds){
+		this.setDs(ds);
+	}
+	
 	public LinearizedSentence (Sentence sentence){
 		this.setSentence(sentence);
 		this.setDs(this.fillDependencyStructure(this.getSentence()));
@@ -149,7 +153,6 @@ public class LinearizedSentence {
 
 	public void linearizedDependencyStructure() {
 		Dependency root = this.getDs().getDependenciesArray()[this.getDs().getRootPosition()];
-		System.out.println("Root:" + root);
 		descendFromNode(root, "(_RT", ")_RT");
 	}
 
