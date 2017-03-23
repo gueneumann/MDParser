@@ -98,5 +98,6 @@ public class MDPrunner {
 		modelFile = "ptb3-std.zip";
 
 		mdpRunner.conllFileParsingAndEval(conllFile, resultFile, modelFile);
+		//mdpRunner.conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
 	}
 }
