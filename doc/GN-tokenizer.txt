@@ -1,4 +1,0 @@
-FEB, 2017:
-
-- remove dependency to MorphAdorner
-- integrate /gnTextUtils/src/main/java/com/gn/text/SimpleSegmentizer.java

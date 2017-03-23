@@ -23,10 +23,21 @@ Feb, 2017:
 -> DONE
 
 HIERIX
+
+- remove MorphAdorner -> use GNT GntTextSegmentizer instead
+
+- remove reference to nemex -> DONE
+
+- remove reference to SVN tagger via Nereid -> use GNT tagger instead
+
+- remove or adapt sentence splitter or move to Gnt
+
 - clean code
 
 - log file
+
 - properties for training with MDParser and POS
+
 - github wiki docu
 
 - apply MDParser for SRL-AMR

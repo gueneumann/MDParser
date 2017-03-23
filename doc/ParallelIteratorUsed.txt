@@ -48,4 +48,9 @@ DONE -> de.dfki.lt.mdparser.parser.Parser.parseCombinedMem(String, Data, Archiva
 	- as well as also the other possible variations
  	- speed for application phase is similar
  		- makes sense because parallelization in application is on sentence level
+ 		
+TODO:
+
+- define interfaces for Trainer and Parser class
+- define sublcasses for parallel and non-parallel versions
 	 
