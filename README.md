@@ -1,14 +1,14 @@
-READ Me file for installing and running MDParser
+# READ Me file for installing and running MDParser
 
-Author: Günter Neumann, date: 12/02/2013
+### Author: Günter Neumann, date: 12/02/2013
 
 Contact:
-Prof. Dr. Günter Neumann, Principal Researcher & Research Fellow
-LT-Lab, DFKI GmbH Campus D3 2, Stuhlsatzenhausweg 3, 66123 Saarbrücken, Germany
-neumann@dfki.de                       Phone:  +49 681 85775 5298
-http://www.dfki.de/~neumann           Fax  :  +49 681 85775 5338
+	Prof. Dr. Günter Neumann, Principal Researcher & Research Fellow
+	LT-Lab, DFKI GmbH Campus D3 2, Stuhlsatzenhausweg 3, 66123 Saarbrücken, Germany
+	neumann@dfki.de                       Phone:  +49 681 85775 5298
+	http://www.dfki.de/~neumann           Fax  :  +49 681 85775 5338
 
-NOTES
+## NOTES
 ______
 
 UPDATES: May, 2016
@@ -20,7 +20,7 @@ I also created a Maven pom file and updated MDParser to the newest java version 
 
 
 
-Description:
+## Description:
 ____________
 
 MDParser stands for multilingual dependency parser and is a data-driven system, which can be used to parse text of an arbitrary 
@@ -49,7 +49,7 @@ Note: These models can be used for research purposes provided that you have a li
 on which the model was trained. If you want to use them for commercial applications, 
 please contact the license holder for the relevant treebank to find out which conditions apply.
 
-About the MDP-package ZIP file
+## About the MDP-package ZIP file
 ________________________________
 
 The MDParser source code and its resources folder are collected in a ZIP file called MDP-package.
@@ -58,7 +58,7 @@ After uncompressing MDP-package.zip, a folder exists named MDP-package which con
 - a zip file named MDP-1.0.zip
 - a zip file named resources.zip
 
-Initial Installation Step:
+## Initial Installation Step:
 ___________________________
 
 
@@ -69,7 +69,7 @@ MOVE the resources folder to the MDP-1.0 folder:
 mv resources MDP-1.0/.
 
 
-Structure of the zip file MDP-1.0
+## Structure of the zip file MDP-1.0
 _________________________________
 
 Within the sub-folder MDP-1.0 you will see a number of sub-directories. 
@@ -93,7 +93,7 @@ resources/ - contains subfolders for keeping all major input/output files, prope
 	resources/props/ - keeps the property files which are used to configure the MDParser; 
 		within a property file, direct access to this folder is made;
 
-Installation:
+## Installation:
 _____________
 
 We assume that the Apache ant build tool is installed on your computer, cf. http://ant.apache.org/
@@ -141,7 +141,7 @@ Then:
    'cd <myMDPFolder>' and then 'ln -s <pathToMDP-1.0>/resources/ resources'
 
 	
-Running
+## Running
 ________________________________
 
 IMPORTANT:
@@ -149,9 +149,9 @@ IMPORTANT:
    parameters as described in the property file: resources/props/props.xml
    This property file contains a list of all useful properties together with some explanations that
    are needed to run the MDParser, e.g., 
-   - language specific settings (POS tagger and dependency grammar models)
-   - input file and output file
-   - input and output formats
+   * language specific settings (POS tagger and dependency grammar models)
+   * input file and output file
+   * input and output formats
    
    Please, consult the properties file for more details.
    
@@ -159,7 +159,7 @@ IMPORTANT:
    		and client/server settings!
    
 
-Using the standalone exec version:
+## Using the standalone exec version:
 
 1. Running the mdp.jar exec file is easy. Either from MDP-1.0 or your own myMDPfolder call
 
@@ -173,7 +173,7 @@ Using the standalone exec version:
    
   
 
-Using Server and Client
+## Using Server and Client
 
 3. Starting of server:
 
@@ -239,7 +239,7 @@ are responsible for maintaining the proper reference within your property files!
 	
 
 
-Requirements:
+## Requirements:
 ______________
 
 We have run and tested MDParser under Mac OSX Mavericks (and earlier Mac OSX versions), 
@@ -255,12 +255,12 @@ should be enough.
 Development was done using Eclipse (Juno and Kepler).
 
 
-License:
+## License:
 ________
 
 The license.txt file contained in the MDP-1.0 folder belongs to the source code. It does not automatically hold for the language models, see above.
 
-Reference:
+## Reference:
 __________
 
 Use the following technical publication for referencing MDParser:
