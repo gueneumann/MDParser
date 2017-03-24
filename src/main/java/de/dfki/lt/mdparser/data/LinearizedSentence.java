@@ -38,7 +38,7 @@ public class LinearizedSentence {
 	public LinearizedSentence (DependencyStructure ds){
 		this.setDs(ds);
 	}
-	
+
 	public LinearizedSentence (Sentence sentence){
 		this.setSentence(sentence);
 		this.setDs(this.fillDependencyStructure(this.getSentence()));
@@ -112,6 +112,25 @@ public class LinearizedSentence {
 		}
 		return modifiers;
 	}
+	
+	// NOTE:
+	// I am currently defining two very similar versions 
+	// - one which is very close to a standard dependency tree representation
+	// - one which I am using in my GAMR system - these are marked by suffix *AMR
+
+	// Method for creating the node label in the string representation
+	
+	private String makeNodeString(Dependency dependency){
+		return
+				dependency.getDependent()
+				+":"+dependency.getDependentWord()
+				+":"+dependency.getDependentPos();
+	}
+	
+	private String makeNodeStringAMR(Dependency dependency){
+		return
+				dependency.getDependentWord();
+	}
 
 	/**
 	 * Traverse a dependency tree top-down, depth first left to right.
@@ -119,18 +138,11 @@ public class LinearizedSentence {
 	 * where sublist is empty or the linearized modifier dependency nodes of the modifier.
 	 */
 
-	// TODO HIERIX
-	// In case of dependency parsing, should it not be enough to store POS/Label in linearized DP?
-	// But then, do I need a bilingual alignment between words from sentence and linearDP.
-	// I think I need this to create the dependency tree from a linearized DP.
-	// THINK: Maybe I need to create directly a partial Ctree to ensure token index conssitency
+
 	private void descendFromNode(Dependency dependency, String openNode, String closeNode) {
 
 		this.getLinearizedSentence().add(openNode);
-		String word = 
-				dependency.getDependent()
-				+":"+dependency.getDependentWord()
-				+":"+dependency.getDependentPos();
+		String word = this.makeNodeString(dependency);
 		this.getLinearizedSentence().add(word);
 		// Modifiers are processed from left to right
 		List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
@@ -138,6 +150,25 @@ public class LinearizedSentence {
 			descendFromNode(modifiers.get(i), 
 					"(_"+modifiers.get(i).getLabel(), 
 					")_"+modifiers.get(i).getLabel());
+		}
+		this.getLinearizedSentence().add(closeNode);
+	}
+
+	// Mainly the same but created a AMR-syntactic tree representation
+	private void descendFromNodeAMR(Dependency dependency, String label, String openNode, String closeNode) {
+
+		if (!label.isEmpty())
+			this.getLinearizedSentence().add(":"+label);
+		this.getLinearizedSentence().add(openNode);
+		String word = this.makeNodeStringAMR(dependency);
+		this.getLinearizedSentence().add(word);
+		// Modifiers are processed from left to right
+		List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
+		for (int i=0; i < modifiers.size(); i++) {
+			descendFromNodeAMR(modifiers.get(i), 
+					modifiers.get(i).getLabel(),
+					"(", 
+					")");
 		}
 		this.getLinearizedSentence().add(closeNode);
 	}
@@ -156,9 +187,8 @@ public class LinearizedSentence {
 		descendFromNode(root, "(_RT", ")_RT");
 	}
 
-	public void inverseLinearizedDependencyStructure(){
-		// given a linearized sentence, create the dependency structure/2-Dim sentence object
-		// the resulting sentence object should be equal with the original one
+	public void linearizedDependencyStructureAMR() {
+		Dependency root = this.getDs().getDependenciesArray()[this.getDs().getRootPosition()];
+		descendFromNodeAMR(root, "", "(", ")");
 	}
-
 }
