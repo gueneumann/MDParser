@@ -191,4 +191,13 @@ public class LinearizedSentence {
 		Dependency root = this.getDs().getDependenciesArray()[this.getDs().getRootPosition()];
 		descendFromNodeAMR(root, "", "(", ")");
 	}
+	
+	public String toLinearizedDependencyString(){
+		String outString = "";
+		for (int i=0; i < this.getLinearizedSentence().size()-1; i++){
+			outString = outString + this.getLinearizedSentence().get(i) + " ";
+		}
+		outString = outString + this.getLinearizedSentence().get(this.getLinearizedSentence().size()-1);
+		return outString;
+	}
 }
