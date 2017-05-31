@@ -2,14 +2,12 @@ package cases;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
-import de.bwaldvogel.liblinear.InvalidInputDataException;
 import de.dfki.lt.mdparser.parser.Trainer;
 
 public class TrainerTest {
 
-  public static void main(String[] args) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
+  public static void main(String[] args) {
 
     String inputFile = args[0];
 
@@ -24,8 +22,12 @@ public class TrainerTest {
     String splitFile = "temp/split.txt";
     deleteOld(dirs);
     createNew(dirs);
-    trainer.createAndTrainWithSplittingFromDisk(algorithm, inputFile, splitModelsDir, alphabetFileParser,
-        alphabetFileLabeler, splitFile);
+    try {
+      trainer.createAndTrainWithSplittingFromDisk(algorithm, inputFile, splitModelsDir, alphabetFileParser,
+          alphabetFileLabeler, splitFile);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
   }
 

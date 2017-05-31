@@ -1,4 +1,4 @@
-package de.dfki.lt.mdparser.sentenceSplitter;
+package de.dfki.lt.mdparser.sentencesplitter;
 
 import java.util.List;
 import java.util.Set;

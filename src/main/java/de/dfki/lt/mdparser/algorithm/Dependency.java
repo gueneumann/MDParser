@@ -7,9 +7,6 @@ public class Dependency {
   private int dependent;
   private int head;
 
-  private int j;
-  private int i;
-
   private int startIndex;
 
   private String label;
@@ -29,30 +26,6 @@ public class Dependency {
     this.dependent = dependent;
     this.head = head;
     this.label = label;
-  }
-
-
-  public int getJ() {
-
-    return this.j;
-  }
-
-
-  public void setJ(int j) {
-
-    this.j = j;
-  }
-
-
-  public int getI() {
-
-    return this.i;
-  }
-
-
-  public void setI(int i) {
-
-    this.i = i;
   }
 
 

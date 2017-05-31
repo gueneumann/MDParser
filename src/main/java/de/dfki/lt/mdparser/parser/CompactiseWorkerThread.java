@@ -82,10 +82,6 @@ public class CompactiseWorkerThread extends Thread {
       try {
         me = new ModelEditor(
             new File(this.splitModelsDir + "/" + element.getName()), "splitA/" + element.getName(), true);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-      try {
         me.editAlphabetAndModel("splitA/" + element.getName(), this.splitModelsDir + "/" + element.getName());
       } catch (IOException e) {
         e.printStackTrace();

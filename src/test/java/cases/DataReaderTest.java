@@ -8,11 +8,15 @@ import de.dfki.lt.mdparser.data.Data;
 
 public class DataReaderTest {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
 
-    Data d = new Data("/Users/gune00/data/MLDP/2009/en-train-2009.conll", true);
-    //Data d = new Data("input/english.train", true);
-    countDifLabels(d);
+    try {
+      Data d = new Data("/Users/gune00/data/MLDP/2009/en-train-2009.conll", true);
+      //Data d = new Data("input/english.train", true);
+      countDifLabels(d);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
 

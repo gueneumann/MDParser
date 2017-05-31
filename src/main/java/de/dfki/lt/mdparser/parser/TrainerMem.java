@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.bwaldvogel.liblinear.FeatureNode;
-import de.bwaldvogel.liblinear.InvalidInputDataException;
 import de.bwaldvogel.liblinear.Linear;
 import de.bwaldvogel.liblinear.Model;
 import de.bwaldvogel.liblinear.Parameter;
@@ -43,9 +42,6 @@ public class TrainerMem {
   private int numberOfFeatures;
   private int maxLabelParser;
   private int maxLabelLabeler;
-  private int totalConfigurations;
-
-  // GN: added 8.7.2014
 
 
   public int getNumberOfFeatures() {
@@ -96,28 +92,13 @@ public class TrainerMem {
   }
 
 
-  public void setTotalConfigurations(int totalConfigurations) {
-
-    this.totalConfigurations = totalConfigurations;
-  }
-
-
-  public int getTotalConfigurations() {
-
-    return this.totalConfigurations;
-  }
-
-
   public Problem getProblem() {
 
     return this.prob;
   }
 
 
-  //
-
-  public void myReadProblem(Alphabet alpha, boolean labels, List<FeatureVector> fvList)
-      throws IOException, InvalidInputDataException {
+  public void myReadProblem(Alphabet alpha, boolean labels, List<FeatureVector> fvList) {
 
     int max_index = Integer.MIN_VALUE;
     List<Integer> yList = new ArrayList<Integer>();
@@ -224,9 +205,7 @@ public class TrainerMem {
           b[labelIndex - 1] = true;
         }
       }
-
     }
-
   }
 
 
@@ -234,7 +213,7 @@ public class TrainerMem {
   public void createAndTrainWithSplittingFromMemory(String algorithm,
       String inputFile, String splitModelsDir,
       String alphabetFileParser, String alphabetFileLabeler,
-      String splitFile) throws IOException, InvalidInputDataException {
+      String splitFile) throws IOException {
 
     boolean noLabels = false;
     HashMap<String, List<FeatureVector>> splitMap = new HashMap<String, List<FeatureVector>>();
@@ -257,6 +236,9 @@ public class TrainerMem {
     } else if (algorithm.equals("stack")) {
       fm = new StackFeatureModel(alphaParser, fe);
       pa = new StackAlgorithm();
+    } else {
+      System.err.println("unkown algorithm " + algorithm);
+      return;
     }
     int totalConfigurations = 0;
     File splitA = new File("splitA");
@@ -553,33 +535,33 @@ public class TrainerMem {
 
   private Problem constructProblem(List<Integer> vy, List<FeatureNode[]> vx, int max_index) {
 
-    Problem prob = new Problem();
-    prob.bias = this.bias;
-    prob.l = vy.size();
-    prob.n = max_index;
+    Problem resultProb = new Problem();
+    resultProb.bias = this.bias;
+    resultProb.l = vy.size();
+    resultProb.n = max_index;
     if (this.bias >= 0) {
-      prob.n++;
+      resultProb.n++;
     }
-    prob.x = new FeatureNode[prob.l][];
-    for (int i = 0; i < prob.l; i++) {
-      prob.x[i] = vx.get(i);
+    resultProb.x = new FeatureNode[resultProb.l][];
+    for (int i = 0; i < resultProb.l; i++) {
+      resultProb.x[i] = vx.get(i);
 
       if (this.bias >= 0) {
-        assert prob.x[i][prob.x[i].length - 1] == null;
-        prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, this.bias);
+        assert resultProb.x[i][resultProb.x[i].length - 1] == null;
+        resultProb.x[i][resultProb.x[i].length - 1] = new FeatureNode(max_index + 1, this.bias);
       } else {
-        assert prob.x[i][prob.x[i].length - 1] != null;
+        assert resultProb.x[i][resultProb.x[i].length - 1] != null;
       }
     }
 
     //GN, May, 2016
     // prob.y = new int[prob.l];
-    prob.y = new double[prob.l];
-    for (int i = 0; i < prob.l; i++) {
-      prob.y[i] = vy.get(i);
+    resultProb.y = new double[resultProb.l];
+    for (int i = 0; i < resultProb.l; i++) {
+      resultProb.y[i] = vy.get(i);
     }
 
-    return prob;
+    return resultProb;
   }
 
 

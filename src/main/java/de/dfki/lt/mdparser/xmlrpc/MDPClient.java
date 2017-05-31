@@ -6,10 +6,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -49,18 +51,18 @@ public class MDPClient {
 
   public static String readFileToString(String textFile, String inputFormat) throws IOException {
 
-    FileInputStream in = new FileInputStream(textFile);
-    InputStreamReader ir = new InputStreamReader(in, "UTF8");
-    BufferedReader fr = new BufferedReader(ir);
-    StringBuilder sb = new StringBuilder();
-    String line;
-    while ((line = fr.readLine()) != null) {
-      sb.append(line);
-      if (inputFormat.equals("conll")) {
-        sb.append("\n");
+    try (BufferedReader in = Files.newBufferedReader(
+        Paths.get(textFile), StandardCharsets.UTF_8)) {
+      String line;
+      StringBuilder sb = new StringBuilder();
+      while ((line = in.readLine()) != null) {
+        sb.append(line);
+        if (inputFormat.equals("conll")) {
+          sb.append("\n");
+        }
       }
+      return sb.toString();
     }
-    return sb.toString();
   }
 
 
@@ -217,7 +219,8 @@ public class MDPClient {
     //server
     String serverUrl = props.getProperty("server");
     try {
-      URL u = new URL(serverUrl);
+      // check if url is well-formed
+      new URL(serverUrl);
     } catch (MalformedURLException e) {
       System.out.println("Malformed value for the property 'server'");
       System.exit(0);

@@ -2,9 +2,7 @@ package de.dfki.lt.mdparser.caller;
 
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
-import de.bwaldvogel.liblinear.InvalidInputDataException;
 import de.dfki.lt.mdparser.archive.Archivator;
 import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.eval.Eval;
@@ -13,7 +11,7 @@ import de.dfki.lt.mdparser.parser.Parser;
 
 public class MDPrunner {
 
-  String[] dirs = {};
+  private String[] dirs = {};
   private String algorithm = "covington";
   private Parser parser = new Parser();
   private Data data = null;
@@ -21,6 +19,11 @@ public class MDPrunner {
 
 
   // Getters and setters
+
+  // Class instantiation
+  public MDPrunner() {
+  }
+
 
   public Eval getEvaluator() {
 
@@ -55,11 +58,6 @@ public class MDPrunner {
   public void setAlgorithm(String algorithm) {
 
     this.algorithm = algorithm;
-  }
-
-
-  // Class instantiation
-  public MDPrunner() {
   }
 
 
@@ -111,7 +109,8 @@ public class MDPrunner {
   }
 
 
-  public static void main(String[] args) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
+  public static void main(String[] args)
+      throws IOException {
 
     MDPrunner mdpRunner = new MDPrunner();
     String conllFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test.conll";

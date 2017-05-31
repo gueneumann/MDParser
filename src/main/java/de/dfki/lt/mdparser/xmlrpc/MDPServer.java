@@ -24,7 +24,7 @@ import de.dfki.lt.mdparser.parser.Parser;
 import edu.northwestern.at.morphadorner.corpuslinguistics.sentencesplitter.DefaultSentenceSplitter;
 import edu.northwestern.at.morphadorner.corpuslinguistics.tokenizer.DefaultWordTokenizer;
 
-public class MDPServer {
+public final class MDPServer {
 
   /**
    * POS-Tagger for German.
@@ -54,6 +54,12 @@ public class MDPServer {
   private static Alphabet alphabetParser;
 
   private static ParsingAlgorithm pa;
+
+
+  private MDPServer() {
+
+    // private constructor to enforce noninstantiability
+  }
 
 
   public static void main(String[] args) throws InvalidPropertiesFormatException, IOException, XmlRpcException {

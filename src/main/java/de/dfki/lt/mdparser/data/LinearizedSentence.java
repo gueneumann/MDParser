@@ -13,6 +13,19 @@ public class LinearizedSentence {
   private DependencyStructure ds = null;
 
 
+  // Init class
+
+  public LinearizedSentence(DependencyStructure ds) {
+    this.setDs(ds);
+  }
+
+
+  public LinearizedSentence(Sentence sentence) {
+    this.setSentence(sentence);
+    this.setDs(this.fillDependencyStructure(this.getSentence()));
+  }
+
+
   // Getters and setters
   public Sentence getSentence() {
 
@@ -47,19 +60,6 @@ public class LinearizedSentence {
   public void setDs(DependencyStructure ds) {
 
     this.ds = ds;
-  }
-
-
-  // Init class
-
-  public LinearizedSentence(DependencyStructure ds) {
-    this.setDs(ds);
-  }
-
-
-  public LinearizedSentence(Sentence sentence) {
-    this.setSentence(sentence);
-    this.setDs(this.fillDependencyStructure(this.getSentence()));
   }
 
 
@@ -107,12 +107,12 @@ public class LinearizedSentence {
       }
       parsedDependencies.add(dep);
     }
-    DependencyStructure ds = new DependencyStructure(parsedDependencies.size());
+    DependencyStructure depStr = new DependencyStructure(parsedDependencies.size());
     for (int i = 0; i < parsedDependencies.size(); i++) {
-      ds.addDependency(parsedDependencies.get(i));
+      depStr.addDependency(parsedDependencies.get(i));
     }
-    ds.constructDependenciesArray();
-    return ds;
+    depStr.constructDependenciesArray();
+    return depStr;
   }
 
 

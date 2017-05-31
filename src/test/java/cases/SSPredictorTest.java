@@ -8,7 +8,7 @@ import java.io.OutputStreamWriter;
 import java.util.List;
 
 import de.dfki.lt.mdparser.data.Data;
-import de.dfki.lt.mdparser.sentenceSplitter.SSPredictor;
+import de.dfki.lt.mdparser.sentencesplitter.SSPredictor;
 
 public class SSPredictorTest {
 

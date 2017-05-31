@@ -28,11 +28,10 @@ public class Archivator {
 
   private String archiveName;
 
-  HashMap<String, InputStream> archiveMap;
+  private HashMap<String, InputStream> archiveMap;
 
 
-  public Archivator(String archiveName, String[] dirs)
-      throws IOException {
+  public Archivator(String archiveName, String[] dirs) {
     this.archiveName = archiveName;
     this.archiveMap = new HashMap<String, InputStream>();
     this.checkDirs(dirs);

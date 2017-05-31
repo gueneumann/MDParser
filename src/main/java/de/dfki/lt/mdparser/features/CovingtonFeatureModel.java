@@ -12,19 +12,6 @@ public class CovingtonFeatureModel extends FeatureModel {
   private String[] mergeFeatureNames;
 
 
-  private void addStaticFeature(List<Feature> jList, Feature f, Alphabet alphaParser) {
-
-    Integer fIndex = alphaParser.getFeatureIndex(f.getFeatureString());
-    f.setIndexParser(fIndex);
-    jList.add(f);
-
-  }
-
-
-  //public CovingtonFeatureModel(Alphabet alphabetParser, Alphabet alphabetLabeler, FeatureExtractor fe) {
-  //  super(alphabetParser, alphabetLabeler, fe);
-  //}
-
   public CovingtonFeatureModel(Alphabet alphabetParser, FeatureExtractor fe) {
     super(alphabetParser, fe);
     // WHY 11
@@ -33,6 +20,16 @@ public class CovingtonFeatureModel extends FeatureModel {
       this.mergeFeatureNames[i] = "m" + i;
     }
   }
+
+
+  private void addStaticFeature(List<Feature> jList, Feature f, Alphabet alphaParser) {
+
+    Integer fIndex = alphaParser.getFeatureIndex(f.getFeatureString());
+    f.setIndexParser(fIndex);
+    jList.add(f);
+
+  }
+
 
   // new multithreading
   // GN: The reason why j and i are considered is based on the parsing strategy:

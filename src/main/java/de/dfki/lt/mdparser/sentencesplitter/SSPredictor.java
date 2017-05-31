@@ -1,4 +1,4 @@
-package de.dfki.lt.mdparser.sentenceSplitter;
+package de.dfki.lt.mdparser.sentencesplitter;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -159,7 +159,7 @@ public class SSPredictor {
   }
 
 
-  public List<List<String>> predict(List<String> tokensList) throws IOException {
+  public List<List<String>> predict(List<String> tokensList) {
 
     List<List<String>> result = new ArrayList<List<String>>();
     List<String> curSent = new ArrayList<String>();
@@ -196,7 +196,7 @@ public class SSPredictor {
   }
 
 
-  public List<List<String>> predict(String text) throws IOException {
+  public List<List<String>> predict(String text) {
 
     return predict(tokenise(text));
   }

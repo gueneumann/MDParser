@@ -8,10 +8,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
-public class Conll2009toConllMapper {
+public final class Conll2009toConllMapper {
 
-  public static String sourceDir = "/Users/gune00/data/MLDP/2009/";
-  public static String targetDir = "resources/input/";
+  private static final String SOURCE_DIR = "/Users/gune00/data/MLDP/2009/";
+  private static final String target_DIR = "resources/input/";
+
+
+  private Conll2009toConllMapper() {
+
+    // private constructor to enforce noninstantiability
+  }
 
 
   private static void transformConll2009ToConllFile(String sourceFileName, String targetFileName)
@@ -59,17 +65,17 @@ public class Conll2009toConllMapper {
   public static void main(String[] args) throws IOException {
 
     Conll2009toConllMapper.transformConll2009ToConllFile(
-        Conll2009toConllMapper.sourceDir + "conll09-german/german.train",
-        Conll2009toConllMapper.targetDir + "de-train-2009.conll");
+        Conll2009toConllMapper.SOURCE_DIR + "conll09-german/german.train",
+        Conll2009toConllMapper.target_DIR + "de-train-2009.conll");
     Conll2009toConllMapper.transformConll2009ToConllFile(
-        Conll2009toConllMapper.sourceDir + "conll09-german/german.in.test.gold",
-        Conll2009toConllMapper.targetDir + "de-test-2009.conll");
+        Conll2009toConllMapper.SOURCE_DIR + "conll09-german/german.in.test.gold",
+        Conll2009toConllMapper.target_DIR + "de-test-2009.conll");
 
     Conll2009toConllMapper.transformConll2009ToConllFile(
-        Conll2009toConllMapper.sourceDir + "conll09-english/english.train",
-        Conll2009toConllMapper.targetDir + "en-train-2009.conll");
+        Conll2009toConllMapper.SOURCE_DIR + "conll09-english/english.train",
+        Conll2009toConllMapper.target_DIR + "en-train-2009.conll");
     Conll2009toConllMapper.transformConll2009ToConllFile(
-        Conll2009toConllMapper.sourceDir + "conll09-english/english.in.test.gold",
-        Conll2009toConllMapper.targetDir + "en-test-2009.conll");
+        Conll2009toConllMapper.SOURCE_DIR + "conll09-english/english.in.test.gold",
+        Conll2009toConllMapper.target_DIR + "en-test-2009.conll");
   }
 }

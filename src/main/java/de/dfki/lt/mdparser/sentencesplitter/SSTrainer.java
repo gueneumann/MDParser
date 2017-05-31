@@ -1,4 +1,4 @@
-package de.dfki.lt.mdparser.sentenceSplitter;
+package de.dfki.lt.mdparser.sentencesplitter;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -188,10 +188,10 @@ public class SSTrainer {
   }
 
 
-  private void createPossibleLowCasePosList(String conllInputFile2,
-      String neWordsFile) throws IOException {
+  private void createPossibleLowCasePosList(
+      String conllInputFile2, String neWordsFileParam) throws IOException {
 
-    FileOutputStream out = new FileOutputStream(neWordsFile);
+    FileOutputStream out = new FileOutputStream(neWordsFileParam);
     OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
     BufferedWriter bw = new BufferedWriter(or);
 
@@ -232,13 +232,13 @@ public class SSTrainer {
   }
 
 
-  private void createLowerCaseWordsList(String conllInputFile, String outputFile) throws IOException {
+  private void createLowerCaseWordsList(String conllInputFileParam, String outputFile) throws IOException {
 
     FileOutputStream out = new FileOutputStream(outputFile);
     OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
     BufferedWriter bw = new BufferedWriter(or);
 
-    Data d = new Data(conllInputFile, true);
+    Data d = new Data(conllInputFileParam, true);
     Sentence[] sents = d.getSentences();
     Set<String> lowCaseWords = new HashSet<String>();
     for (int i = 0; i < sents.length; i++) {
@@ -261,7 +261,7 @@ public class SSTrainer {
   }
 
 
-  private void createNEWordsList(String conllInputFile, String language, String outputFile) throws IOException {
+  private void createNEWordsList(String conllInputFileParam, String language, String outputFile) throws IOException {
 
     Set<String> posTagSet = new HashSet<String>();
     if (language.equals("english")) {
@@ -274,7 +274,7 @@ public class SSTrainer {
     OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
     BufferedWriter bw = new BufferedWriter(or);
 
-    Data d = new Data(conllInputFile, true);
+    Data d = new Data(conllInputFileParam, true);
     Sentence[] sents = d.getSentences();
     Set<String> neWords = new HashSet<String>();
     for (int i = 0; i < sents.length; i++) {
@@ -298,14 +298,14 @@ public class SSTrainer {
   }
 
 
-  private void createPossibleEndCharsList(String conllInputFile,
-      String endFile) throws IOException {
+  private void createPossibleEndCharsList(
+      String conllInputFileParam, String endFileParam) throws IOException {
 
-    FileOutputStream out = new FileOutputStream(endFile);
+    FileOutputStream out = new FileOutputStream(endFileParam);
     OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
     BufferedWriter bw = new BufferedWriter(or);
 
-    Data d = new Data(conllInputFile, true);
+    Data d = new Data(conllInputFileParam, true);
     Sentence[] sents = d.getSentences();
     HashMap<String, Integer> map = new HashMap<String, Integer>();
     for (int i = 0; i < sents.length; i++) {
@@ -333,12 +333,12 @@ public class SSTrainer {
   }
 
 
-  private void createPossibleNonEndList(String conllInputFile, String endFile) throws IOException {
+  private void createPossibleNonEndList(String conllInputFileParam, String endFileParam) throws IOException {
 
-    FileOutputStream out = new FileOutputStream(endFile);
+    FileOutputStream out = new FileOutputStream(endFileParam);
     OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
     BufferedWriter bw = new BufferedWriter(or);
-    Data d = new Data(conllInputFile, true);
+    Data d = new Data(conllInputFileParam, true);
     Sentence[] sents = d.getSentences();
     HashMap<String, Integer> map = new HashMap<String, Integer>();
     for (int i = 0; i < sents.length; i++) {
@@ -370,12 +370,12 @@ public class SSTrainer {
   }
 
 
-  private void createPossibleAbbrList(String conllInputFile, String abbrFile) throws IOException {
+  private void createPossibleAbbrList(String conllInputFileParam, String abbrFileParam) throws IOException {
 
-    FileOutputStream out = new FileOutputStream(abbrFile);
+    FileOutputStream out = new FileOutputStream(abbrFileParam);
     OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
     BufferedWriter bw = new BufferedWriter(or);
-    Data d = new Data(conllInputFile, true);
+    Data d = new Data(conllInputFileParam, true);
     Sentence[] sents = d.getSentences();
     HashMap<String, Integer> map = new HashMap<String, Integer>();
     for (int i = 0; i < sents.length; i++) {
@@ -407,13 +407,13 @@ public class SSTrainer {
   }
 
 
-  private void createPossibleFirstWords(String conllInputFile,
-      String firstFile) throws IOException {
+  private void createPossibleFirstWords(
+      String conllInputFileParam, String firstFileParam) throws IOException {
 
-    FileOutputStream out = new FileOutputStream(firstFile);
+    FileOutputStream out = new FileOutputStream(firstFileParam);
     OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
     BufferedWriter bw = new BufferedWriter(or);
-    Data d = new Data(conllInputFile, true);
+    Data d = new Data(conllInputFileParam, true);
     Sentence[] sents = d.getSentences();
     HashMap<String, Integer> map = new HashMap<String, Integer>();
     for (int i = 0; i < sents.length; i++) {
@@ -574,38 +574,38 @@ public class SSTrainer {
 
   public Problem constructProblem(List<Integer> vy, List<FeatureNode[]> vx, int max_index) {
 
-    Problem prob = new Problem();
-    prob.bias = this.bias;
-    prob.l = vy.size();
-    prob.n = max_index;
+    Problem resultProb = new Problem();
+    resultProb.bias = this.bias;
+    resultProb.l = vy.size();
+    resultProb.n = max_index;
     if (this.bias >= 0) {
-      prob.n++;
+      resultProb.n++;
     }
-    prob.x = new FeatureNode[prob.l][];
-    for (int i = 0; i < prob.l; i++) {
-      prob.x[i] = vx.get(i);
+    resultProb.x = new FeatureNode[resultProb.l][];
+    for (int i = 0; i < resultProb.l; i++) {
+      resultProb.x[i] = vx.get(i);
 
 
       // GN: bias is set to -1 !
 
       if (this.bias >= 0) {
         // GN: assert should be gone !
-        assert prob.x[i][prob.x[i].length - 1] == null;
+        assert resultProb.x[i][resultProb.x[i].length - 1] == null;
 
-        prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, this.bias);
+        resultProb.x[i][resultProb.x[i].length - 1] = new FeatureNode(max_index + 1, this.bias);
 
       } else {
         // GN: assert should be gone !
-        assert prob.x[i][prob.x[i].length - 1] != null;
+        assert resultProb.x[i][resultProb.x[i].length - 1] != null;
       }
     }
 
     // GN: looks like that vy and vx are just copied
-    prob.y = new double[prob.l];
-    for (int i = 0; i < prob.l; i++) {
-      prob.y[i] = vy.get(i);
+    resultProb.y = new double[resultProb.l];
+    for (int i = 0; i < resultProb.l; i++) {
+      resultProb.y[i] = vy.get(i);
     }
-    return prob;
+    return resultProb;
   }
 
 

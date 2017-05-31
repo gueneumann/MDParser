@@ -72,7 +72,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
       while (iter.hasNext()) {
         int curJ = iter.next();
 
-        if (curJ + 1 != rootPosition) {
+        if (rootPosition != null && curJ + 1 != rootPosition) {
           sentArray[curJ][6] = String.valueOf(rootPosition);
           sentArray[curJ][7] = "NMOD";
           //sentArray[curJ][7] = "nmod__adj";

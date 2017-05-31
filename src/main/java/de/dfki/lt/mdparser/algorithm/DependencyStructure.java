@@ -79,12 +79,12 @@ public class DependencyStructure {
     this.dependencies.add(dependency);
     this.heads[dependency.getDependent()] = dependency.getHead();
     this.labels[dependency.getDependent()] = dependency.getLabel();
-    Set<Integer> dependents = this.dependents.get(dependency.getHead());
-    if (dependents == null) {
-      dependents = new HashSet<Integer>();
+    Set<Integer> localDependents = this.dependents.get(dependency.getHead());
+    if (localDependents == null) {
+      localDependents = new HashSet<Integer>();
     }
-    dependents.add(dependency.getDependent());
-    this.dependents.put(dependency.getHead(), dependents);
+    localDependents.add(dependency.getDependent());
+    this.dependents.put(dependency.getHead(), localDependents);
     if (dependency.getHead() == 0) {
       this.rootPosition = dependency.getDependent();
     }

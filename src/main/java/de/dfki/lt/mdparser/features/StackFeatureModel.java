@@ -127,7 +127,6 @@ public class StackFeatureModel extends FeatureModel {
 
   @Override
   public void initializeStaticFeaturesCombined(Sentence sent, boolean train) {
-
+    // do nothing
   }
-
 }

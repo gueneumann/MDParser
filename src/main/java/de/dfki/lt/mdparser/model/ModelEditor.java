@@ -18,10 +18,10 @@ import de.dfki.lt.mdparser.features.Alphabet;
 public class ModelEditor {
 
   private String solverType;
-  private String nr_class;
+  private String nrClass;
   private String label;
   private int numberOfClasses;
-  private String nr_feature;
+  private String nrFeature;
   private String bias;
   private HashMap<Integer, Integer> oldIndexToNewIndexMap;
   private double[] weights;
@@ -78,14 +78,14 @@ public class ModelEditor {
   }
 
 
-  public void editAlphabetAndModel(String alphabetFile, String modelFile) throws IOException {
+  public void editAlphabetAndModel(String alphabetFile, String modelFileParam) throws IOException {
 
     editAlphabet(this.neverUsed, alphabetFile);
-    editModel(this.neverUsed, modelFile);
+    editModel(this.neverUsed, modelFileParam);
   }
 
 
-  private void editModel(Set<Integer> neverUsed, String modelFile) throws IOException {
+  private void editModel(Set<Integer> neverUsedParam, String modelFileParam) throws IOException {
 
     FileInputStream in = new FileInputStream(this.modelFile);
     BufferedInputStream bis = new BufferedInputStream(in, 8000);
@@ -93,23 +93,23 @@ public class ModelEditor {
     BufferedReader fr = new BufferedReader(ir);
     String line;
     this.solverType = fr.readLine();
-    this.nr_class = fr.readLine();
+    this.nrClass = fr.readLine();
     this.label = fr.readLine();
     //nr_feature = fr.readLine();
     fr.readLine();
-    this.nr_feature = "nr_feature " + String.valueOf(this.alpha.getMaxIndex() - 1);
-    this.numberOfClasses = Integer.valueOf(this.nr_class.split(" ")[1]);
+    this.nrFeature = "nr_feature " + String.valueOf(this.alpha.getMaxIndex() - 1);
+    this.numberOfClasses = Integer.valueOf(this.nrClass.split(" ")[1]);
     this.bias = fr.readLine();
     fr.readLine();
     if (this.numberOfClasses != 2) {
-      this.weights = new double[Integer.valueOf(this.nr_feature.split(" ")[1]) * this.numberOfClasses];
+      this.weights = new double[Integer.valueOf(this.nrFeature.split(" ")[1]) * this.numberOfClasses];
     } else {
-      this.weights = new double[Integer.valueOf(this.nr_feature.split(" ")[1])];
+      this.weights = new double[Integer.valueOf(this.nrFeature.split(" ")[1])];
     }
     int k = 0;
     int l = 1;
     while ((line = fr.readLine()) != null) {
-      if (!neverUsed.contains(l)) {
+      if (!neverUsedParam.contains(l)) {
         String[] weightsArray = line.split(" ");
         if (this.numberOfClasses != 2) {
           for (int c = 0; c < this.numberOfClasses; c++) {
@@ -124,20 +124,20 @@ public class ModelEditor {
       l++;
     }
     fr.close();
-    printToFile(modelFile);
+    printToFile(modelFileParam);
   }
 
 
-  private void editAlphabet(Set<Integer> neverUsed, String alphabetFile) throws IOException {
+  private void editAlphabet(Set<Integer> neverUsedParam, String alphabetFile) throws IOException {
 
     int maxIndex = 1;
     HashMap<String, Integer> valueToIndexMap = this.alpha.getValueToIndexMap();
     HashMap<String, Integer> newValueToIndexMap =
-        new HashMap<String, Integer>(valueToIndexMap.size() - neverUsed.size() + 1);
+        new HashMap<String, Integer>(valueToIndexMap.size() - neverUsedParam.size() + 1);
     String[] indexToValueArray = this.alpha.getIndexToValueArray();
-    String[] newIndexToValueArray = new String[valueToIndexMap.size() - neverUsed.size() + 1];
+    String[] newIndexToValueArray = new String[valueToIndexMap.size() - neverUsedParam.size() + 1];
     for (int i = 1; i < this.alpha.getMaxIndex(); i++) {
-      if (!neverUsed.contains(i)) {
+      if (!neverUsedParam.contains(i)) {
         String oldString = indexToValueArray[i];
         newValueToIndexMap.put(oldString, maxIndex);
         newIndexToValueArray[maxIndex] = oldString;
@@ -165,13 +165,13 @@ public class ModelEditor {
 
   public void setNr_class(String nr_class) {
 
-    this.nr_class = nr_class;
+    this.nrClass = nr_class;
   }
 
 
   public String getNr_class() {
 
-    return this.nr_class;
+    return this.nrClass;
   }
 
 
@@ -189,13 +189,13 @@ public class ModelEditor {
 
   public void setNr_feature(String nr_feature) {
 
-    this.nr_feature = nr_feature;
+    this.nrFeature = nr_feature;
   }
 
 
   public String getNr_feature() {
 
-    return this.nr_feature;
+    return this.nrFeature;
   }
 
 
@@ -254,11 +254,11 @@ public class ModelEditor {
     BufferedWriter fw = new BufferedWriter(or);
     fw.append(this.solverType);
     fw.append("\n");
-    fw.append(this.nr_class);
+    fw.append(this.nrClass);
     fw.append("\n");
     fw.append(this.label);
     fw.append("\n");
-    fw.append(this.nr_feature);
+    fw.append(this.nrFeature);
     fw.append("\n");
     fw.append(this.bias);
     fw.append("\n");

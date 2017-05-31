@@ -29,7 +29,7 @@ import pi.ParIteratorFactory;
 
 public class Parser {
 
-  public static long time;
+  private static long time;
 
   private double[] weightsParser;
   private int numberOfClassesParser;
@@ -81,11 +81,6 @@ public class Parser {
   public int getNumberOfClassesLabeler() {
 
     return this.numberOfClassesLabeler;
-  }
-
-
-  public void setWeightsLabeler(double[] featureWeights) {
-
   }
 
 
@@ -182,30 +177,30 @@ public class Parser {
 
   public HashMap<String, String> readSplitFile(String splitFile) throws IOException {
 
-    HashMap<String, String> splitMap = new HashMap<String, String>();
+    HashMap<String, String> resultSplitMap = new HashMap<String, String>();
     BufferedReader fp = new BufferedReader(new FileReader(splitFile));
     String line;
     while ((line = fp.readLine()) != null) {
       String[] lineArray = line.split(" ");
       //System.out.println(line);
-      splitMap.put(lineArray[0], lineArray[1]);
+      resultSplitMap.put(lineArray[0], lineArray[1]);
     }
     fp.close();
-    return splitMap;
+    return resultSplitMap;
   }
 
 
   private HashMap<String, String> readSplitFile(InputStream splitFileIs) throws IOException {
 
-    HashMap<String, String> splitMap = new HashMap<String, String>();
+    HashMap<String, String> resultSplitMap = new HashMap<String, String>();
     InputStreamReader ir = new InputStreamReader(splitFileIs, "UTF8");
     BufferedReader fr = new BufferedReader(ir);
     String line;
     while ((line = fr.readLine()) != null) {
       String[] lineArray = line.split(" ");
-      splitMap.put(lineArray[0], lineArray[1]);
+      resultSplitMap.put(lineArray[0], lineArray[1]);
     }
-    return splitMap;
+    return resultSplitMap;
   }
 
 
@@ -250,6 +245,9 @@ public class Parser {
       fm = new StackFeatureModel(alphabetParser, fe);
       pa = new StackAlgorithm();
       pa.setNumberOfConfigurations(0);
+    } else {
+      System.err.println("unknown algorithm " + algorithm);
+      return;
     }
 
     pa.initLabelFreqMap();
@@ -290,8 +288,8 @@ public class Parser {
     System.out.println("Time to parse (msec): " + Double.valueOf(time));
     System.out.println("Speed (sent/s): " + (sentences.length * 1000) / Double.valueOf(time));
     System.out.println("Number of configurations: " + pa.getNumberOfConfigurations());
-    System.out
-        .println("Average number of configurations per sentence: " + pa.getNumberOfConfigurations() / sentences.length);
+    System.out.println(
+        "Average number of configurations per sentence: " + pa.getNumberOfConfigurations() / sentences.length);
   }
 
 
@@ -316,6 +314,9 @@ public class Parser {
       fm = new StackFeatureModel(alphabetParser, fe);
       pa = new StackAlgorithm();
       pa.setNumberOfConfigurations(0);
+    } else {
+      System.err.println("unkown algorithm " + algorithm);
+      return;
     }
     pa.setParser(this);
     long start = System.currentTimeMillis();
@@ -327,7 +328,7 @@ public class Parser {
     System.out.println("Time to parse: " + Double.valueOf(time));
     System.out.println("Speed (sent/s): " + (sentences.length * 1000) / Double.valueOf(time));
     System.out.println("Number of configurations: " + pa.getNumberOfConfigurations());
-    System.out
-        .println("Average number of configurations per sentence: " + pa.getNumberOfConfigurations() / sentences.length);
+    System.out.println(
+        "Average number of configurations per sentence: " + pa.getNumberOfConfigurations() / sentences.length);
   }
 }

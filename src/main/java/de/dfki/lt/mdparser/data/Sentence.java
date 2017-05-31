@@ -10,6 +10,18 @@ public class Sentence {
   private Feature[][][] staticFeatures;
 
 
+  public Sentence(Integer sentSize, int infoSize) {
+    this.sentArray = new String[sentSize][infoSize];
+    this.rootPosition = -1;
+  }
+
+
+  public Sentence(String[][] sentArray) {
+    this.sentArray = sentArray;
+    this.rootPosition = -1;
+  }
+
+
   // setters and getters
   public void setSentArray(String[][] sentArray) {
 
@@ -44,19 +56,6 @@ public class Sentence {
   public Feature[][][] getStaticFeatures() {
 
     return this.staticFeatures;
-  }
-
-
-  // Init class
-  public Sentence(Integer sentSize, int infoSize) {
-    this.sentArray = new String[sentSize][infoSize];
-    this.rootPosition = -1;
-  }
-
-
-  public Sentence(String[][] sentArray) {
-    this.sentArray = sentArray;
-    this.rootPosition = -1;
   }
 
 

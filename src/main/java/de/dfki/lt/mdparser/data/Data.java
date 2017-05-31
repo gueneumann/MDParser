@@ -31,7 +31,7 @@ public class Data {
     BufferedReader fr = new BufferedReader(ir);
     String line;
     List<String> curSent = new ArrayList<String>(50);
-    List<Sentence> sentences = new ArrayList<Sentence>(40000);
+    List<Sentence> sentencesList = new ArrayList<Sentence>(40000);
     while ((line = fr.readLine()) != null) {
       if (line.length() > 0) {
         // XXX
@@ -61,14 +61,14 @@ public class Data {
             }
           }
         }
-        sentences.add(new Sentence(sentArray));
+        sentencesList.add(new Sentence(sentArray));
         curSent = new ArrayList<String>();
       }
     }
     fr.close();
-    this.sentences = new Sentence[sentences.size()];
-    for (int i = 0; i < sentences.size(); i++) {
-      this.sentences[i] = sentences.get(i);
+    this.sentences = new Sentence[sentencesList.size()];
+    for (int i = 0; i < sentencesList.size(); i++) {
+      this.sentences[i] = sentencesList.get(i);
     }
   }
 

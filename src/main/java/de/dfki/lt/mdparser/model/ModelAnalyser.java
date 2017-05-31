@@ -89,10 +89,11 @@ public class ModelAnalyser {
   }
 
 
-  private void edit(File curFile, String oldAlphabetFile, String newAlphabetFile) throws IOException {
+  private void edit(File curFile, String oldAlphabetFileParam, String newAlphabetFileParam)
+      throws IOException {
 
-    Alphabet oldAlpha = new Alphabet(oldAlphabetFile);
-    Alphabet newAlpha = new Alphabet(newAlphabetFile);
+    Alphabet oldAlpha = new Alphabet(oldAlphabetFileParam);
+    Alphabet newAlpha = new Alphabet(newAlphabetFileParam);
     FileInputStream in = new FileInputStream(curFile);
     InputStreamReader ir = new InputStreamReader(in, "UTF8");
     BufferedReader fr = new BufferedReader(ir);

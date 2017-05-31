@@ -3,27 +3,29 @@ package de.dfki.lt.mdparser.caller;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
-import de.bwaldvogel.liblinear.InvalidInputDataException;
 import de.dfki.lt.mdparser.archive.Archivator;
 import de.dfki.lt.mdparser.parser.Trainer;
 import de.dfki.lt.mdparser.parser.TrainerMem;
 
 public class MDPtrainer {
 
-  String trainFile;
-  String modelFile;
+  private String trainFile;
+  private String modelFile;
 
-  String[] trainArgs;
-  String[] parseArgs;
+  private String[] trainArgs;
+  private String[] parseArgs;
 
-  String[] dirs = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
-  String splitModelsDir = "splitModels";
-  String algorithm = "covington";
-  String splitFile = "temp/split.txt";
-  String alphabetFileParser = "temp/alphaParser.txt";
-  String alphabetFileLabeler = "temp/alphaLabeler.txt";
+  private String[] dirs = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
+  private String splitModelsDir = "splitModels";
+  private String algorithm = "covington";
+  private String splitFile = "temp/split.txt";
+  private String alphabetFileParser = "temp/alphaParser.txt";
+  private String alphabetFileLabeler = "temp/alphaLabeler.txt";
+
+
+  public MDPtrainer() {
+  }
 
 
   public String getAlgorithm() {
@@ -35,10 +37,6 @@ public class MDPtrainer {
   public void setAlgorithm(String algorithm) {
 
     this.algorithm = algorithm;
-  }
-
-
-  public MDPtrainer() {
   }
 
 
@@ -70,8 +68,8 @@ public class MDPtrainer {
   }
 
 
-  public void trainer(String trainFile, String archiveName)
-      throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
+  public void trainer(String trainFileParam, String archiveName)
+      throws IOException {
 
 
     deleteOld(this.dirs);
@@ -82,7 +80,7 @@ public class MDPtrainer {
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromDisk(this.algorithm, trainFile,
+    trainer.createAndTrainWithSplittingFromDisk(this.algorithm, trainFileParam,
         this.splitModelsDir, this.alphabetFileParser, this.alphabetFileLabeler, this.splitFile);
 
     long s2 = System.currentTimeMillis();
@@ -97,8 +95,8 @@ public class MDPtrainer {
   }
 
 
-  public void trainerMem(String trainFile, String archiveName)
-      throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
+  public void trainerMem(String trainFileParam, String archiveName)
+      throws IOException {
 
 
     deleteOld(this.dirs);
@@ -109,7 +107,7 @@ public class MDPtrainer {
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromMemory(this.algorithm, trainFile,
+    trainer.createAndTrainWithSplittingFromMemory(this.algorithm, trainFileParam,
         this.splitModelsDir, this.alphabetFileParser, this.alphabetFileLabeler, this.splitFile);
 
     long s2 = System.currentTimeMillis();
@@ -124,13 +122,17 @@ public class MDPtrainer {
   }
 
 
-  public static void main(String[] args) throws IOException, InvalidInputDataException, NoSuchAlgorithmException {
+  public static void main(String[] args) {
 
-    MDPtrainer mdpTrainer = new MDPtrainer();
-    //mdpTrainer.setAlgorithm("stack");
-    // Run parallel version of trainier
-    mdpTrainer.trainer("resources/input/ptb3-std-training.conll", "ptb3-std.zip");
-    // Run non-parallel (in memory) version of trainer
-    //mdpTrainer.trainerMem("resources/input/ptb3-std-training.conll", "ptb3-std-nonpara.zip");
+    try {
+      MDPtrainer mdpTrainer = new MDPtrainer();
+      //mdpTrainer.setAlgorithm("stack");
+      // Run parallel version of trainier
+      mdpTrainer.trainer("resources/input/ptb3-std-training.conll", "ptb3-std.zip");
+      // Run non-parallel (in memory) version of trainer
+      //mdpTrainer.trainerMem("resources/input/ptb3-std-training.conll", "ptb3-std-nonpara.zip");
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 }

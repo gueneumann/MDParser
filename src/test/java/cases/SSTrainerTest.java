@@ -4,11 +4,11 @@ package cases;
 import java.io.IOException;
 
 import de.bwaldvogel.liblinear.InvalidInputDataException;
-import de.dfki.lt.mdparser.sentenceSplitter.SSTrainer;
+import de.dfki.lt.mdparser.sentencesplitter.SSTrainer;
 
 public class SSTrainerTest {
 
-  public static void main(String[] args) throws IOException, InvalidInputDataException {
+  public static void main(String[] args) {
 
     String conllInputFile = "";
     String taggerFile = "";
@@ -26,8 +26,11 @@ public class SSTrainerTest {
     // GN: Trainer gets training file and model files, i.e.,
     // files which carry or will carry important information for feature vector representation
     SSTrainer sp = new SSTrainer(conllInputFile, modelFiles);
-    sp.createTrainingData(language);
-    sp.train();
+    try {
+      sp.createTrainingData(language);
+      sp.train();
+    } catch (IOException | InvalidInputDataException e) {
+      e.printStackTrace();
+    }
   }
-
 }

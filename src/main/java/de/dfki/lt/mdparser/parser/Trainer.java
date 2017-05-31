@@ -168,7 +168,7 @@ public class Trainer {
   public void createAndTrainWithSplittingFromDisk(String algorithm,
       String inputFile, String splitModelsDir,
       String alphabetFileParser, String alphabetFileLabeler,
-      String splitFile) throws IOException, InvalidInputDataException {
+      String splitFile) throws IOException {
 
     boolean noLabels = false;
     System.out.println("Start training with createAndTrainWithSplittingFromDisk!");
@@ -192,6 +192,9 @@ public class Trainer {
     } else if (algorithm.equals("stack")) {
       fm = new StackFeatureModel(alphaParser, fe);
       pa = new StackAlgorithm();
+    } else {
+      System.err.println("unknown algorithm " + algorithm);
+      return;
     }
     setTotalConfigurations(0);
     File splitA = new File("splitA");

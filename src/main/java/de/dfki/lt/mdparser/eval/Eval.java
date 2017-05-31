@@ -13,13 +13,13 @@ import java.util.Iterator;
 public class Eval {
 
 
-  int correctParents;
-  int correctLabels;
-  int correctParentsAndLabels;
-  int correctPunct;
-  int totalPunct;
-  int total;
-  int unattached;
+  private int correctParents;
+  private int correctLabels;
+  private int correctParentsAndLabels;
+  private int correctPunct;
+  private int totalPunct;
+  private int total;
+  private int unattached;
 
   private HashMap<String, Integer> posIndexMap;
   private HashMap<String, Integer> labelIndexMap;

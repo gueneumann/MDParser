@@ -8,7 +8,7 @@ import de.bwaldvogel.liblinear.FeatureNode;
 
 public class FeatureVector {
 
-  private List<Feature> fList;
+  private List<Feature> featureList;
   private String standardRepresentation;
   private String integerRepresentation;
 
@@ -17,13 +17,13 @@ public class FeatureVector {
 
 
   public FeatureVector(boolean train) {
-    this.fList = new ArrayList<Feature>(40);
+    this.featureList = new ArrayList<Feature>(40);
   }
 
 
   public void addFeature(Feature f, Alphabet alpha, boolean train) {
 
-    this.fList.add(f);
+    this.featureList.add(f);
     if (train && !alpha.getValueToIndexMap().keySet().contains((f.getFeatureString()))) {
       alpha.addFeature(f.getFeatureString());
     }
@@ -32,8 +32,8 @@ public class FeatureVector {
 
   public void updateFeature(String featureName, String newValue) {
 
-    for (int i = this.fList.size() - 1; i >= 0; i--) {
-      Feature f = this.fList.get(i);
+    for (int i = this.featureList.size() - 1; i >= 0; i--) {
+      Feature f = this.featureList.get(i);
       if (f.getName().equals(featureName)) {
         System.out.println(f.getValue() + " vs " + newValue);
         f.setValue(newValue);
@@ -46,8 +46,8 @@ public class FeatureVector {
 
   public Feature getFeature(String featureName) {
 
-    for (int i = 0; i < this.fList.size(); i++) {
-      Feature f = this.fList.get(i);
+    for (int i = 0; i < this.featureList.size(); i++) {
+      Feature f = this.featureList.get(i);
       if (f.getName().equals(featureName)) {
         return f;
       }
@@ -79,8 +79,8 @@ public class FeatureVector {
     StringBuilder sb = new StringBuilder();
     List<Integer> indexList = new ArrayList<Integer>();
     sb.append(alpha.getLabelIndexMap().get(this.label));
-    for (int i = 0; i < this.fList.size(); i++) {
-      Feature f = this.fList.get(i);
+    for (int i = 0; i < this.featureList.size(); i++) {
+      Feature f = this.featureList.get(i);
       Integer fIndex = null;
       if (labels) {
         fIndex = f.getIndexLabeler();
@@ -119,8 +119,8 @@ public class FeatureVector {
   public FeatureNode[] getLiblinearRepresentation(boolean train, boolean labels, Alphabet alpha) {
 
     List<Integer> indexList = new ArrayList<Integer>(40);
-    for (int i = 0; i < this.fList.size(); i++) {
-      Feature f = this.fList.get(i);
+    for (int i = 0; i < this.featureList.size(); i++) {
+      Feature f = this.featureList.get(i);
       Integer fIndex = null;
       if (labels) {
         fIndex = f.getIndexLabeler();
@@ -157,13 +157,13 @@ public class FeatureVector {
 
   public void setfList(List<Feature> fList) {
 
-    this.fList = fList;
+    this.featureList = fList;
   }
 
 
   public List<Feature> getfList() {
 
-    return this.fList;
+    return this.featureList;
   }
 
 
@@ -196,9 +196,9 @@ public class FeatureVector {
 
     StringBuilder sb = new StringBuilder();
     sb.append(this.label);
-    for (int i = 0; i < this.fList.size(); i++) {
+    for (int i = 0; i < this.featureList.size(); i++) {
       sb.append(" ");
-      sb.append(this.fList.get(i).getFeatureString());
+      sb.append(this.featureList.get(i).getFeatureString());
     }
     return sb.toString();
   }

@@ -33,7 +33,7 @@ import de.dfki.lt.mdparser.outputformat.TripleOutput;
 import de.dfki.lt.mdparser.outputformat.XMLString;
 import de.dfki.lt.mdparser.parser.Parser;
 import de.dfki.lt.mdparser.parser.Trainer;
-import de.dfki.lt.mdparser.sentenceSplitter.SSPredictor;
+import de.dfki.lt.mdparser.sentencesplitter.SSPredictor;
 import edu.northwestern.at.morphadorner.corpuslinguistics.sentencesplitter.DefaultSentenceSplitter;
 import edu.northwestern.at.morphadorner.corpuslinguistics.sentencesplitter.SentenceSplitter;
 import edu.northwestern.at.morphadorner.corpuslinguistics.tokenizer.DefaultWordTokenizer;
@@ -240,12 +240,12 @@ public class MDParser {
           || word.endsWith("!")
           || word.endsWith(",")
           || word.endsWith(".)")) {
-        int length = word.length();
+        int wordLength = word.length();
         String pref = "";
         String suff = "";
-        if (length != 1) {
-          pref = word.substring(0, length - 1);
-          suff = word.substring(length - 1, length);
+        if (wordLength != 1) {
+          pref = word.substring(0, wordLength - 1);
+          suff = word.substring(wordLength - 1, wordLength);
         } else {
           suff = word;
         }
@@ -261,28 +261,31 @@ public class MDParser {
   }
 
 
-  public String tagText(String text, String language, String inputFormat) throws Exception {
+  public String tagText(String text, String languageParam, String inputFormat)
+      throws IOException {
 
     long start = System.currentTimeMillis();
     Tagger tagger = null;
-    if (language.equals("german")) {
+    if (languageParam.equals("german")) {
       tagger = this.germanTagger;
-    } else if (language.equals("english")) {
+    } else if (languageParam.equals("english")) {
       tagger = this.englishTagger;
     }
     this.length = 0;
     List<List<String>> sentences = null;
     String[][] sentencesArray = null;
-    List<String> taggedList = null;
+    List<String> taggedList = new ArrayList<String>();
     StringBuilder sb = new StringBuilder();
     if (inputFormat.equals("text")) {
-      if (language.equals("english")) {
+      if (languageParam.equals("english")) {
         sentences = this.sentenceSplitter.extractSentences(text, this.wordTokenizer);
-      } else if (language.equals("german")) {
+      } else if (languageParam.equals("german")) {
         sentences = this.mySentenceSplitter.predict(text);
+      } else {
+        System.err.println("unknown language " + this.language);
+        return "";
       }
       sentencesArray = new String[sentences.size()][];
-      taggedList = new ArrayList<String>();
       for (int i = 0; i < sentences.size(); i++) {
         StringBuilder sbSentence = new StringBuilder();
         List<String> sentence = sentences.get(i);
@@ -323,7 +326,11 @@ public class MDParser {
         sentencesArray[i] = curSentence.toArray(sentenceArray);
       }
 
+    } else {
+      System.err.println("unknown format " + inputFormat);
+      return "";
     }
+
     this.tokenizedOutput = new String[sentences.size()][][];
     for (int i = 0; i < sentencesArray.length; i++) {
       String[] curSentence = sentencesArray[i];
@@ -336,6 +343,9 @@ public class MDParser {
 
       } else if (inputFormat.equals("conll")) {
         taggedSentenceArray = curSentence;
+      } else {
+        System.err.println("unkown input format " + inputFormat);
+        return "";
       }
       for (int j = 0; j < curSentence.length; j++) {
         String curEntry = taggedSentenceArray[j];
@@ -365,13 +375,14 @@ public class MDParser {
   }
 
 
-  public String tagSentence(String text, String language, String inputFormat) throws Exception {
+  public String tagSentence(String text, String languageParam, String inputFormat)
+      throws IOException {
 
     long start = System.currentTimeMillis();
     Tagger tagger = null;
-    if (language.equals("german")) {
+    if (languageParam.equals("german")) {
       tagger = this.germanTagger;
-    } else if (language.equals("english")) {
+    } else if (languageParam.equals("english")) {
       tagger = this.englishTagger;
     }
     this.length = 0;
@@ -394,6 +405,9 @@ public class MDParser {
       }
       sentenceArray = new String[sentence.size()];
       sentenceArray = sentence.toArray(sentenceArray);
+    } else {
+      System.err.println("unkown format " + inputFormat);
+      return "";
     }
     this.tokenizedOutput = new String[1][][];
     this.tokenizedOutput[0] = new String[sentenceArray.length][10];
@@ -422,9 +436,10 @@ public class MDParser {
   }
 
 
-  public String parseSentence(String text, String language, String inputFormat) throws Exception {
+  public String parseSentence(String text, String languageParam, String inputFormat)
+      throws IOException {
 
-    tagSentence(text, language, inputFormat);
+    tagSentence(text, languageParam, inputFormat);
     FeatureExtractor fe = new FeatureExtractor();
     FeatureModel fm = new CovingtonFeatureModel(this.alphabetParser, fe);
     ParsingAlgorithm pa = new CovingtonAlgorithm();
@@ -435,10 +450,11 @@ public class MDParser {
   }
 
 
-  public String parseText(String text, String language, String inputFormat) throws Exception {
+  public String parseText(String text, String languageParam, String inputFormat)
+      throws IOException {
 
     long startComplete = System.currentTimeMillis();
-    tagText(text, language, inputFormat);
+    tagText(text, languageParam, inputFormat);
 
     this.length = 0;
     long startParse = System.currentTimeMillis();
@@ -481,91 +497,93 @@ public class MDParser {
   }
 
 
-  public static void main(String[] args) throws Exception {
+  public static void main(String[] args) {
 
-    Properties props = new Properties();
-    FileInputStream in = null;
-    // GN: read properties
-    if (args.length == 1) {
-      in = new FileInputStream(new File(args[0]));
-    } else {
-      in = new FileInputStream(new File("resources/props/props.xml"));
-    }
-    props.loadFromXML(in);
-    checkProps(props);
-    MDParser mdp = new MDParser(props);
-    String fileName = props.getProperty("inputFile");
-    String inputType = props.getProperty("inputType");
-    String inputFormat = props.getProperty("inputFormat");
-    File[] allFiles = null;
-    if (inputType.equals("file")) {
-      allFiles = new File[1];
-      allFiles[0] = new File(fileName);
-    } else if (inputType.equals("dir")) {
-      allFiles = new File(fileName).listFiles();
-    }
-    for (int i = 0; i < allFiles.length; i++) {
-      fileName = allFiles[i].getPath();
-      String outputFile = props.getProperty("outputFile");
-      String taggedFile = props.getProperty("taggedFile");
-      if (inputType.equals("dir")) {
-        outputFile = String.format("%s/%04d.txt", outputFile, i);
-        taggedFile = String.format("%s/%04d_morph.txt", taggedFile, i);
+    try {
+      Properties props = new Properties();
+      FileInputStream in = null;
+      // GN: read properties
+      if (args.length == 1) {
+        in = new FileInputStream(new File(args[0]));
+      } else {
+        in = new FileInputStream(new File("resources/props/props.xml"));
       }
-      String inputString = readFileToString(fileName, inputFormat);
-      String parsed = "";
-      String mode = props.getProperty("mode");
-      System.err.println("------ Tag and Parse input file ...");
-
-      if (mode.equals("parse")) {
-        parsed = mdp.parseText(inputString, mdp.language, inputFormat);
-        String outputFormat = props.getProperty("outputFormat");
-        String output = "";
-        if (outputFormat.equals("stanford")) {
-          String stanfordMorphString = new StanfordOutput(parsed).getTaggedOutput();
-          String stanfordParsedString = new StanfordOutput(parsed).getParsedOutput();
-          printStringToFile(stanfordMorphString, taggedFile);
-          printStringToFile(stanfordParsedString, outputFile);
-        } else {
-          if (outputFormat.equals("conll")) {
-            output = new ConllOutput(parsed).getOutput();
-          } else if (outputFormat.equals("conllxml")) {
-            output = new ConllXMLOutput(parsed).getOutput();
-          } else if (outputFormat.equals("triple")) {
-            output = new TripleOutput(parsed).getOutput();
-          }
-          printStringToFile(output, outputFile);
-          System.err.println("------ ... DONE!");
+      props.loadFromXML(in);
+      checkProps(props);
+      MDParser mdp = new MDParser(props);
+      String fileName = props.getProperty("inputFile");
+      String inputType = props.getProperty("inputType");
+      String inputFormat = props.getProperty("inputFormat");
+      File[] allFiles = null;
+      if (inputType.equals("file")) {
+        allFiles = new File[1];
+        allFiles[0] = new File(fileName);
+      } else if (inputType.equals("dir")) {
+        allFiles = new File(fileName).listFiles();
+      } else {
+        System.err.println("unknown input type " + inputType);
+        return;
+      }
+      for (int i = 0; i < allFiles.length; i++) {
+        fileName = allFiles[i].getPath();
+        String outputFile = props.getProperty("outputFile");
+        String taggedFile = props.getProperty("taggedFile");
+        if (inputType.equals("dir")) {
+          outputFile = String.format("%s/%04d.txt", outputFile, i);
+          taggedFile = String.format("%s/%04d_morph.txt", taggedFile, i);
         }
-      } else if (mode.equals("tag")) {
-        System.err.println("------ Tag input file ...");
+        String inputString = readFileToString(fileName, inputFormat);
+        String parsed = "";
+        String mode = props.getProperty("mode");
+        System.err.println("------ Tag and Parse input file ...");
 
-        parsed = mdp.tagText(inputString, mdp.language, inputFormat);
-        printStringToFile(parsed, taggedFile);
-        System.err.println("------ ... DONE!");
-      } else if (mode.equals("train")) {
-        Trainer trainer = new Trainer();
-        String[] dirs = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
-        String splitModelsDir = "splitModels";
-        String algorithm = "covington";
-        String splitFile = "temp/split.txt";
-        TrainerTest.deleteOld(dirs);
-        TrainerTest.createNew(dirs);
-        String inputFile = props.getProperty("inputFile");
-        String alphabetFileParser = "temp/alphaParser.txt";
-        String alphabetFileLabeler = "temp/alphaLabeler.txt";
-        trainer.createAndTrainWithSplittingFromDisk(algorithm, inputFile, splitModelsDir, alphabetFileParser,
-            alphabetFileLabeler, splitFile);
-        Archivator arch = new Archivator(props.getProperty("modelsFile"), dirs);
-        arch.pack();
-        arch.delTemp();
-        TrainerTest.deleteOld(dirs);
+        if (mode.equals("parse")) {
+          parsed = mdp.parseText(inputString, mdp.language, inputFormat);
+          String outputFormat = props.getProperty("outputFormat");
+          String output = "";
+          if (outputFormat.equals("stanford")) {
+            String stanfordMorphString = new StanfordOutput(parsed).getTaggedOutput();
+            String stanfordParsedString = new StanfordOutput(parsed).getParsedOutput();
+            printStringToFile(stanfordMorphString, taggedFile);
+            printStringToFile(stanfordParsedString, outputFile);
+          } else {
+            if (outputFormat.equals("conll")) {
+              output = new ConllOutput(parsed).getOutput();
+            } else if (outputFormat.equals("conllxml")) {
+              output = new ConllXMLOutput(parsed).getOutput();
+            } else if (outputFormat.equals("triple")) {
+              output = new TripleOutput(parsed).getOutput();
+            }
+            printStringToFile(output, outputFile);
+            System.err.println("------ ... DONE!");
+          }
+        } else if (mode.equals("tag")) {
+          System.err.println("------ Tag input file ...");
 
-
+          parsed = mdp.tagText(inputString, mdp.language, inputFormat);
+          printStringToFile(parsed, taggedFile);
+          System.err.println("------ ... DONE!");
+        } else if (mode.equals("train")) {
+          Trainer trainer = new Trainer();
+          String[] dirs = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
+          String splitModelsDir = "splitModels";
+          String algorithm = "covington";
+          String splitFile = "temp/split.txt";
+          TrainerTest.deleteOld(dirs);
+          TrainerTest.createNew(dirs);
+          String inputFile = props.getProperty("inputFile");
+          String alphabetFileParser = "temp/alphaParser.txt";
+          String alphabetFileLabeler = "temp/alphaLabeler.txt";
+          trainer.createAndTrainWithSplittingFromDisk(algorithm, inputFile, splitModelsDir, alphabetFileParser,
+              alphabetFileLabeler, splitFile);
+          Archivator arch = new Archivator(props.getProperty("modelsFile"), dirs);
+          arch.pack();
+          arch.delTemp();
+          TrainerTest.deleteOld(dirs);
+        }
       }
-
+    } catch (IOException e) {
+      e.printStackTrace();
     }
-
-
   }
 }
