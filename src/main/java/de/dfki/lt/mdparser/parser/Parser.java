@@ -5,12 +5,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
 import de.bwaldvogel.liblinear.Model;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
@@ -24,8 +26,6 @@ import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
 import de.dfki.lt.mdparser.features.FeatureExtractor;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
-import pi.ParIterator;
-import pi.ParIteratorFactory;
 
 public class Parser {
 
@@ -233,9 +233,8 @@ public class Parser {
     System.out.println("Time to read model (msec): " + (end - st));
     //gds readSplitModelsL(arch);
     FeatureExtractor fe = new FeatureExtractor();
-    Sentence[] sentences = d.getSentences();
-    FeatureModel fm = null;
-    ParsingAlgorithm pa = null;
+    final FeatureModel fm;
+    final ParsingAlgorithm pa;
     if (algorithm.equals("covington")) {
       fm = new CovingtonFeatureModel(alphabetParser, fe);
       pa = new CovingtonAlgorithm();
@@ -253,43 +252,30 @@ public class Parser {
     pa.initLabelFreqMap();
     pa.setParser(this);
     long start = System.currentTimeMillis();
-    Runtime runtime = Runtime.getRuntime();
-    int numberOfProcessors = runtime.availableProcessors();
-    //  System.out.println("Number of processors used: "+numberOfProcessors);
+    int numberOfProcessors = Runtime.getRuntime().availableProcessors();
+    // TODO make this configurable
     int threadCount = numberOfProcessors;
-    //    int threadCount = 1;
-    List<Sentence> sentencesList = new ArrayList<Sentence>(sentences.length);
-    for (int n = 0; n < sentences.length; n++) {
-      sentencesList.add(sentences[n]);
+    List<Sentence> sentencesList = Arrays.asList(d.getSentences());
+    //sentencesList.stream().forEach(x -> pa.processCombined(x, fm, noLabels, this.splitMap));
+    // we use our own thread pool to be able to better control parallelization
+    ForkJoinPool forkJoinPool = new ForkJoinPool(threadCount);
+    try {
+      forkJoinPool.submit(
+          () -> sentencesList.stream().parallel().forEach(x -> pa.processCombined(x, fm, noLabels, this.splitMap))
+      ).get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
     }
-    ParIterator<Sentence> iter = ParIteratorFactory.createParIterator(sentencesList, threadCount);
-    Thread[] threadPool = new ParserWorkerThread[threadCount];
-    for (int i = 0; i < threadCount; i++) {
-      threadPool[i] = new ParserWorkerThread(i, iter, pa, fm, noLabels, this.splitMap);
-      threadPool[i].start();
-    }
-    /*
-    for (int n=0; n < sentences.length;n++) {
-      pa.processCombined(sentences[n], fm, noLabels, splitMap);
-    }
-    */
-    // Main thread waits for worker threads to complete
-    for (int i = 0; i < threadCount; i++) {
-      try {
-        threadPool[i].join();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+
     // System.out.println("All worker threads have completed.");
     long end2 = System.currentTimeMillis();
     time += end2 - start;
     System.out.println("No. of threads: " + threadCount);
     System.out.println("Time to parse (msec): " + Double.valueOf(time));
-    System.out.println("Speed (sent/s): " + (sentences.length * 1000) / Double.valueOf(time));
+    System.out.println("Speed (sent/s): " + (d.getSentences().length * 1000) / Double.valueOf(time));
     System.out.println("Number of configurations: " + pa.getNumberOfConfigurations());
     System.out.println(
-        "Average number of configurations per sentence: " + pa.getNumberOfConfigurations() / sentences.length);
+        "Average number of configurations per sentence: " + pa.getNumberOfConfigurations() / d.getSentences().length);
   }
 
 

@@ -10,14 +10,19 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
 import de.bwaldvogel.liblinear.FeatureNode;
 import de.bwaldvogel.liblinear.InvalidInputDataException;
@@ -37,13 +42,10 @@ import de.dfki.lt.mdparser.features.FeatureExtractor;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
-import pi.ParIterator;
-import pi.ParIteratorFactory;
 
 public class Trainer {
 
   private double bias = -1;
-  private Problem prob = null;
   // solver, penalty C, epsilon Eps
   private Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
   private int totalConfigurations;
@@ -90,7 +92,7 @@ public class Trainer {
   }
 
 
-  public void readProblem(String filename) throws IOException, InvalidInputDataException {
+  public static Problem readProblem(String filename, double bias) throws IOException, InvalidInputDataException {
 
     BufferedReader fp = new BufferedReader(new FileReader(filename));
     List<Integer> vy = new ArrayList<Integer>();
@@ -118,7 +120,7 @@ public class Trainer {
 
         int m = st.countTokens() / 2;
         FeatureNode[] x;
-        if (this.bias >= 0) {
+        if (bias >= 0) {
           x = new FeatureNode[m + 1];
         } else {
           x = new FeatureNode[m];
@@ -157,7 +159,7 @@ public class Trainer {
 
         vx.add(x);
       }
-      this.prob = constructProblem(vy, vx, max_index);
+      return constructProblem(vy, vx, max_index, bias);
     } finally {
       fp.close();
     }
@@ -166,7 +168,7 @@ public class Trainer {
 
   // XXX GN: this is used for training
   public void createAndTrainWithSplittingFromDisk(String algorithm,
-      String inputFile, String splitModelsDir,
+      String inputFile, String splitModelsDirParam,
       String alphabetFileParser, String alphabetFileLabeler,
       String splitFile) throws IOException {
 
@@ -260,7 +262,7 @@ public class Trainer {
       opMap.get(curOp).close();
     }
 
-    HashMap<String, BufferedWriter> splitMap = new HashMap<String, BufferedWriter>();
+    Map<String, PrintWriter> splitMap = new HashMap<>();
 
     //XXX HIERIX -MDP-howItWorks.txt
     // GN: the next code basically creates the split training files
@@ -279,46 +281,34 @@ public class Trainer {
 
     System.out.println("Create splitting training files!");
 
-    // GN: for each label-specific feature vector integer encoded file do
-    File[] trainingFiles = splitO.listFiles();
-    Runtime runtime = Runtime.getRuntime();
-
     // GN: the number of available processor is determined !
-    int numberOfProcessors = runtime.availableProcessors();
+    int numberOfProcessors = Runtime.getRuntime().availableProcessors();
+    // TODO make this configurable
     int threadCount = numberOfProcessors;
-    //    int threadCount = 10;
+
+    // GN: for each label-specific feature vector integer encoded file do
+
+    // split files
+    List<File> filesToSplit = Arrays.asList(splitO.listFiles());
+    SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
+    //filesToSplit.stream().forEach(x -> splitWorker.processFile(x));
+    // we use our own thread pool to be able to better control parallelization
+    ForkJoinPool forkJoinPool = new ForkJoinPool(threadCount);
     System.out.println("Parallel processing on " + threadCount + " processors !");
-
-    List<File> filesList = new ArrayList<File>(trainingFiles.length);
-    for (int n = 0; n < trainingFiles.length; n++) {
-      filesList.add(trainingFiles[n]);
+    try {
+      forkJoinPool.submit(
+          () -> filesToSplit.stream().parallel().forEach(x -> splitWorker.processFile(x))
+      ).get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
     }
-
-    // GN: distribute the split files equally to parallel iterators
-    ParIterator<File> iter = ParIteratorFactory.createParIterator(filesList, threadCount);
-    Thread[] threadPool = new SplitWorkerThread[threadCount];
-    for (int k = 0; k < threadCount; k++) {
-      threadPool[k] = new SplitWorkerThread(k, iter, posMap, splitMap);
-      threadPool[k].start();
-    }
-    for (int k = 0; k < threadCount; k++) {
-      try {
-        threadPool[k].join();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-
-    System.out.println("Splitting files created in splitF");
-    Iterator<String> splitIter = splitMap.keySet().iterator();
-    while (splitIter.hasNext()) {
-      String curSplitVal = splitIter.next();
-      splitMap.get(curSplitVal).close();
+    for (PrintWriter oneWriter : splitMap.values()) {
+      oneWriter.close();
     }
 
     // GN: First version of split files are generated in splitF/
     // adjust them and store them in split/merge into files of acceptable size
-    trainingFiles = new File("splitF").listFiles();
+    File[] trainingFiles = new File("splitF").listFiles();
 
     System.out.println("Adjust splitting files in splitF and store them in split/ ");
     HashMap<String, String> newSplitMap = new HashMap<String, String>();
@@ -424,36 +414,25 @@ public class Trainer {
       curBw.append(featureString + " " + "split/" + newFile + " " + curSplitVal + "\n");
     }
     curBw.close();
-    File[] files = new File("split").listFiles();
-    filesList = new ArrayList<File>(files.length);
-    for (int n = 0; n < files.length; n++) {
-      filesList.add(files[n]);
-    }
 
     System.out.println("Compute the weights and the final model files in splitModels/ and alphabet files in splitA/ !");
-    // XXX GN: Perform parallel training
-    // For each file in split create call the trainer on that file
-    // -> means a new trainer object is created for each thread
-    // via de.dfki.lt.mdparser.parser.CompactiseWorkerThread.CompactiseWorkerThread(
-    // int, ParIterator<File>, Alphabet, String)
-    iter = ParIteratorFactory.createParIterator(filesList, threadCount);
-    threadPool = new CompactiseWorkerThread[threadCount];
-    for (int m = 0; m < threadCount; m++) {
-      threadPool[m] = new CompactiseWorkerThread(m, iter, alphaParser, splitModelsDir);
-      threadPool[m].start();
-    }
-    for (int m = 0; m < threadCount; m++) {
-      try {
-        threadPool[m].join();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+
+    // compact files
+    List<File> filesToCompact = Arrays.asList(new File("split").listFiles());
+    CompactiseWorker compactiseWorker = new CompactiseWorker(alphaParser, splitModelsDirParam, this.bias);
+    //filesToCompact.stream().forEach(x -> compactiseWorker.processFile(x));
+    // we use our own thread pool to be able to better control parallelization
+    ForkJoinPool compactingForkJoinPool = new ForkJoinPool(threadCount);
+    try {
+      compactingForkJoinPool.submit(
+          () -> filesToCompact.stream().parallel().forEach(x -> compactiseWorker.processFile(x))
+      ).get();
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
     }
 
     System.out.println("Make single alphabet file from splitA files " + alphabetFileParser);
-    recreateOneAlphabetAndAdjustModels(alphabetFileParser, "splitA", splitModelsDir);
-
-
+    recreateOneAlphabetAndAdjustModels(alphabetFileParser, "splitA", splitModelsDirParam);
   }
 
 
@@ -556,7 +535,7 @@ public class Trainer {
   }
 
 
-  void saveAlphabet(Alphabet alphaParser, Model model, int[][] compactArray, File file) throws IOException {
+  static void saveAlphabet(Alphabet alphaParser, Model model, int[][] compactArray, File file) throws IOException {
 
     int[] newToOld = compactArray[0];
     FileOutputStream out = new FileOutputStream(file);
@@ -584,7 +563,8 @@ public class Trainer {
   }
 
 
-  int[][] compactiseTrainingDataFile(File curentTrainingFile, int absoluteMax, File splitC) throws IOException {
+  public static int[][] compactiseTrainingDataFile(
+      File curentTrainingFile, int absoluteMax, File splitC) throws IOException {
 
     int[][] compactArray = new int[2][];
     int[] oldToNew = new int[absoluteMax];
@@ -632,22 +612,22 @@ public class Trainer {
   }
 
 
-  private Problem constructProblem(List<Integer> vy, List<FeatureNode[]> vx, int max_index) {
+  private static Problem constructProblem(List<Integer> vy, List<FeatureNode[]> vx, int max_index, double bias) {
 
     Problem prob = new Problem();
-    prob.bias = this.bias;
+    prob.bias = bias;
     prob.l = vy.size();
     prob.n = max_index;
-    if (this.bias >= 0) {
+    if (bias >= 0) {
       prob.n++;
     }
     prob.x = new FeatureNode[prob.l][];
     for (int i = 0; i < prob.l; i++) {
       prob.x[i] = vx.get(i);
 
-      if (this.bias >= 0) {
+      if (bias >= 0) {
         assert prob.x[i][prob.x[i].length - 1] == null;
-        prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, this.bias);
+        prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, bias);
       } else {
         assert prob.x[i][prob.x[i].length - 1] != null;
       }
@@ -674,11 +654,4 @@ public class Trainer {
 
     return this.totalConfigurations;
   }
-
-
-  public Problem getProblem() {
-
-    return this.prob;
-  }
-
 }
