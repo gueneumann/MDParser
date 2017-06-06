@@ -9,109 +9,59 @@ import de.dfki.lt.mdparser.eval.Eval;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.parser.Parser;
 
-public class MDPrunner {
+public final class MDPrunner {
 
-  private String algorithm = "covington";
-  private Parser parser = new Parser();
-  private Data data = null;
-  private Eval evaluator = null;
+  private static final String ALGORITHM = "covington";
 
 
-  // Getters and setters
+  private MDPrunner() {
 
-  // Class instantiation
-  public MDPrunner() {
+    // private constructor to enforce noninstantiability
   }
 
 
-  public Eval getEvaluator() {
-
-    return this.evaluator;
-  }
-
-
-  public void setEvaluator(Eval evaluator) {
-
-    this.evaluator = evaluator;
-  }
-
-
-  public Data getData() {
-
-    return this.data;
-  }
-
-
-  public void setData(Data data) {
-
-    this.data = data;
-  }
-
-
-  public String getAlgorithm() {
-
-    return this.algorithm;
-  }
-
-
-  public void setAlgorithm(String algorithm) {
-
-    this.algorithm = algorithm;
-  }
-
-
-  // Methods
-
-  public void conllFileParsingAndEval(String conllFile, String resultFile, String modelFile)
+  public static void conllFileParsingAndEval(String conllFile, String resultFile, String modelFile)
       throws IOException {
 
-    this.parser = new Parser();
-    this.data = new Data(conllFile, false);
-    System.out.println("No. of sentences: " + this.data.getSentences().length);
+    Parser parser = new Parser();
+    Data data = new Data(conllFile, false);
+    System.out.println("No. of sentences: " + data.getSentences().length);
 
     Archivator arch = new Archivator(modelFile);
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-    this.parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);
+    parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);
 
-    this.parser.parseCombined(this.algorithm, this.data, arch, alphabetParser, false);
+    parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
 
-    this.getData().printToFile(resultFile);
-    this.evalParser(conllFile, resultFile);
-
+    data.printToFile(resultFile);
+    Eval evaluator = new Eval(conllFile, resultFile, 6, 6, 7, 7);
+    System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
+    System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
   }
 
 
-  public void evalParser(String conllFile, String resultFile) throws IOException {
-
-    this.evaluator = new Eval(conllFile, resultFile, 6, 6, 7, 7);
-    System.out.println("Parent accuracy: " + this.evaluator.getParentsAccuracy());
-    System.out.println("Label accuracy:  " + this.evaluator.getLabelsAccuracy());
-  }
-
-
-  public void conllFileParsingAndLinearize(String conllFile, String resultFile, String modelFile)
+  public static void conllFileParsingAndLinearize(String conllFile, String resultFile, String modelFile)
       throws IOException {
 
-    this.parser = new Parser();
-    this.data = new Data(conllFile, false);
-    System.out.println("No. of sentences: " + this.data.getSentences().length);
+    Parser parser = new Parser();
+    Data data = new Data(conllFile, false);
+    System.out.println("No. of sentences: " + data.getSentences().length);
 
-    Archivator arch = new Archivator(modelFile, this.dirs);
+    Archivator arch = new Archivator(modelFile);
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-    this.parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);
+    parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);
 
-    this.parser.parseCombined(this.algorithm, this.data, arch, alphabetParser, false);
+    parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
 
-    this.getData().testLinearizedToFile(resultFile);
+    data.testLinearizedToFile(resultFile);
   }
 
 
   public static void main(String[] args)
       throws IOException {
 
-    MDPrunner mdpRunner = new MDPrunner();
     String conllFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test.conll";
     String resultFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test-result.conll";
     String modelFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-MDPmodel.zip";
@@ -120,7 +70,7 @@ public class MDPrunner {
     resultFile = "resources/input/ptb3-std-test.conll-result.conll";
     modelFile = "ptb3-std.zip";
 
-    mdpRunner.conllFileParsingAndEval(conllFile, resultFile, modelFile);
-    //mdpRunner.conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
+    conllFileParsingAndEval(conllFile, resultFile, modelFile);
+    //conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
   }
 }

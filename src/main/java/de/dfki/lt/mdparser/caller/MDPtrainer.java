@@ -8,42 +8,80 @@ import de.dfki.lt.mdparser.archive.Archivator;
 import de.dfki.lt.mdparser.parser.Trainer;
 import de.dfki.lt.mdparser.parser.TrainerMem;
 
-public class MDPtrainer {
+public final class MDPtrainer {
 
-  private String trainFile;
-  private String modelFile;
-
-  private String[] trainArgs;
-  private String[] parseArgs;
-
-  private String[] dirs = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
-  private String splitModelsDir = "splitModels";
-  private String algorithm = "covington";
-  private String splitFile = "temp/split.txt";
-  private String alphabetFileParser = "temp/alphaParser.txt";
-  private String alphabetFileLabeler = "temp/alphaLabeler.txt";
+  private static final String[] DIRS = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
+  private static final String ALGORITHM = "covington";
+  private static final String SPLIT_MODELS_DIR = "splitModels";
+  private static final String SPLIT_FILE = "temp/split.txt";
+  private static final String ALPHABET_FILE_PARSER = "temp/alphaParser.txt";
+  private static final String ALPHABET_FILE_LABELER = "temp/alphaLabeler.txt";
 
 
-  public MDPtrainer() {
+  private MDPtrainer() {
+
+    // private constructor to enforce noninstantiability
   }
 
 
-  public String getAlgorithm() {
+  public static void train(String trainFileParam, String archiveName)
+      throws IOException {
 
-    return this.algorithm;
+
+    deleteOldDirs();
+    createNewDirs();
+
+    Archivator arch = new Archivator(archiveName);
+    Trainer trainer = new Trainer();
+
+    long s1 = System.currentTimeMillis();
+
+    trainer.createAndTrainWithSplittingFromDisk(ALGORITHM, trainFileParam,
+        SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER, ALPHABET_FILE_LABELER, SPLIT_FILE);
+
+    long s2 = System.currentTimeMillis();
+
+    System.out.println("Complete Training time: " + ((s2 - s1)) + " milliseconds.");
+
+    //ModelEditorTest.main(null);
+    arch.pack();
+    arch.delTemp();
+
+    deleteOldDirs();
   }
 
 
-  public void setAlgorithm(String algorithm) {
+  public static void trainMem(String trainFileParam, String archiveName)
+      throws IOException {
 
-    this.algorithm = algorithm;
+
+    deleteOldDirs();
+    createNewDirs();
+
+    Archivator arch = new Archivator(archiveName);
+    TrainerMem trainer = new TrainerMem();
+
+    long s1 = System.currentTimeMillis();
+
+    trainer.createAndTrainWithSplittingFromMemory(ALGORITHM, trainFileParam,
+        SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER, ALPHABET_FILE_LABELER, SPLIT_FILE);
+
+    long s2 = System.currentTimeMillis();
+
+    System.out.println("Complete Training time: " + ((s2 - s1)) + " milliseconds.");
+
+    //ModelEditorTest.main(null);
+    arch.pack();
+    arch.delTemp();
+
+    deleteOldDirs();
   }
 
 
-  public static void createNew(String[] dirs) {
+  public static void createNewDirs() {
 
-    for (int i = 0; i < dirs.length; i++) {
-      String dir = dirs[i];
+    for (int i = 0; i < DIRS.length; i++) {
+      String dir = DIRS[i];
       File d = new File(dir);
       if (!d.exists()) {
         d.mkdir();
@@ -52,10 +90,10 @@ public class MDPtrainer {
   }
 
 
-  public static void deleteOld(String[] dirs) {
+  public static void deleteOldDirs() {
 
-    for (int i = 0; i < dirs.length; i++) {
-      File[] files = new File(dirs[i]).listFiles();
+    for (int i = 0; i < DIRS.length; i++) {
+      File[] files = new File(DIRS[i]).listFiles();
       if (files != null) {
         for (int k = 0; k < files.length; k++) {
           boolean b = files[k].delete();
@@ -68,69 +106,14 @@ public class MDPtrainer {
   }
 
 
-  public void trainer(String trainFileParam, String archiveName)
-      throws IOException {
-
-
-    deleteOld(this.dirs);
-    createNew(this.dirs);
-
-    Archivator arch = new Archivator(archiveName);
-    Trainer trainer = new Trainer();
-
-    long s1 = System.currentTimeMillis();
-
-    trainer.createAndTrainWithSplittingFromDisk(this.algorithm, trainFileParam,
-        this.splitModelsDir, this.alphabetFileParser, this.alphabetFileLabeler, this.splitFile);
-
-    long s2 = System.currentTimeMillis();
-
-    System.out.println("Complete Training time: " + ((s2 - s1)) + " milliseconds.");
-
-    //ModelEditorTest.main(null);
-    arch.pack();
-    arch.delTemp();
-
-    deleteOld(this.dirs);
-  }
-
-
-  public void trainerMem(String trainFileParam, String archiveName)
-      throws IOException {
-
-
-    deleteOld(this.dirs);
-    createNew(this.dirs);
-
-    Archivator arch = new Archivator(archiveName);
-    TrainerMem trainer = new TrainerMem();
-
-    long s1 = System.currentTimeMillis();
-
-    trainer.createAndTrainWithSplittingFromMemory(this.algorithm, trainFileParam,
-        this.splitModelsDir, this.alphabetFileParser, this.alphabetFileLabeler, this.splitFile);
-
-    long s2 = System.currentTimeMillis();
-
-    System.out.println("Complete Training time: " + ((s2 - s1)) + " milliseconds.");
-
-    //ModelEditorTest.main(null);
-    arch.pack();
-    arch.delTemp();
-
-    deleteOld(this.dirs);
-  }
-
-
   public static void main(String[] args) {
 
     try {
-      MDPtrainer mdpTrainer = new MDPtrainer();
       //mdpTrainer.setAlgorithm("stack");
       // Run parallel version of trainier
-      mdpTrainer.trainer("resources/input/ptb3-std-training.conll", "ptb3-std.zip");
+      train("resources/input/ptb3-std-training.conll", "ptb3-std.zip");
       // Run non-parallel (in memory) version of trainer
-      //mdpTrainer.trainerMem("resources/input/ptb3-std-training.conll", "ptb3-std-nonpara.zip");
+      //trainerMem("resources/input/ptb3-std-training.conll", "ptb3-std-nonpara.zip");
     } catch (IOException e) {
       e.printStackTrace();
     }

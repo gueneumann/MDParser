@@ -4,12 +4,8 @@ import java.io.IOException;
 
 import de.dfki.lt.mdparser.caller.MDPrunner;
 import de.dfki.lt.mdparser.caller.MDPtrainer;
-import de.dfki.lt.mdparser.eval.Eval;
 
 public class MDPtester {
-
-  private Eval eval;
-
 
   private void trainLanguage(String trainConllFile, String modelFile)
       throws IOException {
@@ -17,9 +13,7 @@ public class MDPtester {
     String trainFile = trainConllFile;
     String modelZipFileName = modelFile;
 
-    MDPtrainer mdpTrainer = new MDPtrainer();
-
-    mdpTrainer.trainer(trainFile, modelZipFileName);
+    MDPtrainer.train(trainFile, modelZipFileName);
   }
 
 
@@ -29,10 +23,7 @@ public class MDPtester {
     String mdpResultFile = resultFile;
     String modelZipFileName = modelFile;
 
-    MDPrunner mdpRunner = new MDPrunner();
-    mdpRunner.conllFileParsingAndEval(testFile, mdpResultFile, modelZipFileName);
-
-    this.eval = mdpRunner.getEvaluator();
+    MDPrunner.conllFileParsingAndEval(testFile, mdpResultFile, modelZipFileName);
   }
 
 
