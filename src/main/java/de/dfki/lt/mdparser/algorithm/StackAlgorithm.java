@@ -1,9 +1,9 @@
 package de.dfki.lt.mdparser.algorithm;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -168,7 +168,7 @@ public class StackAlgorithm extends ParsingAlgorithm {
   @Override
 
   // Called by Parser
-  public void processCombined(Sentence sent, FeatureModel fm, boolean noLabels, HashMap<String, String> splitMap) {
+  public void processCombined(Sentence sent, FeatureModel fm, boolean noLabels, Map<String, Model> feature2ModelMap) {
 
     String[][] sentArray = sent.getSentArray();
     Stack<Integer> buffer = initBuffer(sentArray.length);
@@ -181,14 +181,10 @@ public class StackAlgorithm extends ParsingAlgorithm {
       FeatureVector fvParser = fm.applyCombined(curState, true, noLabels);
       //System.out.print(sent.getRootPosition()+" "+curState.getStackToken(0)+" "+curState.getBufferToken(0)
       //+" "+stack+" "+buffer+" ");
-      String mName = "";
-      if (splitMap.get(fvParser.getFeature("pj").getFeatureString()) == null) {
-        List<String> mNames = new ArrayList<String>(splitMap.values());
-        mName = mNames.get(0);
-      } else {
-        mName = splitMap.get(fvParser.getFeature("pj").getFeatureString());
+      Model curModel = feature2ModelMap.get(fvParser.getFeature("pj").getFeatureString());
+      if (curModel == null) {
+        curModel = feature2ModelMap.values().iterator().next();
       }
-      Model curModel = this.getParser().getSplitModelMap().get(mName);
       int labelInt =
           (int)Linear.predict(curModel, fvParser.getLiblinearRepresentation(false, false, fm.getAlphabetParser()));
       String label = fm.getAlphabetParser().getIndexLabelArray()[labelInt];

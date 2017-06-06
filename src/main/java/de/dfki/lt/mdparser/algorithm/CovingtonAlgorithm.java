@@ -1,10 +1,10 @@
 package de.dfki.lt.mdparser.algorithm;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -202,7 +202,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
   // GN: Used in nereid.parser.MDPApi
   // AND also called in MDPrunner via ParserWorkerThread.run
   public void processCombined(Sentence sent, FeatureModel fm, boolean noLabels,
-      HashMap<String, String> splitMap) {
+      Map<String, Model> feature2ModelMap) {
 
     String[][] sentArray = sent.getSentArray();
     sent.setRootPosition(-1);
@@ -216,15 +216,12 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
         if (ps.isPermissible()) {
           super.plus();
           FeatureVector fvParser = fm2.applyCombined(ps, false, noLabels);
-          //System.out.println(fvParser);
-          String mName = "";
-          if (splitMap.get(fvParser.getFeature("pj").getFeatureString()) == null) {
-            List<String> mNames = new ArrayList<String>(splitMap.values());
-            mName = mNames.get(0);
-          } else {
-            mName = splitMap.get(fvParser.getFeature("pj").getFeatureString());
+          //System.out.println(fvParser);          
+          Model curModel = feature2ModelMap.get(fvParser.getFeature("pj").getFeatureString());
+          if (curModel == null) {
+            // TODO don't use a random model here!!! -> non-deterministic
+            curModel = feature2ModelMap.values().iterator().next();
           }
-          Model curModel = this.getParser().getSplitModelMap().get(mName);
           //System.out.println(mName+" "+curAlphabet);
           //System.out.println(+" "+curModel+" "+fm2+" "+fm2.getAlphabetParser());
           int labelInt = (int)Linear.predict(curModel,

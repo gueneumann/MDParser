@@ -3,7 +3,9 @@ package de.dfki.lt.mdparser.algorithm;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import de.bwaldvogel.liblinear.Model;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
@@ -33,8 +35,8 @@ public abstract class ParsingAlgorithm {
 
 
   //TEST-GDS-COMBINED
-  public abstract void processCombined(Sentence sent, FeatureModel fm, boolean noLabels,
-      HashMap<String, String> splitMap);
+  public abstract void processCombined(
+      Sentence sent, FeatureModel fm, boolean noLabels, Map<String, Model> feature2ModelMap);
 
 
   public abstract String findOutCorrectLabel(int j, int i, String[][] sentArray);

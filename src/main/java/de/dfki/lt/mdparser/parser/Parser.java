@@ -5,12 +5,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 
@@ -37,7 +36,6 @@ public class Parser {
   private int predictedSecondBestLabelIndex;
 
   private HashMap<String, Model> splitModelMap;
-  private HashMap<String, String> splitMap;
   private HashMap<String, Model> splitModelMapL;
   private HashMap<String, String> splitMapL;
 
@@ -121,12 +119,6 @@ public class Parser {
   }
 
 
-  public HashMap<String, String> getSplitMap() {
-
-    return this.splitMap;
-  }
-
-
   public void setSplitMapL(HashMap<String, String> splitMapL) {
 
     this.splitMapL = splitMapL;
@@ -190,35 +182,43 @@ public class Parser {
   }
 
 
-  private HashMap<String, String> readSplitFile(InputStream splitFileIs) throws IOException {
+  // returns a mapping of features to model file names
+  private static Map<String, String> readSplitFile(InputStream splitFileInputStream) {
 
-    HashMap<String, String> resultSplitMap = new HashMap<String, String>();
-    InputStreamReader ir = new InputStreamReader(splitFileIs, "UTF8");
-    BufferedReader fr = new BufferedReader(ir);
-    String line;
-    while ((line = fr.readLine()) != null) {
-      String[] lineArray = line.split(" ");
-      resultSplitMap.put(lineArray[0], lineArray[1]);
+    Map<String, String> splitMap = new HashMap<>();
+    try (BufferedReader in = new BufferedReader(
+        new InputStreamReader(splitFileInputStream, StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = in.readLine()) != null) {
+        String[] lineArray = line.split(" ");
+        splitMap.put(lineArray[0], lineArray[1]);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
     }
-    return resultSplitMap;
+
+    return splitMap;
   }
 
 
-  public void readSplitModels(Archivator arch) throws IOException {
+  // returns a mapping of features to models
+  private static Map<String, Model> readModels(Archivator arch) throws IOException {
 
-    this.splitWeightsMap = new HashMap<String, double[]>();
-    this.splitMap = readSplitFile(arch.getSplitFileInputStream());
-    this.splitModelMap = new HashMap<String, Model>();
-    Set<String> values = new HashSet<String>(this.splitMap.values());
-    Iterator<String> iter = values.iterator();
-    while (iter.hasNext()) {
-      String modelNameOriginal = iter.next();
-      String modelName = "splitModels/" + modelNameOriginal.substring(6);
-      InputStream is = arch.getInputStream(modelName);
-      Model m = Model.load(new InputStreamReader(is));
-      this.splitModelMap.put(modelNameOriginal, m);
-      this.splitWeightsMap.put(modelNameOriginal, m.getFeatureWeights());
+    Map<String, Model> feature2ModelMap = new HashMap<>();
+    Map<String, Model> modelId2ModelMap = new HashMap<>();
+    Map<String, String> feature2ModelFileNameMap = readSplitFile(arch.getSplitFileInputStream());
+    for (Map.Entry<String, String> oneFeature2ModelFileName : feature2ModelFileNameMap.entrySet()) {
+      String modelId = oneFeature2ModelFileName.getValue().substring(6);
+      Model model = modelId2ModelMap.get(modelId);
+      if (null == model) {
+        String modelFileName = "splitModels/" + modelId;
+        InputStream is = arch.getInputStream(modelFileName);
+        model = Model.load(new InputStreamReader(is));
+      }
+      feature2ModelMap.put(oneFeature2ModelFileName.getKey(), model);
+      modelId2ModelMap.put(modelId, model);
     }
+    return feature2ModelMap;
   }
 
 
@@ -227,7 +227,7 @@ public class Parser {
       throws IOException {
 
     long st = System.currentTimeMillis();
-    readSplitModels(arch);
+    Map<String, Model> feature2ModelMap = readModels(arch);
     //readSplitAlphabets(arch);
     long end = System.currentTimeMillis();
     System.out.println("Time to read model (msec): " + (end - st));
@@ -261,7 +261,7 @@ public class Parser {
     ForkJoinPool forkJoinPool = new ForkJoinPool(threadCount);
     try {
       forkJoinPool.submit(
-          () -> sentencesList.stream().parallel().forEach(x -> pa.processCombined(x, fm, noLabels, this.splitMap))
+          () -> sentencesList.stream().parallel().forEach(x -> pa.processCombined(x, fm, noLabels, feature2ModelMap))
       ).get();
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
@@ -284,7 +284,7 @@ public class Parser {
       throws IOException {
 
     long st = System.currentTimeMillis();
-    readSplitModels(arch);
+    Map<String, Model> feature2ModelMap = readModels(arch);
 
     long end = System.currentTimeMillis();
     System.out.println("Time to read model (msec): " + (end - st));
@@ -307,7 +307,7 @@ public class Parser {
     pa.setParser(this);
     long start = System.currentTimeMillis();
     for (int n = 0; n < sentences.length; n++) {
-      pa.processCombined(sentences[n], fm, noLabels, this.splitMap);
+      pa.processCombined(sentences[n], fm, noLabels, feature2ModelMap);
     }
     long end2 = System.currentTimeMillis();
     time += end2 - start;
