@@ -9,37 +9,18 @@ import de.bwaldvogel.liblinear.Model;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
-import de.dfki.lt.mdparser.parser.Parser;
 
 public abstract class ParsingAlgorithm {
 
-  private Parser parser;
   private int numberOfConfigurations;
-  private HashMap<String, Integer> labelFreqMap;
+  private Map<String, Integer> labelFreqMap;
 
 
-  public void setParser(Parser parser) {
+  public ParsingAlgorithm() {
 
-    this.parser = parser;
+    this.numberOfConfigurations = 0;
+    this.labelFreqMap = new HashMap<>();
   }
-
-
-  public Parser getParser() {
-
-    return this.parser;
-  }
-
-
-  //TRAIN-GDS-COMBINED
-  public abstract List<FeatureVector> processCombined(Sentence sentence, FeatureModel fm, boolean noLabels);
-
-
-  //TEST-GDS-COMBINED
-  public abstract void processCombined(
-      Sentence sent, FeatureModel fm, boolean noLabels, Map<String, Model> feature2ModelMap);
-
-
-  public abstract String findOutCorrectLabel(int j, int i, String[][] sentArray);
 
 
   public int getNumberOfConfigurations() {
@@ -48,37 +29,23 @@ public abstract class ParsingAlgorithm {
   }
 
 
-  public void plus() {
+  public synchronized void incNumberOfConfigurations() {
 
     this.numberOfConfigurations++;
   }
 
 
-  public void setNumberOfConfigurations(int numberOfConfigurations) {
-
-    this.numberOfConfigurations = numberOfConfigurations;
-  }
-
-
-  public void initLabelFreqMap() {
-
-    this.labelFreqMap = new HashMap<String, Integer>();
-  }
+  //TRAIN-GDS-COMBINED
+  public abstract List<FeatureVector> processCombined(
+      Sentence sent, FeatureModel featureModel, boolean noLabels);
 
 
-  public void setLabelFreqMap(HashMap<String, Integer> labelFreqMap) {
-
-    this.labelFreqMap = labelFreqMap;
-  }
-
-
-  public HashMap<String, Integer> getLabelFreqMap() {
-
-    return this.labelFreqMap;
-  }
+  //TEST-GDS-COMBINED
+  public abstract void processCombined(
+      Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap);
 
 
-  public synchronized String findTheMostFreqLabel(String pos) {
+  public synchronized String findMostFrequentLabel(String pos) {
 
     Iterator<String> iter = this.labelFreqMap.keySet().iterator();
     Integer curMax = Integer.MIN_VALUE;
@@ -93,21 +60,19 @@ public abstract class ParsingAlgorithm {
           curMaxLabel = curLabel;
           curMax = val;
         }
-
       }
     }
     return curMaxLabel;
   }
 
 
-  public synchronized void increaseCount(String key) {
+  public synchronized void increaseLabelCount(String label) {
 
-    Integer curKeyFreq = this.labelFreqMap.get(key);
+    Integer curKeyFreq = this.labelFreqMap.get(label);
     if (curKeyFreq == null) {
-      this.labelFreqMap.put(key, 1);
+      this.labelFreqMap.put(label, 1);
     } else {
-      this.labelFreqMap.put(key, 1 + curKeyFreq);
+      this.labelFreqMap.put(label, 1 + curKeyFreq);
     }
   }
-
 }

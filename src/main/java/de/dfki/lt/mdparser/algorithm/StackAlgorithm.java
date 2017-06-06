@@ -19,17 +19,63 @@ public class StackAlgorithm extends ParsingAlgorithm {
   private int maxi;
 
 
-  @Override
-  public int getNumberOfConfigurations() {
+  public StackAlgorithm() {
 
-    return super.getNumberOfConfigurations();
+    super();
   }
 
 
   @Override
-  public void setNumberOfConfigurations(int numberOfConfigurations) {
+  // GN: called by Trainer
+  public List<FeatureVector> processCombined(
+      Sentence sentence, FeatureModel featureModel, boolean noLabels) {
 
-    super.setNumberOfConfigurations(numberOfConfigurations);
+    List<FeatureVector> featureVectorList = new ArrayList<FeatureVector>();
+    String[][] sentArray = sentence.getSentArray();
+    Stack<Integer> buffer = initBuffer(sentArray.length);
+    Stack<Integer> stack = new Stack<Integer>();
+    stack.add(0);
+    DependencyStructure curDepStruct = new DependencyStructure(sentArray.length);
+    initGoldDepStruct(sentArray);
+    StackParserState curState = new StackParserState(stack, buffer, sentence, curDepStruct);
+    while (!curState.isTerminal()) {
+      FeatureVector featureVector = featureModel.applyCombined(curState, true, noLabels);
+      // System.out.print(curState.getStackToken(0)+" "+curState.getBufferToken(0)+" "+maxi+" "+stack+" "+buffer+" ");
+      String label = findOutCorrectLabel2Combined(curState.getStack(), curState.getBufferToken(0), sentArray);
+      // System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
+      featureVector.setLabel(label);
+      String labelTrans = "";
+      if (label.contains("#")) {
+        labelTrans = label.split("#")[0];
+      }
+      if (labelTrans.equals("j")) {
+        sentArray[curState.getStackToken(0) - 1][8] = String.valueOf(curState.getBufferToken(0));
+        String depRel = sentArray[curState.getStackToken(0) - 1][7];
+        sentArray[curState.getStackToken(0) - 1][9] = depRel;
+        curDepStruct.addDependency(new Dependency(curState.getStackToken(0), curState.getBufferToken(0), depRel));
+
+        stack.pop();
+      } else if (labelTrans.equals("i")) {
+        sentArray[curState.getBufferToken(0) - 1][8] = String.valueOf(curState.getStackToken(0));
+        String depRel = sentArray[curState.getBufferToken(0) - 1][7];
+        sentArray[curState.getBufferToken(0) - 1][9] = depRel;
+        curDepStruct.addDependency(new Dependency(curState.getBufferToken(0), curState.getStackToken(0), depRel));
+        stack.push(buffer.remove(0));
+      } else if (label.equals("reduce")) {
+        stack.pop();
+      } else {
+        if (!buffer.isEmpty()) {
+          stack.push(buffer.remove(0));
+        }
+      }
+      if (buffer.isEmpty()) {
+        curState.setTerminal(true);
+      }
+      featureModel.getAlphabetParser().addLabel(label);
+      featureVectorList.add(featureVector);
+      this.maxi = Math.max(curState.getBufferToken(0), this.maxi);
+    }
+    return featureVectorList;
   }
 
 
@@ -41,39 +87,6 @@ public class StackAlgorithm extends ParsingAlgorithm {
       this.goldDepStruct.addDependency(
           new Dependency(Integer.valueOf(sentArray[i][0]), Integer.valueOf(sentArray[i][6]), sentArray[i][7]));
     }
-  }
-
-
-  private Stack<Integer> initBuffer(int length) {
-
-    Stack<Integer> buffer = new Stack<Integer>();
-    for (int j = 1; j < length + 1; j++) {
-      buffer.push(j);
-    }
-    return buffer;
-  }
-
-
-  private void postprocess(String[][] sentArray, Sentence sent) {
-
-    for (int j = 0; j < sentArray.length; j++) {
-      if (sentArray[j][6] == null || sentArray[j][6].equals("_")) {
-        int root = sent.getRootPosition();
-        if (root == -1) {
-          root = 1;
-        }
-        sentArray[j][6] = String.valueOf(root);
-      }
-    }
-  }
-
-
-  @Override
-  // GN: NOT Used but needed because if Interface
-  public String findOutCorrectLabel(int j, int i, String[][] sentArray) {
-
-    String label = "";
-    return label;
   }
 
 
@@ -113,62 +126,10 @@ public class StackAlgorithm extends ParsingAlgorithm {
 
 
   @Override
-  // GN: called by Trainer
-  public List<FeatureVector> processCombined(Sentence sentence, FeatureModel fm, boolean noLabels) {
-
-    List<FeatureVector> fvList = new ArrayList<FeatureVector>();
-    String[][] sentArray = sentence.getSentArray();
-    Stack<Integer> buffer = initBuffer(sentArray.length);
-    Stack<Integer> stack = new Stack<Integer>();
-    stack.add(0);
-    DependencyStructure curDepStruct = new DependencyStructure(sentArray.length);
-    initGoldDepStruct(sentArray);
-    StackParserState curState = new StackParserState(stack, buffer, sentence, curDepStruct);
-    while (!curState.isTerminal()) {
-      FeatureVector fv = fm.applyCombined(curState, true, noLabels);
-      // System.out.print(curState.getStackToken(0)+" "+curState.getBufferToken(0)+" "+maxi+" "+stack+" "+buffer+" ");
-      String label = findOutCorrectLabel2Combined(curState.getStack(), curState.getBufferToken(0), sentArray);
-      // System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
-      fv.setLabel(label);
-      String labelTrans = "";
-      if (label.contains("#")) {
-        labelTrans = label.split("#")[0];
-      }
-      if (labelTrans.equals("j")) {
-        sentArray[curState.getStackToken(0) - 1][8] = String.valueOf(curState.getBufferToken(0));
-        String depRel = sentArray[curState.getStackToken(0) - 1][7];
-        sentArray[curState.getStackToken(0) - 1][9] = depRel;
-        curDepStruct.addDependency(new Dependency(curState.getStackToken(0), curState.getBufferToken(0), depRel));
-
-        stack.pop();
-      } else if (labelTrans.equals("i")) {
-        sentArray[curState.getBufferToken(0) - 1][8] = String.valueOf(curState.getStackToken(0));
-        String depRel = sentArray[curState.getBufferToken(0) - 1][7];
-        sentArray[curState.getBufferToken(0) - 1][9] = depRel;
-        curDepStruct.addDependency(new Dependency(curState.getBufferToken(0), curState.getStackToken(0), depRel));
-        stack.push(buffer.remove(0));
-      } else if (label.equals("reduce")) {
-        stack.pop();
-      } else {
-        if (!buffer.isEmpty()) {
-          stack.push(buffer.remove(0));
-        }
-      }
-      if (buffer.isEmpty()) {
-        curState.setTerminal(true);
-      }
-      fm.getAlphabetParser().addLabel(label);
-      fvList.add(fv);
-      this.maxi = Math.max(curState.getBufferToken(0), this.maxi);
-    }
-    return fvList;
-  }
-
-
-  @Override
 
   // Called by Parser
-  public void processCombined(Sentence sent, FeatureModel fm, boolean noLabels, Map<String, Model> feature2ModelMap) {
+  public void processCombined(
+      Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap) {
 
     String[][] sentArray = sent.getSentArray();
     Stack<Integer> buffer = initBuffer(sentArray.length);
@@ -177,17 +138,17 @@ public class StackAlgorithm extends ParsingAlgorithm {
     DependencyStructure curDepStruct = new DependencyStructure(sentArray.length);
     StackParserState curState = new StackParserState(stack, buffer, sent, curDepStruct);
     while (!curState.isTerminal()) {
-      super.plus();
-      FeatureVector fvParser = fm.applyCombined(curState, true, noLabels);
+      super.incNumberOfConfigurations();
+      FeatureVector featureVector = featureModel.applyCombined(curState, true, noLabels);
       //System.out.print(sent.getRootPosition()+" "+curState.getStackToken(0)+" "+curState.getBufferToken(0)
       //+" "+stack+" "+buffer+" ");
-      Model curModel = feature2ModelMap.get(fvParser.getFeature("pj").getFeatureString());
+      Model curModel = feature2ModelMap.get(featureVector.getFeature("pj").getFeatureString());
       if (curModel == null) {
         curModel = feature2ModelMap.values().iterator().next();
       }
-      int labelInt =
-          (int)Linear.predict(curModel, fvParser.getLiblinearRepresentation(false, false, fm.getAlphabetParser()));
-      String label = fm.getAlphabetParser().getIndexLabelArray()[labelInt];
+      int labelInt = (int)Linear.predict(
+          curModel, featureVector.getLiblinearRepresentation(false, false, featureModel.getAlphabetParser()));
+      String label = featureModel.getAlphabetParser().getIndexLabelArray()[labelInt];
       //System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
       String labelTrans = "";
       String labelDepRel = "";
@@ -195,7 +156,7 @@ public class StackAlgorithm extends ParsingAlgorithm {
         labelTrans = label.split("#")[0];
         labelDepRel = label.split("#")[1];
       }
-      fvParser.setLabel(label);
+      featureVector.setLabel(label);
       if (labelTrans.equals("j") && 0 != curState.getStackToken(0)) {
         sentArray[curState.getStackToken(0) - 1][6] = String.valueOf(curState.getBufferToken(0));
         String depRel = labelDepRel;
@@ -235,4 +196,26 @@ public class StackAlgorithm extends ParsingAlgorithm {
   }
 
 
+  private void postprocess(String[][] sentArray, Sentence sent) {
+
+    for (int j = 0; j < sentArray.length; j++) {
+      if (sentArray[j][6] == null || sentArray[j][6].equals("_")) {
+        int root = sent.getRootPosition();
+        if (root == -1) {
+          root = 1;
+        }
+        sentArray[j][6] = String.valueOf(root);
+      }
+    }
+  }
+
+
+  private static Stack<Integer> initBuffer(int length) {
+
+    Stack<Integer> buffer = new Stack<Integer>();
+    for (int j = 1; j < length + 1; j++) {
+      buffer.push(j);
+    }
+    return buffer;
+  }
 }

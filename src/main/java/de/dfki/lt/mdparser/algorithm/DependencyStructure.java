@@ -3,6 +3,7 @@ package de.dfki.lt.mdparser.algorithm;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -12,12 +13,13 @@ public class DependencyStructure {
   private Set<Dependency> dependencies;
   private int[] heads;
   private String[] labels;
-  private HashMap<Integer, Set<Integer>> dependents;
+  private Map<Integer, Set<Integer>> dependents;
   private int rootPosition;
   private int size;
 
 
   public DependencyStructure(int size) {
+
     this.dependencies = new HashSet<Dependency>(40);
     this.heads = new int[size + 1];
     this.labels = new String[size + 1];
@@ -32,21 +34,9 @@ public class DependencyStructure {
   }
 
 
-  public Set<Dependency> getDependencies() {
+  public Dependency[] getDependenciesArray() {
 
-    return this.dependencies;
-  }
-
-
-  public int getSize() {
-
-    return this.size;
-  }
-
-
-  public HashMap<Integer, Set<Integer>> getDependents() {
-
-    return this.dependents;
+    return this.dependenciesArray;
   }
 
 
@@ -56,9 +46,9 @@ public class DependencyStructure {
   }
 
 
-  public String[] getLabels() {
+  public Map<Integer, Set<Integer>> getDependents() {
 
-    return this.labels;
+    return this.dependents;
   }
 
 
@@ -68,9 +58,15 @@ public class DependencyStructure {
   }
 
 
-  public void setRootPosition(int rootPosition) {
-
-    this.rootPosition = rootPosition;
+  public void constructDependenciesArray() {
+  
+    Iterator<Dependency> iter = this.dependencies.iterator();
+    Dependency[] deps = new Dependency[this.size];
+    while (iter.hasNext()) {
+      Dependency curDep = iter.next();
+      deps[curDep.getDependent()] = curDep;
+    }
+    this.dependenciesArray = deps;
   }
 
 
@@ -110,7 +106,7 @@ public class DependencyStructure {
   }
 
 
-  public boolean contains(Dependency dependency) {
+  public boolean containsDependency(Dependency dependency) {
 
     int dependent = dependency.getDependent();
     int head = dependency.getHead();
@@ -121,6 +117,23 @@ public class DependencyStructure {
       }
     }
     return false;
+  }
+
+
+  public Set<Integer> getAllDependentsTransitive(Integer token) {
+  
+    Stack<Integer> st = new Stack<Integer>();
+    st.add(token);
+    Set<Integer> allDeps = new HashSet<Integer>();
+    while (!st.isEmpty()) {
+      Integer curToken = st.pop();
+      Set<Integer> curDependents = this.dependents.get(curToken);
+      if (curDependents != null && !curDependents.isEmpty()) {
+        st.addAll(curDependents);
+        allDeps.addAll(curDependents);
+      }
+    }
+    return allDeps;
   }
 
 
@@ -169,7 +182,7 @@ public class DependencyStructure {
 
   public int getFarthestLeftDependent(int i) {
 
-    int ld = 99999;
+    int ld = Integer.MAX_VALUE;
     Set<Integer> deps = this.dependents.get(i);
     if (deps != null) {
       Iterator<Integer> depsIter = deps.iterator();
@@ -179,11 +192,11 @@ public class DependencyStructure {
           ld = curDep;
         }
       }
-      if (ld == 99999) {
+      if (ld == Integer.MAX_VALUE) {
         ld = 0;
       }
     }
-    if (ld == 99999) {
+    if (ld == Integer.MAX_VALUE) {
       ld = -1;
     }
     return ld;
@@ -281,46 +294,5 @@ public class DependencyStructure {
       sb.append("(" + (i) + "," + this.heads[i] + ") ");
     }
     return sb.toString();
-  }
-
-
-  public Set<Integer> getAllDependentsTransitive(Integer token) {
-
-    Stack<Integer> st = new Stack<Integer>();
-    st.add(token);
-    Set<Integer> allDeps = new HashSet<Integer>();
-    while (!st.isEmpty()) {
-      Integer curToken = st.pop();
-      Set<Integer> curDependents = getDependents().get(curToken);
-      if (curDependents != null && !curDependents.isEmpty()) {
-        st.addAll(curDependents);
-        allDeps.addAll(curDependents);
-      }
-    }
-    return allDeps;
-  }
-
-
-  public void constructDependenciesArray() {
-
-    Iterator<Dependency> iter = getDependencies().iterator();
-    Dependency[] deps = new Dependency[getSize()];
-    while (iter.hasNext()) {
-      Dependency curDep = iter.next();
-      deps[curDep.getDependent()] = curDep;
-    }
-    this.dependenciesArray = deps;
-  }
-
-
-  public void setDependenciesArray(Dependency[] dependenciesArray) {
-
-    this.dependenciesArray = dependenciesArray;
-  }
-
-
-  public Dependency[] getDependenciesArray() {
-
-    return this.dependenciesArray;
   }
 }

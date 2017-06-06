@@ -7,37 +7,24 @@ public class Dependency {
   private int dependent;
   private int head;
 
-  private int startIndex;
-
   private String label;
 
-  private double probability;
   private String dependentString;
   private String headString;
 
 
   public Dependency(int dependent, int head) {
+
     this.dependent = dependent;
     this.head = head;
   }
 
 
   public Dependency(int dependent, int head, String label) {
+
     this.dependent = dependent;
     this.head = head;
     this.label = label;
-  }
-
-
-  public int getStartIndex() {
-
-    return this.startIndex;
-  }
-
-
-  public void setStartIndex(int si) {
-
-    this.startIndex = si;
   }
 
 
@@ -59,9 +46,15 @@ public class Dependency {
   }
 
 
-  public void setLabel(String label) {
+  public void setDependentString(String dependentString) {
+  
+    this.dependentString = dependentString;
+  }
 
-    this.label = label;
+
+  public void setHeadString(String headString) {
+  
+    this.headString = headString;
   }
 
 
@@ -72,30 +65,6 @@ public class Dependency {
     } else {
       return this.head - this.dependent;
     }
-  }
-
-
-  public void setProbability(double prob) {
-
-    this.probability = prob;
-  }
-
-
-  public double getProbability() {
-
-    return this.probability;
-  }
-
-
-  public void setDependentString(String dependentString) {
-
-    this.dependentString = dependentString;
-  }
-
-
-  public String getDependentString() {
-
-    return this.dependentString;
   }
 
 
@@ -127,18 +96,6 @@ public class Dependency {
   }
 
 
-  public void setHeadString(String headString) {
-
-    this.headString = headString;
-  }
-
-
-  public String getHeadString() {
-
-    return this.headString;
-  }
-
-
   public boolean isProjective(int[] heads) {
 
     if (this.getDistance() == 1) {
@@ -159,7 +116,6 @@ public class Dependency {
           }
         }
       }
-
     }
     return true;
   }
@@ -198,7 +154,6 @@ public class Dependency {
       } else {
         toCheck.add(curHeadHead);
         possibleEnds[curHead] = true;
-
       }
     }
     return true;

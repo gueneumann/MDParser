@@ -13,43 +13,20 @@ public class StackParserState extends ParserState {
   private Sentence sent;
 
 
-  public StackParserState(Stack<Integer> stack, Stack<Integer> buffer, Sentence sent,
-      DependencyStructure curDepStruct) {
+  public StackParserState(
+      Stack<Integer> stack, Stack<Integer> buffer, Sentence sent, DependencyStructure curDepStruct) {
+
     this.buffer = buffer;
     this.stack = stack;
     this.curDepStruct = curDepStruct;
     this.terminal = false;
-    this.setSent(sent);
-  }
-
-
-  public void setStack(Stack<Integer> stack) {
-
-    this.stack = stack;
+    this.sent = sent;
   }
 
 
   public Stack<Integer> getStack() {
 
     return this.stack;
-  }
-
-
-  public void setBuffer(Stack<Integer> buffer) {
-
-    this.buffer = buffer;
-  }
-
-
-  public Stack<Integer> getBuffer() {
-
-    return this.buffer;
-  }
-
-
-  public void setCurDepStruct(DependencyStructure curDepStruct) {
-
-    this.curDepStruct = curDepStruct;
   }
 
 
@@ -68,12 +45,6 @@ public class StackParserState extends ParserState {
   public boolean isTerminal() {
 
     return this.terminal;
-  }
-
-
-  public void setSent(Sentence sent) {
-
-    this.sent = sent;
   }
 
 
@@ -101,5 +72,4 @@ public class StackParserState extends ParserState {
       return this.buffer.get(i);
     }
   }
-
 }
