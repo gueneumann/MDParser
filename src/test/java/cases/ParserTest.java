@@ -23,9 +23,7 @@ public class ParserTest {
 
       String archiveName = args[1];
 
-
-      String[] dirs = {};
-      Archivator arch = new Archivator(archiveName, dirs);
+      Archivator arch = new Archivator(archiveName);
       arch.extract();
       Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
       parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);

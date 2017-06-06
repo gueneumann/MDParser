@@ -11,7 +11,6 @@ import de.dfki.lt.mdparser.parser.Parser;
 
 public class MDPrunner {
 
-  private String[] dirs = {};
   private String algorithm = "covington";
   private Parser parser = new Parser();
   private Data data = null;
@@ -70,7 +69,7 @@ public class MDPrunner {
     this.data = new Data(conllFile, false);
     System.out.println("No. of sentences: " + this.data.getSentences().length);
 
-    Archivator arch = new Archivator(modelFile, this.dirs);
+    Archivator arch = new Archivator(modelFile);
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
     this.parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);

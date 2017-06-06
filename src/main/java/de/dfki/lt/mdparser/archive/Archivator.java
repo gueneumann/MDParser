@@ -31,10 +31,9 @@ public class Archivator {
   private HashMap<String, InputStream> archiveMap;
 
 
-  public Archivator(String archiveName, String[] dirs) {
+  public Archivator(String archiveName) {
     this.archiveName = archiveName;
     this.archiveMap = new HashMap<String, InputStream>();
-    this.checkDirs(dirs);
     setAlphabetParser("temp/alphaParser.txt");
     setSplitFile("temp/split.txt");
     setSplitModelsDir("splitModels");
@@ -45,17 +44,6 @@ public class Archivator {
   public HashMap<String, InputStream> getArchiveMap() {
 
     return this.archiveMap;
-  }
-
-
-  public void checkDirs(String[] dirs) {
-
-    for (int i = 0; i < dirs.length; i++) {
-      File curDir = new File(dirs[i]);
-      if (!curDir.exists()) {
-        curDir.mkdir();
-      }
-    }
   }
 
 

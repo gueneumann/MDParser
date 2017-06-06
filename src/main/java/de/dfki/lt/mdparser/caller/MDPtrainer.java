@@ -75,7 +75,7 @@ public class MDPtrainer {
     deleteOld(this.dirs);
     createNew(this.dirs);
 
-    Archivator arch = new Archivator(archiveName, this.dirs);
+    Archivator arch = new Archivator(archiveName);
     Trainer trainer = new Trainer();
 
     long s1 = System.currentTimeMillis();
@@ -102,7 +102,7 @@ public class MDPtrainer {
     deleteOld(this.dirs);
     createNew(this.dirs);
 
-    Archivator arch = new Archivator(archiveName, this.dirs);
+    Archivator arch = new Archivator(archiveName);
     TrainerMem trainer = new TrainerMem();
 
     long s1 = System.currentTimeMillis();
