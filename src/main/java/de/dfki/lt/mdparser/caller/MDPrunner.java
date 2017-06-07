@@ -23,16 +23,14 @@ public final class MDPrunner {
   public static void conllFileParsingAndEval(String conllFile, String resultFile, String modelFile)
       throws IOException {
 
-    Parser parser = new Parser();
     Data data = new Data(conllFile, false);
     System.out.println("No. of sentences: " + data.getSentences().length);
 
     Archivator arch = new Archivator(modelFile);
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-    parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);
 
-    parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
+    Parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
 
     data.printToFile(resultFile);
     Eval evaluator = new Eval(conllFile, resultFile, 6, 6, 7, 7);
@@ -44,16 +42,13 @@ public final class MDPrunner {
   public static void conllFileParsingAndLinearize(String conllFile, String resultFile, String modelFile)
       throws IOException {
 
-    Parser parser = new Parser();
     Data data = new Data(conllFile, false);
     System.out.println("No. of sentences: " + data.getSentences().length);
 
     Archivator arch = new Archivator(modelFile);
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-    parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);
-
-    parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
+    Parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
 
     data.testLinearizedToFile(resultFile);
   }

@@ -11,20 +11,16 @@ public class TrainerTest {
 
     String inputFile = args[0];
 
-
     String alphabetFileParser = "temp/alphaParser.txt";
-    String alphabetFileLabeler = "temp/alphaLabeler.txt";
 
     Trainer trainer = new Trainer();
     String[] dirs = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
     String splitModelsDir = "splitModels";
     String algorithm = "covington";
-    String splitFile = "temp/split.txt";
     deleteOld(dirs);
     createNew(dirs);
     try {
-      trainer.createAndTrainWithSplittingFromDisk(algorithm, inputFile, splitModelsDir, alphabetFileParser,
-          alphabetFileLabeler, splitFile);
+      trainer.createAndTrainWithSplittingFromDisk(algorithm, inputFile, splitModelsDir, alphabetFileParser);
     } catch (IOException e) {
       e.printStackTrace();
     }

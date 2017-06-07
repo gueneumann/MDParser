@@ -53,7 +53,7 @@ public class CompactiseWorker {
       System.out.println("Save: " + this.splitModelsDir + "/" + file.getName());
       model.save(new File(this.splitModelsDir + "/" + file.getName()));
 
-      Trainer.saveAlphabet(this.alphaParser, model, compactArray, new File("splitA/" + file.getName()));
+      Trainer.saveAlphabet(this.alphaParser, compactArray, new File("splitA/" + file.getName()));
 
       //System.out.println(alphaParser.getMaxIndex());
       ModelEditor modelEditor = new ModelEditor(

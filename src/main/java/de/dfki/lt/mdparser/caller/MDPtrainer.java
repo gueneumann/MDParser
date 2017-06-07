@@ -15,7 +15,6 @@ public final class MDPtrainer {
   private static final String SPLIT_MODELS_DIR = "splitModels";
   private static final String SPLIT_FILE = "temp/split.txt";
   private static final String ALPHABET_FILE_PARSER = "temp/alphaParser.txt";
-  private static final String ALPHABET_FILE_LABELER = "temp/alphaLabeler.txt";
 
 
   private MDPtrainer() {
@@ -36,8 +35,8 @@ public final class MDPtrainer {
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromDisk(ALGORITHM, trainFileParam,
-        SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER, ALPHABET_FILE_LABELER, SPLIT_FILE);
+    trainer.createAndTrainWithSplittingFromDisk(
+        ALGORITHM, trainFileParam, SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER);
 
     long s2 = System.currentTimeMillis();
 
@@ -63,8 +62,8 @@ public final class MDPtrainer {
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromMemory(ALGORITHM, trainFileParam,
-        SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER, ALPHABET_FILE_LABELER, SPLIT_FILE);
+    trainer.createAndTrainWithSplittingFromMemory(
+        ALGORITHM, trainFileParam, SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER, SPLIT_FILE);
 
     long s2 = System.currentTimeMillis();
 

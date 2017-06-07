@@ -1,26 +1,23 @@
 package de.dfki.lt.mdparser.parser;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 
@@ -28,9 +25,7 @@ import de.bwaldvogel.liblinear.FeatureNode;
 import de.bwaldvogel.liblinear.InvalidInputDataException;
 import de.bwaldvogel.liblinear.Linear;
 import de.bwaldvogel.liblinear.Model;
-import de.bwaldvogel.liblinear.Parameter;
 import de.bwaldvogel.liblinear.Problem;
-import de.bwaldvogel.liblinear.SolverType;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
@@ -46,159 +41,39 @@ import de.dfki.lt.mdparser.features.StackFeatureModel;
 public class Trainer {
 
   private double bias = -1;
-  // solver, penalty C, epsilon Eps
-  private Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
-  private int totalConfigurations;
-
-
-  // GN: added 8.7.2014
-  public Parameter getParam() {
-
-    return this.param;
-  }
-
-
-  public void setParam(Parameter param) {
-
-    this.param = param;
-  }
-
-
-  //
-
-  static double atof(String s) {
-
-    if (s == null || s.length() < 1) {
-      throw new IllegalArgumentException("Can't convert empty string to integer");
-    }
-    double d = Double.parseDouble(s);
-    if (Double.isNaN(d) || Double.isInfinite(d)) {
-      throw new IllegalArgumentException("NaN or Infinity in input: " + s);
-    }
-    return (d);
-  }
-
-
-  static int atoi(String s) throws NumberFormatException {
-
-    if (s == null || s.length() < 1) {
-      throw new IllegalArgumentException("Can't convert empty string to integer");
-    }
-    // Integer.parseInt doesn't accept '+' prefixed strings
-    if (s.charAt(0) == '+') {
-      s = s.substring(1);
-    }
-    return Integer.parseInt(s);
-  }
-
-
-  public static Problem readProblem(String filename, double bias) throws IOException, InvalidInputDataException {
-
-    BufferedReader fp = new BufferedReader(new FileReader(filename));
-    List<Integer> vy = new ArrayList<Integer>();
-    List<FeatureNode[]> vx = new ArrayList<FeatureNode[]>();
-    int max_index = 0;
-    int lineNr = 0;
-
-    try {
-      while (true) {
-        String line = fp.readLine();
-        if (line == null) {
-          break;
-        }
-        lineNr++;
-
-        StringTokenizer st = new StringTokenizer(line, " \t\n\r\f:");
-        String token = st.nextToken();
-
-        try {
-
-          vy.add(atoi(token));
-        } catch (NumberFormatException e) {
-          throw new InvalidInputDataException("invalid label: " + token, filename, lineNr, e);
-        }
-
-        int m = st.countTokens() / 2;
-        FeatureNode[] x;
-        if (bias >= 0) {
-          x = new FeatureNode[m + 1];
-        } else {
-          x = new FeatureNode[m];
-        }
-        int indexBefore = 0;
-        for (int j = 0; j < m; j++) {
-
-          token = st.nextToken();
-          int index;
-          try {
-            index = atoi(token);
-          } catch (NumberFormatException e) {
-            throw new InvalidInputDataException("invalid index: " + token, filename, lineNr, e);
-          }
-
-          // assert that indices are valid and sorted
-          if (index < 0) {
-            throw new InvalidInputDataException("invalid index: " + index, filename, lineNr);
-          }
-          if (index <= indexBefore) {
-            throw new InvalidInputDataException("indices must be sorted in ascending order", filename, lineNr);
-          }
-          indexBefore = index;
-
-          token = st.nextToken();
-          try {
-            double value = atof(token);
-            x[j] = new FeatureNode(index, value);
-          } catch (NumberFormatException e) {
-            throw new InvalidInputDataException("invalid value: " + token, filename, lineNr);
-          }
-        }
-        if (m > 0) {
-          max_index = Math.max(max_index, x[m - 1].index);
-        }
-
-        vx.add(x);
-      }
-      return constructProblem(vy, vx, max_index, bias);
-    } finally {
-      fp.close();
-    }
-  }
 
 
   // XXX GN: this is used for training
-  public void createAndTrainWithSplittingFromDisk(String algorithm,
-      String inputFile, String splitModelsDirParam,
-      String alphabetFileParser, String alphabetFileLabeler,
-      String splitFile) throws IOException {
+  public void createAndTrainWithSplittingFromDisk(
+      String algorithmId, String inputFile, String splitModelsDirParam, String alphabetFileParser)
+      throws IOException {
 
     boolean noLabels = false;
     System.out.println("Start training with createAndTrainWithSplittingFromDisk!");
 
     // GN: internalize CONLL data in 2-Dim sentences; max 0-12 conll columns are considered
     System.out.println("Internalize training data from: " + inputFile);
-    Data d = new Data(inputFile, true);
+    Data data = new Data(inputFile, true);
 
     // GN: alphaParser is used for the mapping of integer to feature name
     // it is incrementally built during training for all features that are added
     // to the model
     Alphabet alphaParser = new Alphabet();
     // GN: the feature templates functions
-    FeatureExtractor fe = new FeatureExtractor();
-    Sentence[] sentences = d.getSentences();
-    FeatureModel fm = null;
-    ParsingAlgorithm pa = null;
-    if (algorithm.equals("covington")) {
-      fm = new CovingtonFeatureModel(alphaParser, fe);
-      pa = new CovingtonAlgorithm();
-    } else if (algorithm.equals("stack")) {
-      fm = new StackFeatureModel(alphaParser, fe);
-      pa = new StackAlgorithm();
+    FeatureExtractor extractor = new FeatureExtractor();
+    Sentence[] sentences = data.getSentences();
+    FeatureModel featureModel = null;
+    ParsingAlgorithm algorithm = null;
+    if (algorithmId.equals("covington")) {
+      featureModel = new CovingtonFeatureModel(alphaParser, extractor);
+      algorithm = new CovingtonAlgorithm();
+    } else if (algorithmId.equals("stack")) {
+      featureModel = new StackFeatureModel(alphaParser, extractor);
+      algorithm = new StackAlgorithm();
     } else {
-      System.err.println("unknown algorithm " + algorithm);
+      System.err.println("unknown algorithm " + algorithmId);
       return;
     }
-    setTotalConfigurations(0);
     File splitA = new File("splitA");
     splitA.mkdir();
     File splitO = new File("splitO");
@@ -206,8 +81,8 @@ public class Trainer {
     File splitF = new File("splitF");
     splitF.mkdir();
     //print training data
-    HashMap<Integer, BufferedWriter> opMap = new HashMap<Integer, BufferedWriter>();
-    HashMap<Integer, String> posMap = new HashMap<Integer, String>();
+    Map<Integer, PrintWriter> outputMap = new HashMap<>();
+    Map<Integer, String> posMap = new HashMap<>();
 
     // GN: for each training sentence example do:
     // NOTE: this is a sequential step
@@ -215,7 +90,7 @@ public class Trainer {
     System.out.println("Create files in split0 ");
     for (int n = 0; n < sentences.length; n++) {
       Sentence sent = sentences[n];
-      // fm.initializeStaticFeaturesCombined(sent, true);
+      // featureModel.initializeStaticFeaturesCombined(sent, true);
 
       // GN: call the parser on each training example to "re-play" the parser configurations
       //     and to compute the operations in form of a list of feature vectors for each state.
@@ -223,10 +98,9 @@ public class Trainer {
       //     the feature model in the training mode.
       //     the result is then a list of parser states in form of feature vectors whose values are based
       //     one the specific training example
-      List<FeatureVector> parserList = pa.processCombined(sent, fm, noLabels);
+      List<FeatureVector> parserList = algorithm.processCombined(sent, featureModel, noLabels);
 
       //System.out.println(parserList.toString());
-      this.totalConfigurations += parserList.size();
 
       // GN: for each feature vector (which represents a parser state) do
       for (int i = 0; i < parserList.size(); i++) {
@@ -234,35 +108,31 @@ public class Trainer {
         // buffer whose name depends on the label-value of the feature vector
         // store in the label-value/buffer in opMap hash.
         // NOTE: token level, so duplicates
-        FeatureVector fv = parserList.get(i);
-        String operation = fv.getLabel();
+        FeatureVector featureVector = parserList.get(i);
+        String operation = featureVector.getLabel();
         // GN: Lookup up label-index and use it to create/extend buffer
         Integer index = alphaParser.getLabelIndexMap().get(operation);
         // GN: create label-index many different split0 files, so that each files contains just the feature vectors
         // of each edge feature vector and its label instance
         // The label-index buffers are kept in a hash array
-        BufferedWriter curBw = opMap.get(index);
-        if (curBw == null) {
-          FileOutputStream out = new FileOutputStream(String.format("splitO/%03d.txt", index));
-          OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
-          curBw = new BufferedWriter(or);
-          opMap.put(index, curBw);
-
+        PrintWriter curWriter = outputMap.get(index);
+        if (curWriter == null) {
+          curWriter =
+              new PrintWriter(
+                  Files.newBufferedWriter(
+                      Paths.get(String.format("splitO/%03d.txt", index)), StandardCharsets.UTF_8));
+          outputMap.put(index, curWriter);
         }
-        String sentenceIntegerString = fv.getIntegerRepresentation(alphaParser, false);
+        String sentenceIntegerString = featureVector.getIntegerRepresentation(alphaParser, false);
         //System.out.println(sentenceIntegerString+"\n");
-        curBw.append(sentenceIntegerString + "\n");
+        curWriter.println(sentenceIntegerString);
       }
     }
 
-    // GN: and finally close all the buffers
-    Iterator<Integer> opIter = opMap.keySet().iterator();
-    while (opIter.hasNext()) {
-      Integer curOp = opIter.next();
-      opMap.get(curOp).close();
+    // GN: and finally close all the writers
+    for (PrintWriter oneWriter : outputMap.values()) {
+      oneWriter.close();
     }
-
-    Map<String, PrintWriter> splitMap = new HashMap<>();
 
     //XXX HIERIX -MDP-howItWorks.txt
     // GN: the next code basically creates the split training files
@@ -289,6 +159,7 @@ public class Trainer {
     // GN: for each label-specific feature vector integer encoded file do
 
     // split files
+    Map<String, PrintWriter> splitMap = new HashMap<>();
     List<File> filesToSplit = Arrays.asList(splitO.listFiles());
     SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
     //filesToSplit.stream().forEach(x -> splitWorker.processFile(x));
@@ -297,8 +168,7 @@ public class Trainer {
     System.out.println("Parallel processing on " + threadCount + " processors !");
     try {
       forkJoinPool.submit(
-          () -> filesToSplit.stream().parallel().forEach(x -> splitWorker.processFile(x))
-      ).get();
+          () -> filesToSplit.stream().parallel().forEach(x -> splitWorker.processFile(x))).get();
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
@@ -311,86 +181,81 @@ public class Trainer {
     File[] trainingFiles = new File("splitF").listFiles();
 
     System.out.println("Adjust splitting files in splitF and store them in split/ ");
-    HashMap<String, String> newSplitMap = new HashMap<String, String>();
+    Map<String, String> newSplitMap = new TreeMap<>();
     int curSize = 0;
     int splitThreshold = 3000;
-    BufferedWriter curBw = null;
+    PrintWriter curWriter = null;
     String curFile = null;
     String lastFile = null;
     String curSplitVal = null;
     for (int f = 0; f < trainingFiles.length; f++) {
       curSplitVal = trainingFiles[f].getName();
-      FileInputStream in = new FileInputStream(trainingFiles[f]);
-      BufferedInputStream bis = new BufferedInputStream(in, 8000);
-      InputStreamReader ir = new InputStreamReader(bis, "UTF8");
-      BufferedReader fr = new BufferedReader(ir);
-      if (curBw == null) {
+
+      if (curWriter == null) {
         curFile = curSplitVal;
-        OutputStreamWriter or = new OutputStreamWriter(new FileOutputStream("split/" + curFile), "UTF-8");
-        curBw = new BufferedWriter(or);
+        curWriter = new PrintWriter(
+            Files.newBufferedWriter(Paths.get("split/" + curFile), StandardCharsets.UTF_8));
       }
-      String line;
-      while ((line = fr.readLine()) != null) {
-        curBw.append(line + "\n");
-        curSize++;
+
+      try (BufferedReader in = Files.newBufferedReader(trainingFiles[f].toPath(), StandardCharsets.UTF_8)) {
+        String line;
+        while ((line = in.readLine()) != null) {
+          curWriter.println(line);
+          curSize++;
+        }
       }
-      fr.close();
+
       if (curSize > splitThreshold) {
-        curBw.close();
-        curBw = null;
+        curWriter.close();
+        curWriter = null;
         curSize = 0;
         lastFile = curFile;
       }
       newSplitMap.put(curSplitVal, curFile);
-
     }
     //if the last file is too small add to the second to last
 
     System.out.println("Eventually adjust last split/ file. ");
-    if (curBw != null) {
-      curBw.close();
+    if (curWriter != null) {
+      curWriter.close();
       if (lastFile != null) {
-        FileInputStream in = new FileInputStream("split/" + lastFile);
-        BufferedInputStream bis = new BufferedInputStream(in, 8000);
-        InputStreamReader ir = new InputStreamReader(bis, "UTF8");
-        BufferedReader fr = new BufferedReader(ir);
-        String line = "";
-        StringBuilder sb = new StringBuilder();
-        while ((line = fr.readLine()) != null) {
-          sb.append(line + "\n");
+
+        StringBuilder builder = new StringBuilder();
+
+        try (BufferedReader in = Files.newBufferedReader(
+            Paths.get("split/" + lastFile), StandardCharsets.UTF_8)) {
+          String line;
+          while ((line = in.readLine()) != null) {
+            builder.append(String.format("%s%n", line));
+          }
         }
-        in = new FileInputStream("split/" + curFile);
-        bis = new BufferedInputStream(in, 8000);
-        ir = new InputStreamReader(bis, "UTF8");
-        fr = new BufferedReader(ir);
-        while ((line = fr.readLine()) != null) {
-          sb.append(line + "\n");
+
+        try (BufferedReader in = Files.newBufferedReader(
+            Paths.get("split/" + curFile), StandardCharsets.UTF_8)) {
+          String line;
+          while ((line = in.readLine()) != null) {
+            builder.append(String.format("%s%n", line));
+          }
         }
-        fr.close();
-        FileOutputStream out = new FileOutputStream("split/" + lastFile);
-        OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
-        curBw = new BufferedWriter(or);
-        curBw.append(sb.toString());
-        curBw.close();
+
+        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+            Paths.get("split/" + lastFile), StandardCharsets.UTF_8))) {
+          out.print(builder.toString());
+        }
+
         File f = new File("split/" + curFile);
         f.delete();
 
         newSplitMap.put(curSplitVal, lastFile);
-
         Set<String> toSubstitute = new HashSet<String>();
-        Iterator<String> keysIter = newSplitMap.keySet().iterator();
-        while (keysIter.hasNext()) {
-          String key = keysIter.next();
-          String curF = newSplitMap.get(key);
-          if (curF.equals(curFile)) {
-            toSubstitute.add(key);
+        for (Map.Entry<String, String> oneEntry : newSplitMap.entrySet()) {
+          if (oneEntry.getValue().equals(curFile)) {
+            toSubstitute.add(oneEntry.getKey());
           }
         }
         if (!toSubstitute.isEmpty()) {
-          keysIter = toSubstitute.iterator();
-          while (keysIter.hasNext()) {
-            String key = keysIter.next();
-            newSplitMap.put(key, lastFile);
+          for (String oneSubstitute : toSubstitute) {
+            newSplitMap.put(oneSubstitute, lastFile);
           }
         }
       } else {
@@ -399,21 +264,18 @@ public class Trainer {
     }
     //System.out.println(newSplitMap);
     //printSplitMap
-    FileOutputStream out = new FileOutputStream("temp/split.txt");
-    OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
-    curBw = new BufferedWriter(or);
-    Iterator<String> splitValIter = newSplitMap.keySet().iterator();
+
     alphaParser.printToFile(alphabetFileParser);
-    while (splitValIter.hasNext()) {
-      curSplitVal = splitValIter.next();
-      String newFile = newSplitMap.get(curSplitVal);
-      Integer index = Integer.valueOf(curSplitVal.split("\\.")[0]);
-      //String featureString = posMap.get(index);
-      String featureString = alphaParser.getIndexToValueArray()[index];
-      //curBw.append(featureString+" split/"+newFile+" "+newFile+"\n");
-      curBw.append(featureString + " " + "split/" + newFile + " " + curSplitVal + "\n");
+    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+        Paths.get("temp/split.txt"), StandardCharsets.UTF_8))) {
+      for (Map.Entry<String, String> oneSplitValFilePair : newSplitMap.entrySet()) {
+        String splitVal = oneSplitValFilePair.getKey();
+        String newFile = oneSplitValFilePair.getValue();
+        Integer index = Integer.valueOf(splitVal.split("\\.")[0]);
+        String featureString = alphaParser.getIndexToValueArray()[index];
+        out.println(featureString + " " + "split/" + newFile + " " + splitVal);
+      }
     }
-    curBw.close();
 
     System.out.println("Compute the weights and the final model files in splitModels/ and alphabet files in splitA/ !");
 
@@ -425,8 +287,7 @@ public class Trainer {
     ForkJoinPool compactingForkJoinPool = new ForkJoinPool(threadCount);
     try {
       compactingForkJoinPool.submit(
-          () -> filesToCompact.stream().parallel().forEach(x -> compactiseWorker.processFile(x))
-      ).get();
+          () -> filesToCompact.stream().parallel().forEach(x -> compactiseWorker.processFile(x))).get();
     } catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();
     }
@@ -436,76 +297,21 @@ public class Trainer {
   }
 
 
-  private void recreateOneAlphabetAndAdjustModels(String alphabetFile, String splitAlphaDir, String splitModelsDir)
+  static void recreateOneAlphabetAndAdjustModels(
+      String alphabetFile, String splitAlphaDir, String splitModelsDir)
       throws IOException {
 
-    Alphabet alpha = unionAlphabets(alphabetFile, splitAlphaDir);
+    Alphabet alpha = unionAlphabets(splitAlphaDir);
     restoreModels(splitModelsDir, alpha, splitAlphaDir);
     alpha.printToFile(alphabetFile);
   }
 
 
-  private void restoreModels(String splitModelsDir, Alphabet alpha, String splitA) throws IOException {
-
-    File[] models = new File(splitModelsDir).listFiles();
-    alpha.createIndexToValueArray();
-    for (int i = 0; i < models.length; i++) {
-      System.out.println("Model file: " + models[i]);
-      Model model = Linear.loadModel(models[i]);
-      double[] wArray = model.getFeatureWeights();
-      String alphaName = splitA + "/" + models[i].getName();
-      Alphabet a = new Alphabet(new FileInputStream(new File(alphaName)));
-      int numberOfClasses = model.getNrClass();
-      FileOutputStream out = new FileOutputStream(models[i]);
-      OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
-      BufferedWriter bw = new BufferedWriter(or);
-      bw.append("solver_type MCSVM_CS\n");
-      bw.append("nr_class " + model.getNrClass() + "\nlabel ");
-
-      for (int k = 0; k < model.getLabels().length; k++) {
-        bw.append(model.getLabels()[k] + " ");
-      }
-      bw.append("\n");
-      String[] features = alpha.getIndexToValueArray();
-      //System.out.println(features);
-      boolean notFound = true;
-      Set<String> thisAlphabetFeatures = a.getValueToIndexMap().keySet();
-      int lastIndex = -1;
-      for (int k = features.length - 1; k > 1 && notFound; k--) {
-        if (thisAlphabetFeatures.contains(features[k])) {
-          lastIndex = k;
-          notFound = false;
-        }
-      }
-      bw.append("nr_feature " + (lastIndex - 1) + "\n");
-      bw.append("bias " + model.getBias() + "\nw\n");
-      HashMap<String, Integer> valToIndexMap = a.getValueToIndexMap();
-      for (int k = 1; k < lastIndex; k++) {
-        String feature = features[k];
-        Integer oldIndex = valToIndexMap.get(feature);
-        if (oldIndex == null) {
-          for (int m = 0; m < numberOfClasses; m++) {
-            bw.append("0 ");
-          }
-        } else {
-          for (int l = 0; l < numberOfClasses; l++) {
-            double curWeight = wArray[(oldIndex - 1) * numberOfClasses + l];
-            bw.append(String.valueOf(curWeight) + " ");
-          }
-        }
-        bw.append("\n");
-
-      }
-      bw.close();
-    }
-  }
-
-
-  private Alphabet unionAlphabets(String alphabetFile, String splitAlphaDir) throws IOException {
+  private static Alphabet unionAlphabets(String splitAlphaDir) throws IOException {
 
     Alphabet alpha = new Alphabet();
     File[] alphabets = new File(splitAlphaDir).listFiles();
-    HashMap<String, Integer> map = alpha.getValueToIndexMap();
+    Map<String, Integer> map = alpha.getValueToIndexMap();
     for (int i = 0; i < alphabets.length; i++) {
       Alphabet curAlpha = new Alphabet(new FileInputStream(alphabets[i]));
       if (alpha.getLabelIndexMap().keySet().isEmpty()) {
@@ -531,35 +337,89 @@ public class Trainer {
     }
 
     return alpha;
-
   }
 
 
-  static void saveAlphabet(Alphabet alphaParser, Model model, int[][] compactArray, File file) throws IOException {
+  private static void restoreModels(String splitModelsDir, Alphabet alpha, String splitA) throws IOException {
 
-    int[] newToOld = compactArray[0];
-    FileOutputStream out = new FileOutputStream(file);
-    OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
-    BufferedWriter bw = new BufferedWriter(or);
-    String[] indexLabelArray = alphaParser.getIndexLabelArray();
-    for (int i = 1; i < alphaParser.getMaxLabelIndex(); i++) {
-      bw.append(i + " " + indexLabelArray[i] + "\n");
-    }
-    // GN: seems to cause problem in training with algorithm=stack
-    bw.append("\n");
-    String[] indexToValue = alphaParser.getIndexToValueArray();
-    boolean notFinished = true;
-    for (int i = 1; notFinished && i < newToOld.length; i++) {
-      int newIndex = i;
-      int oldIndex = newToOld[i];
-      if (oldIndex == 0) {
-        notFinished = false;
-      } else {
-        String stringValue = indexToValue[oldIndex];
-        bw.append(newIndex + " " + stringValue + "\n");
+    File[] models = new File(splitModelsDir).listFiles();
+    alpha.createIndexToValueArray();
+    for (int i = 0; i < models.length; i++) {
+      System.out.println("Model file: " + models[i]);
+      Model model = Linear.loadModel(models[i]);
+      double[] wArray = model.getFeatureWeights();
+      String alphaName = splitA + "/" + models[i].getName();
+      Alphabet a = new Alphabet(new FileInputStream(new File(alphaName)));
+      int numberOfClasses = model.getNrClass();
+
+      try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(models[i].toPath(), StandardCharsets.UTF_8))) {
+        out.println("solver_type MCSVM_CS");
+        out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
+
+        for (int k = 0; k < model.getLabels().length; k++) {
+          out.print(model.getLabels()[k] + " ");
+        }
+        out.println();
+        String[] features = alpha.getIndexToValueArray();
+        //System.out.println(features);
+        boolean notFound = true;
+        Set<String> thisAlphabetFeatures = a.getValueToIndexMap().keySet();
+        int lastIndex = -1;
+        for (int k = features.length - 1; k > 1 && notFound; k--) {
+          if (thisAlphabetFeatures.contains(features[k])) {
+            lastIndex = k;
+            notFound = false;
+          }
+        }
+        out.println("nr_feature " + (lastIndex - 1));
+        out.println("bias " + model.getBias());
+        out.println("w");
+        Map<String, Integer> valToIndexMap = a.getValueToIndexMap();
+        for (int k = 1; k < lastIndex; k++) {
+          String feature = features[k];
+          Integer oldIndex = valToIndexMap.get(feature);
+          if (oldIndex == null) {
+            for (int m = 0; m < numberOfClasses; m++) {
+              out.print("0 ");
+            }
+          } else {
+            for (int l = 0; l < numberOfClasses; l++) {
+              double curWeight = wArray[(oldIndex - 1) * numberOfClasses + l];
+              out.print(curWeight + " ");
+            }
+          }
+          out.println();
+        }
       }
     }
-    bw.close();
+  }
+
+
+  static void saveAlphabet(Alphabet alphaParser, int[][] compactArray, File file)
+      throws IOException {
+
+    int[] newToOld = compactArray[0];
+
+    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8))) {
+      String[] indexLabelArray = alphaParser.getIndexLabelArray();
+      for (int i = 1; i < alphaParser.getMaxLabelIndex(); i++) {
+        out.println(i + " " + indexLabelArray[i]);
+      }
+      // GN: seems to cause problem in training with algorithm=stack
+      out.println();
+      String[] indexToValue = alphaParser.getIndexToValueArray();
+      boolean notFinished = true;
+      for (int i = 1; notFinished && i < newToOld.length; i++) {
+        int newIndex = i;
+        int oldIndex = newToOld[i];
+        if (oldIndex == 0) {
+          notFinished = false;
+        } else {
+          String stringValue = indexToValue[oldIndex];
+          out.println(newIndex + " " + stringValue);
+        }
+      }
+    }
   }
 
 
@@ -571,59 +431,127 @@ public class Trainer {
     int[] newToOld = new int[absoluteMax];
     compactArray[0] = newToOld;
     compactArray[1] = oldToNew;
-    FileInputStream in = new FileInputStream(curentTrainingFile);
-    BufferedInputStream bis = new BufferedInputStream(in, 8000);
-    InputStreamReader ir = new InputStreamReader(bis, "UTF8");
-    BufferedReader fr = new BufferedReader(ir);
-    String line;
-    Integer maxIndex = 1;
-    File outputFile = new File(splitC.getName() + "/" + curentTrainingFile.getName());
-    FileOutputStream out = new FileOutputStream(outputFile);
-    OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
-    BufferedWriter curBw = new BufferedWriter(or);
-    Set<Integer> encountered = new HashSet<Integer>(absoluteMax);
-    while ((line = fr.readLine()) != null) {
-      String[] lineArray = line.split(" ");
-      curBw.append(lineArray[0]);
-      List<Integer> featureList = new ArrayList<Integer>();
-      for (int i = 1; i < lineArray.length; i++) {
-        Integer curFeature = Integer.valueOf(lineArray[i].split(":")[0]);
-        Integer newValue = oldToNew[curFeature];
-        if (!encountered.contains(curFeature)) {
-          newValue = maxIndex;
-          oldToNew[curFeature] = newValue;
-          newToOld[newValue] = curFeature;
-          encountered.add(curFeature);
-          maxIndex++;
+
+    try (PrintWriter out = new PrintWriter(
+        Files.newBufferedWriter(
+            Paths.get(splitC.getName() + "/" + curentTrainingFile.getName()), StandardCharsets.UTF_8));
+        BufferedReader in = Files.newBufferedReader(curentTrainingFile.toPath(), StandardCharsets.UTF_8)) {
+      String line;
+      int maxIndex = 1;
+      Set<Integer> encountered = new HashSet<>(absoluteMax);
+      while ((line = in.readLine()) != null) {
+        String[] lineArray = line.split(" ");
+        out.print(lineArray[0]);
+        List<Integer> featureList = new ArrayList<Integer>();
+        for (int i = 1; i < lineArray.length; i++) {
+          Integer curFeature = Integer.valueOf(lineArray[i].split(":")[0]);
+          Integer newValue = oldToNew[curFeature];
+          if (!encountered.contains(curFeature)) {
+            newValue = maxIndex;
+            oldToNew[curFeature] = newValue;
+            newToOld[newValue] = curFeature;
+            encountered.add(curFeature);
+            maxIndex++;
+          }
+          if (!featureList.contains(newValue)) {
+            featureList.add(newValue);
+          }
         }
-        if (!featureList.contains(newValue)) {
-          featureList.add(newValue);
+        Collections.sort(featureList);
+        for (int i = 0; i < featureList.size(); i++) {
+          out.print(" " + featureList.get(i) + ":1");
         }
+        out.println();
       }
-      Collections.sort(featureList);
-      for (int i = 0; i < featureList.size(); i++) {
-        curBw.append(" " + featureList.get(i) + ":1");
-      }
-      curBw.append("\n");
     }
-    fr.close();
-    curBw.close();
+
     return compactArray;
   }
 
 
-  private static Problem constructProblem(List<Integer> vy, List<FeatureNode[]> vx, int max_index, double bias) {
+  static Problem readProblem(String fileName, double bias)
+      throws InvalidInputDataException {
+
+    List<Integer> yList = new ArrayList<Integer>();
+    List<FeatureNode[]> xList = new ArrayList<FeatureNode[]>();
+    int maxIndex = 0;
+
+    try (BufferedReader in = Files.newBufferedReader(
+        Paths.get(fileName), StandardCharsets.UTF_8)) {
+      String line;
+      int lineNr = 0;
+      while ((line = in.readLine()) != null) {
+        lineNr++;
+        StringTokenizer st = new StringTokenizer(line, " \t\n\r\f:");
+        String token = st.nextToken();
+
+        try {
+          yList.add(Integer.parseInt(token));
+        } catch (NumberFormatException e) {
+          throw new InvalidInputDataException("invalid label: " + token, fileName, lineNr, e);
+        }
+
+        int m = st.countTokens() / 2;
+        FeatureNode[] x;
+        if (bias >= 0) {
+          x = new FeatureNode[m + 1];
+        } else {
+          x = new FeatureNode[m];
+        }
+        int indexBefore = 0;
+        for (int j = 0; j < m; j++) {
+          token = st.nextToken();
+          int index;
+
+          try {
+            index = Integer.parseInt(token);
+          } catch (NumberFormatException e) {
+            throw new InvalidInputDataException("invalid index: " + token, fileName, lineNr, e);
+          }
+
+          // assert that indices are valid and sorted
+          if (index < 0) {
+            throw new InvalidInputDataException("invalid index: " + index, fileName, lineNr);
+          }
+          if (index <= indexBefore) {
+            throw new InvalidInputDataException("indices must be sorted in ascending order", fileName, lineNr);
+          }
+          indexBefore = index;
+
+          token = st.nextToken();
+          try {
+            double value = Double.parseDouble(token);
+            x[j] = new FeatureNode(index, value);
+          } catch (NumberFormatException e) {
+            throw new InvalidInputDataException("invalid value: " + token, fileName, lineNr);
+          }
+        }
+        if (m > 0) {
+          maxIndex = Math.max(maxIndex, x[m - 1].index);
+        }
+        xList.add(x);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return constructProblem(yList, xList, maxIndex, bias);
+  }
+
+
+  static Problem constructProblem(
+      List<Integer> yList, List<FeatureNode[]> xList, int max_index, double bias) {
 
     Problem prob = new Problem();
     prob.bias = bias;
-    prob.l = vy.size();
+    prob.l = yList.size();
     prob.n = max_index;
     if (bias >= 0) {
       prob.n++;
     }
     prob.x = new FeatureNode[prob.l][];
     for (int i = 0; i < prob.l; i++) {
-      prob.x[i] = vx.get(i);
+      prob.x[i] = xList.get(i);
 
       if (bias >= 0) {
         assert prob.x[i][prob.x[i].length - 1] == null;
@@ -633,25 +561,11 @@ public class Trainer {
       }
     }
 
-    //GN, May, 2016
-    // prob.y = new int[prob.l];
     prob.y = new double[prob.l];
     for (int i = 0; i < prob.l; i++) {
-      prob.y[i] = vy.get(i);
+      prob.y[i] = yList.get(i);
     }
 
     return prob;
-  }
-
-
-  public void setTotalConfigurations(int totalConfigurations) {
-
-    this.totalConfigurations = totalConfigurations;
-  }
-
-
-  public int getTotalConfigurations() {
-
-    return this.totalConfigurations;
   }
 }

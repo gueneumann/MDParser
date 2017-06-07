@@ -17,7 +17,6 @@ public class ParserTest {
       String goldFile = args[0];
 
       String resultFile = "temp/1.conll";
-      Parser parser = new Parser();
       Data d = new Data(goldFile, false);
       System.out.println("No. of sentences: " + d.getSentences().length);
 
@@ -26,11 +25,10 @@ public class ParserTest {
       Archivator arch = new Archivator(archiveName);
       arch.extract();
       Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-      parser.setNumberOfClassesParser(alphabetParser.getMaxLabelIndex() - 1);
 
       String algorithm = "covington";
       long s3 = System.currentTimeMillis();
-      parser.parseCombined(algorithm, d, arch, alphabetParser, false);
+      Parser.parseCombined(algorithm, d, arch, alphabetParser, false);
 
       long s4 = System.currentTimeMillis();
       System.out.println("Parsing time: " + ((s4 - s3)) + " milliseconds.");
