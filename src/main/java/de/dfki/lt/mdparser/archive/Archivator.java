@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -20,30 +21,22 @@ public class Archivator {
 
   private String splitModelsDir;
   private String splitAlphabetsDir;
-  private String splitModelsLDir;
   private String alphabetParser;
-  private String alphabetLabeler;
   private String splitFile;
-  private String splitLFile;
 
   private String archiveName;
 
-  private HashMap<String, InputStream> archiveMap;
+  private Map<String, InputStream> archiveMap;
 
 
   public Archivator(String archiveName) {
+
     this.archiveName = archiveName;
     this.archiveMap = new HashMap<String, InputStream>();
-    setAlphabetParser("temp/alphaParser.txt");
-    setSplitFile("temp/split.txt");
-    setSplitModelsDir("splitModels");
-    setSplitAlphabetsDir("splitA");
-  }
-
-
-  public HashMap<String, InputStream> getArchiveMap() {
-
-    return this.archiveMap;
+    this.alphabetParser = "temp/alphaParser.txt";
+    this.splitFile = "temp/split.txt";
+    this.splitModelsDir = "splitModels";
+    this.splitAlphabetsDir = "splitA";
   }
 
 
@@ -113,13 +106,6 @@ public class Archivator {
   }
 
 
-  @Override
-  public String toString() {
-
-    return this.archiveMap.toString();
-  }
-
-
   public InputStream getInputStream(String key) {
 
     return this.archiveMap.get(key);
@@ -132,116 +118,8 @@ public class Archivator {
   }
 
 
-  public InputStream getLabelerAlphabetInputStream() {
-
-    return this.archiveMap.get("temp/alphaLabeler.txt");
-  }
-
-
   public InputStream getSplitFileInputStream() {
 
     return this.archiveMap.get("temp/split.txt");
-  }
-
-
-  public InputStream getSplitLFileInputStream() {
-
-    return this.archiveMap.get("temp/splitL.txt");
-  }
-
-
-  public void setSplitModelsDir(String splitModelsDir) {
-
-    this.splitModelsDir = splitModelsDir;
-  }
-
-
-  public String getSplitModelsDir() {
-
-    return this.splitModelsDir;
-  }
-
-
-  public void setSplitModelsLDir(String splitModelsLDir) {
-
-    this.splitModelsLDir = splitModelsLDir;
-  }
-
-
-  public String getSplitModelsLDir() {
-
-    return this.splitModelsLDir;
-  }
-
-
-  public void setAlphabetParser(String alphabetParser) {
-
-    this.alphabetParser = alphabetParser;
-  }
-
-
-  public String getAlphabetParser() {
-
-    return this.alphabetParser;
-  }
-
-
-  public void setAlphabetLabeler(String alphabetLabeler) {
-
-    this.alphabetLabeler = alphabetLabeler;
-  }
-
-
-  public String getAlphabetLabeler() {
-
-    return this.alphabetLabeler;
-  }
-
-
-  public void setSplitFile(String splitFile) {
-
-    this.splitFile = splitFile;
-  }
-
-
-  public String getSplitFile() {
-
-    return this.splitFile;
-  }
-
-
-  public void setSplitLFile(String splitLFile) {
-
-    this.splitLFile = splitLFile;
-  }
-
-
-  public String getSplitLFile() {
-
-    return this.splitLFile;
-  }
-
-
-  public void setArchiveName(String archiveName) {
-
-    this.archiveName = archiveName;
-  }
-
-
-  public String getArchiveName() {
-
-    return this.archiveName;
-  }
-
-
-  public void setSplitAlphabetsDir(String splitAlphabetsDir) {
-
-    this.splitAlphabetsDir = splitAlphabetsDir;
-  }
-
-
-  public String getSplitAlphabetsDir() {
-
-    return this.splitAlphabetsDir;
   }
 }
