@@ -17,6 +17,8 @@ import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
 import de.dfki.lt.mdparser.archive.Archivator;
+import de.dfki.lt.mdparser.config.ConfigKeys;
+import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
@@ -99,25 +101,25 @@ public final class Parser {
     }
 
     long processStart = System.currentTimeMillis();
-    int numberOfProcessors = Runtime.getRuntime().availableProcessors();
-    // TODO make this configurable
-    int threadCount = numberOfProcessors;
     List<Sentence> sentencesList = Arrays.asList(data.getSentences());
-    //sentencesList.stream().forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap));
-    // we use our own thread pool to be able to better control parallelization
-    ForkJoinPool forkJoinPool = new ForkJoinPool(threadCount);
-    try {
-      forkJoinPool.submit(
-          () -> sentencesList.stream().parallel()
-              .forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap)))
-          .get();
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
+    int parsingThreads = GlobalConfig.getInt(ConfigKeys.PARSING_THREADS);
+    if (parsingThreads > 1) {
+      // we use our own thread pool to be able to better control parallelization
+      ForkJoinPool forkJoinPool = new ForkJoinPool(parsingThreads);
+      try {
+        forkJoinPool.submit(
+            () -> sentencesList.stream().parallel()
+            .forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap))).get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    } else {
+      sentencesList.stream().forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap));
     }
 
     // System.out.println("All worker threads have completed.");
     long processEnd = System.currentTimeMillis();
-    System.out.println("No. of threads: " + threadCount);
+    System.out.println("No. of threads: " + parsingThreads);
     System.out.println("Time to parse (msec): " + (processEnd - processStart));
     System.out.println("Speed (sent/s): " + (data.getSentences().length * 1000.0) / (processEnd - processStart));
     System.out.println("Number of configurations: " + algorithm.getNumberOfConfigurations());

@@ -29,6 +29,8 @@ import de.bwaldvogel.liblinear.Problem;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
+import de.dfki.lt.mdparser.config.ConfigKeys;
+import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
@@ -151,26 +153,25 @@ public class Trainer {
 
     System.out.println("Create splitting training files!");
 
-    // GN: the number of available processor is determined !
-    int numberOfProcessors = Runtime.getRuntime().availableProcessors();
-    // TODO make this configurable
-    int threadCount = numberOfProcessors;
-
     // GN: for each label-specific feature vector integer encoded file do
 
     // split files
     Map<String, PrintWriter> splitMap = new HashMap<>();
     List<File> filesToSplit = Arrays.asList(splitO.listFiles());
     SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
-    //filesToSplit.stream().forEach(x -> splitWorker.processFile(x));
-    // we use our own thread pool to be able to better control parallelization
-    ForkJoinPool forkJoinPool = new ForkJoinPool(threadCount);
-    System.out.println("Parallel processing on " + threadCount + " processors !");
-    try {
-      forkJoinPool.submit(
-          () -> filesToSplit.stream().parallel().forEach(x -> splitWorker.processFile(x))).get();
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
+    int trainingThreads = GlobalConfig.getInt(ConfigKeys.TRAINING_THREADS);
+    if (trainingThreads > 1) {
+      // we use our own thread pool to be able to better control parallelization
+      ForkJoinPool forkJoinPool = new ForkJoinPool(trainingThreads);
+      System.out.println("Parallel processing on " + trainingThreads + " processors !");
+      try {
+        forkJoinPool.submit(
+            () -> filesToSplit.stream().parallel().forEach(x -> splitWorker.processFile(x))).get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    } else {
+      filesToSplit.stream().forEach(x -> splitWorker.processFile(x));
     }
     for (PrintWriter oneWriter : splitMap.values()) {
       oneWriter.close();
@@ -282,14 +283,17 @@ public class Trainer {
     // compact files
     List<File> filesToCompact = Arrays.asList(new File("split").listFiles());
     CompactiseWorker compactiseWorker = new CompactiseWorker(alphaParser, splitModelsDirParam, this.bias);
-    //filesToCompact.stream().forEach(x -> compactiseWorker.processFile(x));
-    // we use our own thread pool to be able to better control parallelization
-    ForkJoinPool compactingForkJoinPool = new ForkJoinPool(threadCount);
-    try {
-      compactingForkJoinPool.submit(
-          () -> filesToCompact.stream().parallel().forEach(x -> compactiseWorker.processFile(x))).get();
-    } catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
+    if (trainingThreads > 1) {
+      // we use our own thread pool to be able to better control parallelization
+      ForkJoinPool compactingForkJoinPool = new ForkJoinPool(trainingThreads);
+      try {
+        compactingForkJoinPool.submit(
+            () -> filesToCompact.stream().parallel().forEach(x -> compactiseWorker.processFile(x))).get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    } else {
+      filesToCompact.stream().forEach(x -> compactiseWorker.processFile(x));
     }
 
     System.out.println("Make single alphabet file from splitA files " + alphabetFileParser);
