@@ -35,7 +35,6 @@ public class ModelEditor {
       throws IOException {
     this.alpha = new Alphabet(alphabetFile);
     this.modelFile = modelFile;
-    boolean[] zeroes = new boolean[this.alpha.getMaxIndex()];
     FileInputStream in = new FileInputStream(modelFile);
     BufferedInputStream bis = new BufferedInputStream(in, 8000);
     InputStreamReader ir = new InputStreamReader(bis, "UTF8");
@@ -44,7 +43,8 @@ public class ModelEditor {
       fr.readLine();
     }
     String line;
-    int wIndex = 0;
+    int wIndex = 1;
+    this.neverUsed = new HashSet<Integer>();
     while ((line = fr.readLine()) != null) {
       String[] lineArray = line.split("\\s+");
       boolean zeroLine = true;
@@ -56,8 +56,7 @@ public class ModelEditor {
         }
       }
       if (zeroLine) {
-        //System.out.println(wIndex+" "+zeroes.length+" "+lineArray.length);
-        zeroes[wIndex] = true;
+        this.neverUsed.add(wIndex);
       }
       //else {
       //  System.out.println(line);
@@ -66,15 +65,8 @@ public class ModelEditor {
     }
     fr.close();
 
-    this.neverUsed = new HashSet<Integer>();
-    //System.out.println(alphabetFile+": "+this.alpha.getMaxIndex()+" "+wIndex);
-    for (int i = 0; i < this.alpha.getMaxIndex(); i++) {
-      boolean neverUsedFeature = zeroes[i];
-      if (neverUsedFeature) {
-        this.neverUsed.add(i + 1);
-      }
-    }
-    //System.out.println(neverUsed.size());
+    //System.out.println(alphabetFile + ": " + (this.alpha.getNumberOfFeatures() + 1) + " " + wIndex);
+    //System.out.println(this.neverUsed.size());
   }
 
 
