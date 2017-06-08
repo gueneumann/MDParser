@@ -23,7 +23,6 @@ import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
-import de.dfki.lt.mdparser.features.FeatureExtractor;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
 
@@ -86,14 +85,13 @@ public final class Parser {
     long modelReadEnd = System.currentTimeMillis();
     System.out.println("Time to read model (msec): " + (modelReadEnd - modelReadStart));
     //gds readSplitModelsL(arch);
-    FeatureExtractor extractor = new FeatureExtractor();
     final FeatureModel featureModel;
     final ParsingAlgorithm algorithm;
     if (algorithmId.equals("covington")) {
-      featureModel = new CovingtonFeatureModel(alphabetParser, extractor);
+      featureModel = new CovingtonFeatureModel(alphabetParser);
       algorithm = new CovingtonAlgorithm();
     } else if (algorithmId.equals("stack")) {
-      featureModel = new StackFeatureModel(alphabetParser, extractor);
+      featureModel = new StackFeatureModel(alphabetParser);
       algorithm = new StackAlgorithm();
     } else {
       System.err.println("unknown algorithm " + algorithmId);
@@ -139,15 +137,14 @@ public final class Parser {
 
     long modelReadEnd = System.currentTimeMillis();
     System.out.println("Time to read model (msec): " + (modelReadEnd - modelReadStart));
-    FeatureExtractor extractor = new FeatureExtractor();
     Sentence[] sentences = data.getSentences();
     FeatureModel model = null;
     ParsingAlgorithm algorithm = null;
     if (algorithmId.equals("covington")) {
-      model = new CovingtonFeatureModel(alphabetParser, extractor);
+      model = new CovingtonFeatureModel(alphabetParser);
       algorithm = new CovingtonAlgorithm();
     } else if (algorithmId.equals("stack")) {
-      model = new StackFeatureModel(alphabetParser, extractor);
+      model = new StackFeatureModel(alphabetParser);
       algorithm = new StackAlgorithm();
     } else {
       System.err.println("unkown algorithm " + algorithmId);

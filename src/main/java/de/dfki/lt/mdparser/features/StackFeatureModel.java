@@ -8,24 +8,22 @@ import de.dfki.lt.mdparser.data.Sentence;
 
 public class StackFeatureModel extends FeatureModel {
 
-  private Feature[][][] staticFeatures;
-  private String[] mergeFeatureNames;
+  private String[] featureNamesForMerging;
 
 
-  public StackFeatureModel(Alphabet alphabetParser, Alphabet alphabetLabeler,
-      FeatureExtractor fe) {
-    super(alphabetParser, alphabetLabeler, fe);
+  public StackFeatureModel(Alphabet parserAlphabet, Alphabet labelerAlphabet) {
 
+    super(parserAlphabet, labelerAlphabet);
   }
 
 
-  public StackFeatureModel(Alphabet alphabetParser, FeatureExtractor fe) {
-    super(alphabetParser, fe);
-    this.mergeFeatureNames = new String[5];
-    for (int i = 0; i < this.mergeFeatureNames.length; i++) {
-      this.mergeFeatureNames[i] = "m" + i;
-    }
+  public StackFeatureModel(Alphabet parserAlphabet) {
 
+    super(parserAlphabet);
+    this.featureNamesForMerging = new String[5];
+    for (int i = 0; i < this.featureNamesForMerging.length; i++) {
+      this.featureNamesForMerging[i] = "m" + i;
+    }
   }
 
 
@@ -34,87 +32,86 @@ public class StackFeatureModel extends FeatureModel {
 
     StackParserState st = (StackParserState)state;
     Sentence curSent = st.getSent();
-    FeatureVector fvParser = new FeatureVector(train);
-    FeatureExtractor fe = this.getFeatureExtractor();
-    Alphabet alphaParser = this.getAlphabetParser();
+    FeatureVector featureVector = new FeatureVector();
+    Alphabet parserAlpha = this.getParserAlphabet();
     int st1 = st.getStackToken(0);
     int st2 = st.getStackToken(1);
     int buf1 = st.getBufferToken(0);
     int buf2 = st.getBufferToken(1);
     int buf3 = st.getBufferToken(2);
     int buf4 = st.getBufferToken(3);
-    Feature fpj = fe.templatePos(st1, "pj", curSent);
-    Integer fIndex = alphaParser.getFeatureIndex(fpj.getFeatureString());
-    fpj.setIndexParser(fIndex);
-    fvParser.addFeature(fpj, alphaParser, train);
-    Feature fpjp1 = fe.templatePos(st2, "pjp1", curSent);
-    fIndex = alphaParser.getFeatureIndex(fpjp1.getFeatureString());
-    fpjp1.setIndexParser(fIndex);
-    fvParser.addFeature(fpjp1, alphaParser, train);
-    Feature fwfj = fe.templateWf(st1, "wfj", curSent);
-    fIndex = alphaParser.getFeatureIndex(fwfj.getFeatureString());
-    fwfj.setIndexParser(fIndex);
-    fvParser.addFeature(fwfj, alphaParser, train);
-    Feature fcpj = fe.templateCPos(st1, "cpj", curSent);
-    fIndex = alphaParser.getFeatureIndex(fcpj.getFeatureString());
-    fcpj.setIndexParser(fIndex);
-    fvParser.addFeature(fcpj, alphaParser, train);
-    Feature fpi = fe.templatePos(buf1, "pi", curSent);
-    fIndex = alphaParser.getFeatureIndex(fpi.getFeatureString());
-    fpi.setIndexParser(fIndex);
-    fvParser.addFeature(fpi, alphaParser, train);
-    Feature fpip1 = fe.templatePos(buf2, "pip1", curSent);
-    fIndex = alphaParser.getFeatureIndex(fpip1.getFeatureString());
-    fpip1.setIndexParser(fIndex);
-    fvParser.addFeature(fpip1, alphaParser, train);
-    Feature fpip2 = fe.templatePos(buf3, "pip2", curSent);
-    fIndex = alphaParser.getFeatureIndex(fpip2.getFeatureString());
-    fpip2.setIndexParser(fIndex);
-    fvParser.addFeature(fpip2, alphaParser, train);
-    Feature fpip3 = fe.templatePos(buf4, "pip3", curSent);
-    fIndex = alphaParser.getFeatureIndex(fpip3.getFeatureString());
-    fpip3.setIndexParser(fIndex);
-    fvParser.addFeature(fpip3, alphaParser, train);
-    Feature fwfi = fe.templateWf(buf1, "wfi", curSent);
-    fIndex = alphaParser.getFeatureIndex(fwfi.getFeatureString());
-    fwfi.setIndexParser(fIndex);
-    fvParser.addFeature(fwfi, alphaParser, train);
-    Feature wfip1 = fe.templateWf(buf2, "wfip1", curSent);
-    fIndex = alphaParser.getFeatureIndex(wfip1.getFeatureString());
-    wfip1.setIndexParser(fIndex);
-    fvParser.addFeature(wfip1, alphaParser, train);
-    Feature fcpi = fe.templateCPos(buf1, "cpi", curSent);
-    fIndex = alphaParser.getFeatureIndex(fcpi.getFeatureString());
-    fcpi.setIndexParser(fIndex);
-    fvParser.addFeature(fcpi, alphaParser, train);
+    Feature fpj = FeatureExtractor.createFeatureForPos(st1, "pj", curSent);
+    Integer fIndex = parserAlpha.getFeatureIndex(fpj.getFeatureString());
+    fpj.setParserIndex(fIndex);
+    featureVector.addFeature(fpj, parserAlpha, train);
+    Feature fpjp1 = FeatureExtractor.createFeatureForPos(st2, "pjp1", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fpjp1.getFeatureString());
+    fpjp1.setParserIndex(fIndex);
+    featureVector.addFeature(fpjp1, parserAlpha, train);
+    Feature fwfj = FeatureExtractor.createFeatureForWF(st1, "wfj", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fwfj.getFeatureString());
+    fwfj.setParserIndex(fIndex);
+    featureVector.addFeature(fwfj, parserAlpha, train);
+    Feature fcpj = FeatureExtractor.createFeatureForCPos(st1, "cpj", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fcpj.getFeatureString());
+    fcpj.setParserIndex(fIndex);
+    featureVector.addFeature(fcpj, parserAlpha, train);
+    Feature fpi = FeatureExtractor.createFeatureForPos(buf1, "pi", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fpi.getFeatureString());
+    fpi.setParserIndex(fIndex);
+    featureVector.addFeature(fpi, parserAlpha, train);
+    Feature fpip1 = FeatureExtractor.createFeatureForPos(buf2, "pip1", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fpip1.getFeatureString());
+    fpip1.setParserIndex(fIndex);
+    featureVector.addFeature(fpip1, parserAlpha, train);
+    Feature fpip2 = FeatureExtractor.createFeatureForPos(buf3, "pip2", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fpip2.getFeatureString());
+    fpip2.setParserIndex(fIndex);
+    featureVector.addFeature(fpip2, parserAlpha, train);
+    Feature fpip3 = FeatureExtractor.createFeatureForPos(buf4, "pip3", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fpip3.getFeatureString());
+    fpip3.setParserIndex(fIndex);
+    featureVector.addFeature(fpip3, parserAlpha, train);
+    Feature fwfi = FeatureExtractor.createFeatureForWF(buf1, "wfi", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fwfi.getFeatureString());
+    fwfi.setParserIndex(fIndex);
+    featureVector.addFeature(fwfi, parserAlpha, train);
+    Feature wfip1 = FeatureExtractor.createFeatureForWF(buf2, "wfip1", curSent);
+    fIndex = parserAlpha.getFeatureIndex(wfip1.getFeatureString());
+    wfip1.setParserIndex(fIndex);
+    featureVector.addFeature(wfip1, parserAlpha, train);
+    Feature fcpi = FeatureExtractor.createFeatureForCPos(buf1, "cpi", curSent);
+    fIndex = parserAlpha.getFeatureIndex(fcpi.getFeatureString());
+    fcpi.setParserIndex(fIndex);
+    featureVector.addFeature(fcpi, parserAlpha, train);
     int hj = st.getCurDepStruct().getHeads()[st1];
-    Feature wfhj = fe.templateWf(hj, "wfhj", curSent);
-    fvParser.addFeature(wfhj, alphaParser, train);
-    Feature fpi_fpj = fe.merge2(0, this.mergeFeatureNames, fpi, fpj);
-    fIndex = alphaParser.getFeatureIndex(fpi_fpj.getFeatureString());
-    fpi_fpj.setIndexParser(fIndex);
-    fvParser.addFeature(fpi_fpj, alphaParser, train);
-    Feature fpjp2_fpjp1_fpi = fe.merge3(1, this.mergeFeatureNames, fpjp1, fpj, fpi);
-    fIndex = alphaParser.getFeatureIndex(fpjp2_fpjp1_fpi.getFeatureString());
-    fpjp2_fpjp1_fpi.setIndexParser(fIndex);
-    fvParser.addFeature(fpjp2_fpjp1_fpi, alphaParser, train);
-    Feature fpj_fpi1_fpip1 = fe.merge3(2, this.mergeFeatureNames, fpj, fpi, fpip1);
-    fIndex = alphaParser.getFeatureIndex(fpj_fpi1_fpip1.getFeatureString());
-    fpj_fpi1_fpip1.setIndexParser(fIndex);
-    fvParser.addFeature(fpj_fpi1_fpip1, alphaParser, train);
-    Feature fpi_fpip1_fpip2 = fe.merge3(3, this.mergeFeatureNames, fpi, fpip1, fpip2);
-    fIndex = alphaParser.getFeatureIndex(fpi_fpip1_fpip2.getFeatureString());
-    fpi_fpip1_fpip2.setIndexParser(fIndex);
-    fvParser.addFeature(fpi_fpip1_fpip2, alphaParser, train);
-    Feature fpip1_fpip2_fpip3 = fe.merge3(4, this.mergeFeatureNames, fpip1, fpip2, fpip3);
-    fIndex = alphaParser.getFeatureIndex(fpip1_fpip2_fpip3.getFeatureString());
-    fpip1_fpip2_fpip3.setIndexParser(fIndex);
-    fvParser.addFeature(fpip1_fpip2_fpip3, alphaParser, train);
-    Feature dist = fe.templateDistance(st1, buf1);
-    fvParser.addFeature(dist, alphaParser, train);
-    //Feature deprelj = fe.templateDepRel(st1, "depj", curSent, train);
-    //fvParser.addFeature(deprelj, alphaParser, train);
-    return fvParser;
+    Feature wfhj = FeatureExtractor.createFeatureForWF(hj, "wfhj", curSent);
+    featureVector.addFeature(wfhj, parserAlpha, train);
+    Feature fpi_fpj = FeatureExtractor.mergeFeatures(0, this.featureNamesForMerging, fpi, fpj);
+    fIndex = parserAlpha.getFeatureIndex(fpi_fpj.getFeatureString());
+    fpi_fpj.setParserIndex(fIndex);
+    featureVector.addFeature(fpi_fpj, parserAlpha, train);
+    Feature fpjp2_fpjp1_fpi = FeatureExtractor.mergeFeatures(1, this.featureNamesForMerging, fpjp1, fpj, fpi);
+    fIndex = parserAlpha.getFeatureIndex(fpjp2_fpjp1_fpi.getFeatureString());
+    fpjp2_fpjp1_fpi.setParserIndex(fIndex);
+    featureVector.addFeature(fpjp2_fpjp1_fpi, parserAlpha, train);
+    Feature fpj_fpi1_fpip1 = FeatureExtractor.mergeFeatures(2, this.featureNamesForMerging, fpj, fpi, fpip1);
+    fIndex = parserAlpha.getFeatureIndex(fpj_fpi1_fpip1.getFeatureString());
+    fpj_fpi1_fpip1.setParserIndex(fIndex);
+    featureVector.addFeature(fpj_fpi1_fpip1, parserAlpha, train);
+    Feature fpi_fpip1_fpip2 = FeatureExtractor.mergeFeatures(3, this.featureNamesForMerging, fpi, fpip1, fpip2);
+    fIndex = parserAlpha.getFeatureIndex(fpi_fpip1_fpip2.getFeatureString());
+    fpi_fpip1_fpip2.setParserIndex(fIndex);
+    featureVector.addFeature(fpi_fpip1_fpip2, parserAlpha, train);
+    Feature fpip1_fpip2_fpip3 = FeatureExtractor.mergeFeatures(4, this.featureNamesForMerging, fpip1, fpip2, fpip3);
+    fIndex = parserAlpha.getFeatureIndex(fpip1_fpip2_fpip3.getFeatureString());
+    fpip1_fpip2_fpip3.setParserIndex(fIndex);
+    featureVector.addFeature(fpip1_fpip2_fpip3, parserAlpha, train);
+    Feature dist = FeatureExtractor.createFeatureForDistance(st1, buf1);
+    featureVector.addFeature(dist, parserAlpha, train);
+    //Feature deprelj = FeatureExtractor.createFeatureForDepRel(st1, "depj", curSent, train);
+    //featureVector.addFeature(deprelj, parserAlpha, train);
+    return featureVector;
   }
 
 
@@ -127,6 +124,7 @@ public class StackFeatureModel extends FeatureModel {
 
   @Override
   public void initializeStaticFeaturesCombined(Sentence sent, boolean train) {
+
     // do nothing
   }
 }

@@ -5,25 +5,22 @@ public class Feature {
   private String name;
   private String value;
   private String featureString;
-  private Integer indexParser;
-  private Integer indexLabeler;
+  private Integer parserIndex;
+  private Integer labelerIndex;
   private int nameIndex;
 
 
   public Feature(String name, String value) {
+
     this.name = name;
     this.value = value;
-
-    StringBuilder sb = new StringBuilder();
-    sb.append(name);
-    sb.append("=");
-    sb.append(value);
-    this.setFeatureString(sb.toString());
+    this.featureString = name + "=" + value;
   }
 
 
-  public Feature(int nameIndex, int indexParser) {
-    this.indexParser = indexParser;
+  public Feature(int nameIndex, int parserIndex) {
+
+    this.parserIndex = parserIndex;
     this.nameIndex = nameIndex;
   }
 
@@ -33,18 +30,12 @@ public class Feature {
   @Override
   public Feature clone() {
 
-    Feature f = new Feature(this.name, this.value);
-    f.featureString = this.featureString;
-    f.indexParser = this.indexParser;
-    f.indexLabeler = this.indexLabeler;
-    f.nameIndex = this.nameIndex;
-    return f;
-  }
-
-
-  public void setName(String name) {
-
-    this.name = name;
+    Feature featureClone = new Feature(this.name, this.value);
+    featureClone.featureString = this.featureString;
+    featureClone.parserIndex = this.parserIndex;
+    featureClone.labelerIndex = this.labelerIndex;
+    featureClone.nameIndex = this.nameIndex;
+    return featureClone;
   }
 
 
@@ -54,21 +45,16 @@ public class Feature {
   }
 
 
-  public void setValue(String value) {
-
-    this.value = value;
-  }
-
-
   public String getValue() {
 
     return this.value;
   }
 
 
-  public void setFeatureString(String featureString) {
+  public void setValue(String value) {
 
-    this.featureString = featureString;
+    this.value = value;
+    this.featureString = this.name + "=" + this.value;
   }
 
 
@@ -78,48 +64,27 @@ public class Feature {
   }
 
 
-  public Integer getIndexParser() {
+  public Integer getParserIndex() {
 
-    return this.indexParser;
+    return this.parserIndex;
   }
 
 
-  public void setIndexParser(Integer fIndex) {
+  public void setParserIndex(Integer fIndex) {
 
-    this.indexParser = fIndex;
+    this.parserIndex = fIndex;
   }
 
 
-  public Integer getIndexLabeler() {
+  public Integer getLabelerIndex() {
 
-    return this.indexLabeler;
-  }
-
-
-  public void setIndexLabeler(Integer fIndex) {
-
-    this.indexLabeler = fIndex;
-
+    return this.labelerIndex;
   }
 
 
   @Override
   public String toString() {
 
-    return String.valueOf(this.featureString + "(" + this.indexParser + ")");
+    return String.valueOf(this.featureString + "(" + this.parserIndex + ")");
   }
-
-
-  public void setNameIndex(int nameIndex) {
-
-    this.nameIndex = nameIndex;
-  }
-
-
-  public int getNameIndex() {
-
-    return this.nameIndex;
-  }
-
-
 }

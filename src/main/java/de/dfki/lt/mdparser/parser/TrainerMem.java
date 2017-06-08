@@ -27,7 +27,6 @@ import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
 import de.dfki.lt.mdparser.features.Feature;
-import de.dfki.lt.mdparser.features.FeatureExtractor;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
@@ -54,15 +53,14 @@ public class TrainerMem {
 
     Data data = new Data(inputFile, true);
     Alphabet alphaParser = new Alphabet();
-    FeatureExtractor extractor = new FeatureExtractor();
     Sentence[] sentences = data.getSentences();
     FeatureModel model = null;
     ParsingAlgorithm algorithm = null;
     if (algorithmId.equals("covington")) {
-      model = new CovingtonFeatureModel(alphaParser, extractor);
+      model = new CovingtonFeatureModel(alphaParser);
       algorithm = new CovingtonAlgorithm();
     } else if (algorithmId.equals("stack")) {
-      model = new StackFeatureModel(alphaParser, extractor);
+      model = new StackFeatureModel(alphaParser);
       algorithm = new StackAlgorithm();
     } else {
       System.err.println("unkown algorithm " + algorithmId);
@@ -105,7 +103,7 @@ public class TrainerMem {
         // m8=6_NNS_for
 
         // reference to the first feature-value which is the POS of current token j
-        Feature splitFeature = featureVector.getfList().get(0);
+        Feature splitFeature = featureVector.getFeatureList().get(0);
 
         // Basically the POS-feature value for the jth element, e.g., pj=ART
         // It is used for creating splitVal different hashes, which serve as parallel split training files
@@ -260,7 +258,7 @@ public class TrainerMem {
       //TODO Set<Integer> alreadyProcessedLabels = new HashSet<Integer>();
       List<FeatureVector> compactisedTrainingData = new ArrayList<FeatureVector>(curTrainingData.size());
       for (FeatureVector oneFeatureVector : curTrainingData) {
-        FeatureVector newFeatureVector = new FeatureVector(true);
+        FeatureVector newFeatureVector = new FeatureVector();
         String label = oneFeatureVector.getLabel();
         //System.out.println(label);
         //TODO Integer labelOld = alphaParser.getLabelIndexMap().get(label);
@@ -275,7 +273,7 @@ public class TrainerMem {
         }
         */
         newFeatureVector.setLabel(label);
-        List<Feature> featureList = oneFeatureVector.getfList();
+        List<Feature> featureList = oneFeatureVector.getFeatureList();
         List<Feature> newFeatureList = new ArrayList<Feature>();
         for (Feature oneFeature : featureList) {
           Integer oldIndex = alphaParser.getFeatureIndex(oneFeature.getFeatureString());
@@ -286,10 +284,10 @@ public class TrainerMem {
             curMaxIndex++;
           }
           Feature newFeature = oneFeature.clone();
-          newFeature.setIndexParser(oldToNew[oldIndex]);
+          newFeature.setParserIndex(oldToNew[oldIndex]);
           newFeatureList.add(newFeature);
         }
-        newFeatureVector.setfList(newFeatureList);
+        newFeatureVector.setFeatureList(newFeatureList);
         compactisedTrainingData.add(newFeatureVector);
       }
       mergedMap.put(curFeature, compactisedTrainingData);

@@ -112,7 +112,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
           } else if (label.equals("terminate")) {
             i = -1;
           }
-          covFeatureModel.getAlphabetParser().addLabel(label);
+          covFeatureModel.getParserAlphabet().addLabel(label);
           featureVector.setLabel(label);
           featureVectorList.add(featureVector);
         }
@@ -150,9 +150,9 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
           //System.out.println(mName+" "+curAlphabet);
           //System.out.println(+" "+curModel+" "+fm2+" "+fm2.getAlphabetParser());
           int labelInt = (int)Linear.predict(
-              curModel, featureVector.getLiblinearRepresentation(false, false, covFeatureModel.getAlphabetParser()));
+              curModel, featureVector.getLiblinearRepresentation(false, false, covFeatureModel.getParserAlphabet()));
 
-          String label = covFeatureModel.getAlphabetParser().getIndexLabelArray()[labelInt];
+          String label = covFeatureModel.getParserAlphabet().getIndexLabelArray()[labelInt];
           //System.out.println(j+" "+i+" "+label+" "+fvParser);
           String labelTrans = "";
           String labelDepRel = "";

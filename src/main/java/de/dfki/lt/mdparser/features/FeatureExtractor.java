@@ -2,123 +2,96 @@ package de.dfki.lt.mdparser.features;
 
 import de.dfki.lt.mdparser.data.Sentence;
 
-// GN: OBACHT: templates are functions and return exactly one feature.
-public class FeatureExtractor {
+public final class FeatureExtractor {
+
+  private FeatureExtractor() {
+
+    // private constructor to enforce noninstantiability
+  }
 
 
-  // GN: return POS of token index in sent
+  // return POS for token index in sent
   // -> is it basically index because array and deptree are counted from 0/1 ?!
-  public Feature templatePos(int index, String indexName, Sentence sent) {
+  public static Feature createFeatureForPos(int tokenIndex, String featureName, Sentence sent) {
 
-    String pos = "";
-    if (index <= 0) {
-      pos = "null";
-    } else if (index > sent.getSentArray().length) {
-      pos = "null";
+    // 3 -> 4th column in CONLL format -> coarse-grained POS
+    int featureIndex = 3;
+    return createFeature(tokenIndex, featureName, sent, featureIndex);
+  }
+
+
+  // same as createFeatureForPos() -> used as static feature
+  public static Feature createFeatureForCPos(int tokenIndex, String featureName, Sentence sent) {
+
+    // 3 -> 4th column in CONLL format -> coarse-grained POS
+    int featureIndex = 3;
+    return createFeature(tokenIndex, featureName, sent, featureIndex);
+  }
+
+
+  // return WF for token index in sent
+  public static Feature createFeatureForWF(int tokenIndex, String featureName, Sentence sent) {
+
+    // 1 -> 2nd column in CONLL format -> word-form
+    int featureIndex = 1;
+    return createFeature(tokenIndex, featureName, sent, featureIndex);
+  }
+
+
+  private static Feature createFeature(
+      int tokenIndex, String featureName, Sentence sent, int featureIndex) {
+
+    String value = "";
+    if (tokenIndex <= 0) {
+      value = "null";
+    } else if (tokenIndex > sent.getSentArray().length) {
+      value = "null";
     } else {
-      // 3 -> 4th column in CONLL format -> coarse-grained POS
-      pos = sent.getSentArray()[index - 1][3];
+      value = sent.getSentArray()[tokenIndex - 1][featureIndex];
     }
-    Feature f = new Feature(indexName, pos);
+    Feature f = new Feature(featureName, value);
     return f;
   }
 
 
-  // GN: same as templatePos() -> used as static feature
-  public Feature templateCPos(int index, String indexName, Sentence sent) {
-
-    String pos = "";
-    if (index <= 0) {
-      pos = "null";
-    } else if (index > sent.getSentArray().length) {
-      pos = "null";
-    } else {
-      // 3 -> 4th column in CONLL format -> coarse-grained POS
-      pos = sent.getSentArray()[index - 1][3];
-      //String[] feats = sent.getSentArray()[index-1][4].split("\\|");
-      //pos = feats[feats.length-1];
-    }
-    Feature f = new Feature(indexName, pos);
-    return f;
-  }
-
-
-  // GN: return WF of j token in sent
-  public Feature templateWf(int index, String indexName, Sentence sent) {
-
-    String wf = "";
-    if (index <= 0) {
-      wf = "null";
-    } else if (index > sent.getSentArray().length) {
-      wf = "null";
-    } else {
-      // 1 -> 2nd column in CONLL format -> word-form
-      wf = sent.getSentArray()[index - 1][1];
-    }
-    Feature f = new Feature(indexName, wf);
-    return f;
-  }
-
-
-  // Returns the dependency relation of head of index, which is parent dependency relation PDEPREL at cell s[9]
-  public Feature templateDepRel(int index, String indexName, Sentence sent, boolean train) {
+  // returns the dependency relation of head of token index,
+  // which is parent dependency relation PDEPREL at cell s[9]
+  public static Feature createFeatureForDepRel(
+      int tokenIndex, String featureName, Sentence sent, boolean train) {
 
     //String depRel = curDepStruct.getLabels()[index];
     String depRel;
-    if (index < 0) {
+    if (tokenIndex < 0) {
       depRel = "null";
-    } else if (index == 0) {
+    } else if (tokenIndex == 0) {
       depRel = "none";
     } else {
       // 9 -> 10th column used for "storing" oracle/predicted label
       // -> at least, seems so; because also these columns are overwritten with "_" when training is read in Data()
       if (train) {
         //System.out.println(sent.toString());
-        if (sent.getSentArray()[index - 1][9] == null || sent.getSentArray()[index - 1][9].equals("_")) {
+        if (sent.getSentArray()[tokenIndex - 1][9] == null || sent.getSentArray()[tokenIndex - 1][9].equals("_")) {
           depRel = "none";
         } else {
-          depRel = sent.getSentArray()[index - 1][9];
+          depRel = sent.getSentArray()[tokenIndex - 1][9];
         }
       } else {
-        if (sent.getSentArray()[index - 1][9] == null || sent.getSentArray()[index - 1][9].equals("_")) {
+        if (sent.getSentArray()[tokenIndex - 1][9] == null || sent.getSentArray()[tokenIndex - 1][9].equals("_")) {
           depRel = "none";
         } else {
-          depRel = sent.getSentArray()[index - 1][9];
+          depRel = sent.getSentArray()[tokenIndex - 1][9];
         }
       }
     }
 
-    Feature f = new Feature(indexName, depRel);
+    Feature feature = new Feature(featureName, depRel);
     // System.out.println(f.toString());
     // computes something like: deprdi=null(null), depldj=SB(null), depi=ROOT(null)
-    return f;
+    return feature;
   }
 
 
-  public Feature merge2(int i, String[] mergeFeatureNames, Feature f1, Feature f2) {
-
-    String name = mergeFeatureNames[i];
-    String value = f1.getValue() + "_" + f2.getValue();
-    //String value = String.valueOf(
-    //  Integer.valueOf(f1.getValue().hashCode())*Integer.valueOf(f2.getValue().hashCode()));
-    Feature f = new Feature(name, value);
-    return f;
-  }
-
-
-  public Feature merge3(int i, String[] mergeFeatureNames, Feature f1, Feature f2, Feature f3) {
-
-    String name = mergeFeatureNames[i];
-    String value = f1.getValue() + "_" + f2.getValue() + "_" + f3.getValue();
-    //String value = String.valueOf(
-    //  Integer.valueOf(f1.getValue().hashCode())*Integer.valueOf(f2.getValue().hashCode())
-    //  *Integer.valueOf(f3.getValue().hashCode()));
-    Feature f = new Feature(name, value);
-    return f;
-  }
-
-
-  public Feature templateDistance(int j, int i) {
+  public static Feature createFeatureForDistance(int j, int i) {
 
     int dist = j - i;
     int distClass;
@@ -137,7 +110,25 @@ public class FeatureExtractor {
     } else {
       distClass = 6;
     }
-    Feature f = new Feature("dist", String.valueOf(distClass));
-    return f;
+    Feature feature = new Feature("dist", String.valueOf(distClass));
+    return feature;
+  }
+
+
+  public static Feature mergeFeatures(int i, String[] mergeFeatureNames, Feature f1, Feature f2) {
+
+    String name = mergeFeatureNames[i];
+    String value = f1.getValue() + "_" + f2.getValue();
+    Feature doubleFeature = new Feature(name, value);
+    return doubleFeature;
+  }
+
+
+  public static Feature mergeFeatures(int i, String[] mergeFeatureNames, Feature f1, Feature f2, Feature f3) {
+
+    String name = mergeFeatureNames[i];
+    String value = f1.getValue() + "_" + f2.getValue() + "_" + f3.getValue();
+    Feature tripleFeature = new Feature(name, value);
+    return tripleFeature;
   }
 }

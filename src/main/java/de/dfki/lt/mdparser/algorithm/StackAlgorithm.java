@@ -71,7 +71,7 @@ public class StackAlgorithm extends ParsingAlgorithm {
       if (buffer.isEmpty()) {
         curState.setTerminal(true);
       }
-      featureModel.getAlphabetParser().addLabel(label);
+      featureModel.getParserAlphabet().addLabel(label);
       featureVectorList.add(featureVector);
       this.maxi = Math.max(curState.getBufferToken(0), this.maxi);
     }
@@ -147,8 +147,8 @@ public class StackAlgorithm extends ParsingAlgorithm {
         curModel = feature2ModelMap.values().iterator().next();
       }
       int labelInt = (int)Linear.predict(
-          curModel, featureVector.getLiblinearRepresentation(false, false, featureModel.getAlphabetParser()));
-      String label = featureModel.getAlphabetParser().getIndexLabelArray()[labelInt];
+          curModel, featureVector.getLiblinearRepresentation(false, false, featureModel.getParserAlphabet()));
+      String label = featureModel.getParserAlphabet().getIndexLabelArray()[labelInt];
       //System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
       String labelTrans = "";
       String labelDepRel = "";

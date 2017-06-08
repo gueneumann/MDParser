@@ -8,21 +8,32 @@ import de.dfki.lt.mdparser.data.Sentence;
 
 public abstract class FeatureModel {
 
-  private Alphabet alphabetParser;
-  private Alphabet alphabetLabeler;
-  private FeatureExtractor fe;
+  private Alphabet parserAlphabet;
+  private Alphabet labelerAlphabet;
 
 
-  public FeatureModel(Alphabet alphabetParser, Alphabet alphabetLabeler, FeatureExtractor fe) {
-    this.alphabetParser = alphabetParser;
-    this.alphabetLabeler = alphabetLabeler;
-    this.fe = fe;
+  public FeatureModel(Alphabet parserAlphabet, Alphabet labelerAlphabet) {
+
+    this.parserAlphabet = parserAlphabet;
+    this.labelerAlphabet = labelerAlphabet;
   }
 
 
-  public FeatureModel(Alphabet alphabetParser, FeatureExtractor fe) {
-    this.alphabetParser = alphabetParser;
-    this.fe = fe;
+  public FeatureModel(Alphabet parserAlphabet) {
+
+    this.parserAlphabet = parserAlphabet;
+  }
+
+
+  public Alphabet getParserAlphabet() {
+
+    return this.parserAlphabet;
+  }
+
+
+  public Alphabet getLabelerAlphabet() {
+
+    return this.labelerAlphabet;
   }
 
 
@@ -33,42 +44,4 @@ public abstract class FeatureModel {
 
 
   public abstract void initializeStaticFeaturesCombined(Sentence sent, boolean train);
-
-
-  public void setAlphabetParser(Alphabet alphabetParser) {
-
-    this.alphabetParser = alphabetParser;
-  }
-
-
-  public Alphabet getAlphabetParser() {
-
-    return this.alphabetParser;
-  }
-
-
-  public void setFeatureExtractor(FeatureExtractor fe) {
-
-    this.fe = fe;
-  }
-
-
-  public FeatureExtractor getFeatureExtractor() {
-
-    return this.fe;
-  }
-
-
-  public void setAlphabetLabeler(Alphabet alphabetLabeler) {
-
-    this.alphabetLabeler = alphabetLabeler;
-  }
-
-
-  public Alphabet getAlphabetLabeler() {
-
-    return this.alphabetLabeler;
-  }
-
-
 }

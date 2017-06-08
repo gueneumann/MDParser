@@ -35,7 +35,6 @@ import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
-import de.dfki.lt.mdparser.features.FeatureExtractor;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
@@ -62,15 +61,14 @@ public class Trainer {
     // to the model
     Alphabet alphaParser = new Alphabet();
     // GN: the feature templates functions
-    FeatureExtractor extractor = new FeatureExtractor();
     Sentence[] sentences = data.getSentences();
     FeatureModel featureModel = null;
     ParsingAlgorithm algorithm = null;
     if (algorithmId.equals("covington")) {
-      featureModel = new CovingtonFeatureModel(alphaParser, extractor);
+      featureModel = new CovingtonFeatureModel(alphaParser);
       algorithm = new CovingtonAlgorithm();
     } else if (algorithmId.equals("stack")) {
-      featureModel = new StackFeatureModel(alphaParser, extractor);
+      featureModel = new StackFeatureModel(alphaParser);
       algorithm = new StackAlgorithm();
     } else {
       System.err.println("unknown algorithm " + algorithmId);
