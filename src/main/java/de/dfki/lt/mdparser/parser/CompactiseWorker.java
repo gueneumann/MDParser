@@ -39,7 +39,7 @@ public class CompactiseWorker {
       System.out.println("... and store in splitC; read problem and call trainer, "
           + "and finally save models and alphabet, and edit them. ");
       int[][] compactArray = Trainer.compactiseTrainingDataFile(
-          file, this.alphaParser.getMaxIndex(), new File("splitC"));
+          file, this.alphaParser.getNumberOfFeatures(), new File("splitC"));
 
       //System.out.println("new to old size: "+compactArray[0].length);
 
@@ -53,7 +53,7 @@ public class CompactiseWorker {
       System.out.println("Save: " + this.splitModelsDir + "/" + file.getName());
       model.save(new File(this.splitModelsDir + "/" + file.getName()));
 
-      Trainer.saveAlphabet(this.alphaParser, compactArray, new File("splitA/" + file.getName()));
+      this.alphaParser.writeToFile("splitA/" + file.getName(), compactArray);
 
       //System.out.println(alphaParser.getMaxIndex());
       ModelEditor modelEditor = new ModelEditor(

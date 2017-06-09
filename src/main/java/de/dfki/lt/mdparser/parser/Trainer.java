@@ -111,7 +111,7 @@ public class Trainer {
         FeatureVector featureVector = parserList.get(i);
         String operation = featureVector.getLabel();
         // GN: Lookup up label-index and use it to create/extend buffer
-        Integer index = alphaParser.getLabelIndexMap().get(operation);
+        Integer index = alphaParser.getLabelIndex(operation);
         // GN: create label-index many different split0 files, so that each files contains just the feature vectors
         // of each edge feature vector and its label instance
         // The label-index buffers are kept in a hash array
@@ -139,11 +139,11 @@ public class Trainer {
     // using a distributed approach based on the available processors
     // stores and adjust the split files in folder split/
     // and finally calls the trainer on each file ion parallel
-    alphaParser.createIndexToValueArray();
-    String[] valArray = alphaParser.getIndexToValueArray();
-    alphaParser.printToFile(alphabetFileParser);
-    for (int v = 1; v < valArray.length; v++) {
-      String val = valArray[v];
+    alphaParser.writeToFile(alphabetFileParser);
+    int numberOfFeatures = alphaParser.getNumberOfFeatures();
+    // feature indices start at 1, so we iterate until num + 1
+    for (int v = 1; v <= numberOfFeatures; v++) {
+      String val = alphaParser.getFeature(v);
       if (val.split("=")[0].equals("pj")) {
         posMap.put(v, val);
       }
@@ -264,14 +264,14 @@ public class Trainer {
     //System.out.println(newSplitMap);
     //printSplitMap
 
-    alphaParser.printToFile(alphabetFileParser);
+    alphaParser.writeToFile(alphabetFileParser);
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
         Paths.get("temp/split.txt"), StandardCharsets.UTF_8))) {
       for (Map.Entry<String, String> oneSplitValFilePair : newSplitMap.entrySet()) {
         String splitVal = oneSplitValFilePair.getKey();
         String newFile = oneSplitValFilePair.getValue();
         Integer index = Integer.valueOf(splitVal.split("\\.")[0]);
-        String featureString = alphaParser.getIndexToValueArray()[index];
+        String featureString = alphaParser.getFeature(index);
         out.println(featureString + " " + "split/" + newFile + " " + splitVal);
       }
     }
@@ -303,49 +303,38 @@ public class Trainer {
       String alphabetFile, String splitAlphaDir, String splitModelsDir)
       throws IOException {
 
-    Alphabet alpha = unionAlphabets(splitAlphaDir);
+    Alphabet alpha = uniteAlphabets(splitAlphaDir);
     restoreModels(splitModelsDir, alpha, splitAlphaDir);
-    alpha.printToFile(alphabetFile);
+    alpha.writeToFile(alphabetFile);
   }
 
 
-  private static Alphabet unionAlphabets(String splitAlphaDir) throws IOException {
+  private static Alphabet uniteAlphabets(String splitAlphaDir) throws IOException {
 
-    Alphabet alpha = new Alphabet();
-    File[] alphabets = new File(splitAlphaDir).listFiles();
-    Map<String, Integer> map = alpha.getValueToIndexMap();
-    for (int i = 0; i < alphabets.length; i++) {
-      Alphabet curAlpha = new Alphabet(new FileInputStream(alphabets[i]));
-      if (alpha.getLabelIndexMap().keySet().isEmpty()) {
-        alpha.setLabelIndexMap(curAlpha.getLabelIndexMap());
-        /*
-        String[] labels = curAlpha.getIndexLabelArray();
-        for (int k=0; k < labels.length;k++) {
-          alpha.addLabel(labels[k]);
-        }
-        */
-        alpha.setMaxLabelIndex(curAlpha.getLabelIndexMap().size() + 1);
+    Alphabet alphasUnited = null;
+    File[] alphabetFiles = new File(splitAlphaDir).listFiles();
+    for (int i = 0; i < alphabetFiles.length; i++) {
+      Alphabet curAlpha = new Alphabet(new FileInputStream(alphabetFiles[i]));
+      if (alphasUnited == null) {
+        // init union with first alphabet to unite
+        alphasUnited = curAlpha;
+        continue;
       }
-      String[] features = curAlpha.getIndexToValueArray();
-      //System.out.println(curAlpha.getValueToIndexMap());
-      for (int k = 1; k < features.length; k++) {
-        Integer index = map.get(features[k]);
-        //System.out,.println(features)
-        if (index == null) {
-          alpha.addFeature(features[k]);
-          //System.out.println(features[k]);
-        }
+      int numberOfFeatures = curAlpha.getNumberOfFeatures();
+      // feature indices start at 1, so we iterate until num + 1
+      for (int k = 1; k <= numberOfFeatures; k++) {
+        alphasUnited.addFeature(curAlpha.getFeature(k));
+        //System.out.println(features[k]);
       }
     }
 
-    return alpha;
+    return alphasUnited;
   }
 
 
   private static void restoreModels(String splitModelsDir, Alphabet alpha, String splitA) throws IOException {
 
     File[] models = new File(splitModelsDir).listFiles();
-    alpha.createIndexToValueArray();
     for (int i = 0; i < models.length; i++) {
       System.out.println("Model file: " + models[i]);
       Model model = Linear.loadModel(models[i]);
@@ -362,13 +351,11 @@ public class Trainer {
           out.print(model.getLabels()[k] + " ");
         }
         out.println();
-        String[] features = alpha.getIndexToValueArray();
-        //System.out.println(features);
+        int numberOfFeatures = alpha.getNumberOfFeatures();
         boolean notFound = true;
-        Set<String> thisAlphabetFeatures = a.getValueToIndexMap().keySet();
         int lastIndex = -1;
-        for (int k = features.length - 1; k > 1 && notFound; k--) {
-          if (thisAlphabetFeatures.contains(features[k])) {
+        for (int k = numberOfFeatures; k > 1 && notFound; k--) {
+          if (a.getFeatureIndex(alpha.getFeature(k)) != null) {
             lastIndex = k;
             notFound = false;
           }
@@ -376,10 +363,9 @@ public class Trainer {
         out.println("nr_feature " + (lastIndex - 1));
         out.println("bias " + model.getBias());
         out.println("w");
-        Map<String, Integer> valToIndexMap = a.getValueToIndexMap();
         for (int k = 1; k < lastIndex; k++) {
-          String feature = features[k];
-          Integer oldIndex = valToIndexMap.get(feature);
+          String feature = alpha.getFeature(k);
+          Integer oldIndex = a.getFeatureIndex(feature);
           if (oldIndex == null) {
             for (int m = 0; m < numberOfClasses; m++) {
               out.print("0 ");
@@ -397,40 +383,13 @@ public class Trainer {
   }
 
 
-  static void saveAlphabet(Alphabet alphaParser, int[][] compactArray, File file)
-      throws IOException {
-
-    int[] newToOld = compactArray[0];
-
-    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8))) {
-      String[] indexLabelArray = alphaParser.getIndexLabelArray();
-      for (int i = 1; i < alphaParser.getMaxLabelIndex(); i++) {
-        out.println(i + " " + indexLabelArray[i]);
-      }
-      // GN: seems to cause problem in training with algorithm=stack
-      out.println();
-      String[] indexToValue = alphaParser.getIndexToValueArray();
-      boolean notFinished = true;
-      for (int i = 1; notFinished && i < newToOld.length; i++) {
-        int newIndex = i;
-        int oldIndex = newToOld[i];
-        if (oldIndex == 0) {
-          notFinished = false;
-        } else {
-          String stringValue = indexToValue[oldIndex];
-          out.println(newIndex + " " + stringValue);
-        }
-      }
-    }
-  }
-
-
   public static int[][] compactiseTrainingDataFile(
-      File curentTrainingFile, int absoluteMax, File splitC) throws IOException {
+      File curentTrainingFile, int numberOfFeatures, File splitC) throws IOException {
 
     int[][] compactArray = new int[2][];
-    int[] oldToNew = new int[absoluteMax];
-    int[] newToOld = new int[absoluteMax];
+    // feature indices start at 1, so we have to add 1 to the size
+    int[] oldToNew = new int[numberOfFeatures + 1];
+    int[] newToOld = new int[numberOfFeatures + 1];
     compactArray[0] = newToOld;
     compactArray[1] = oldToNew;
 
@@ -440,7 +399,7 @@ public class Trainer {
         BufferedReader in = Files.newBufferedReader(curentTrainingFile.toPath(), StandardCharsets.UTF_8)) {
       String line;
       int maxIndex = 1;
-      Set<Integer> encountered = new HashSet<>(absoluteMax);
+      Set<Integer> encountered = new HashSet<>(numberOfFeatures + 1);
       while ((line = in.readLine()) != null) {
         String[] lineArray = line.split(" ");
         out.print(lineArray[0]);

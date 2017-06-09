@@ -2,242 +2,227 @@ package de.dfki.lt.mdparser.features;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Bidirectional mapping of features to their indices and of labels to their indices.
+ */
 public class Alphabet {
 
-  private HashMap<String, Integer> valueToIndexMap;
-  private String[] indexToValueArray;
-  private int maxIndex;
+  private Map<String, Integer> label2IndexMap;
+  private String[] index2LabelArray;
+  // flag to indicate if index2LabelArray is in sync with label2IndexMap
+  private boolean labelArrayDirty;
 
-  private HashMap<String, Integer> labelIndexMap;
-  private String[] indexLabelArray;
-  private int maxLabelIndex;
+  private Map<String, Integer> feature2IndexMap;
+  private String[] index2FeatureArray;
+  // flag to indicate if index2FeatureArray is in sync with feature2IndexMap
+  private boolean featureArrayDirty;
 
 
   public Alphabet() {
-    setValueToIndexMap(new HashMap<String, Integer>(1000000));
-    this.labelIndexMap = new HashMap<String, Integer>(100);
-    this.maxIndex = 1;
-    this.maxLabelIndex = 1;
+
+    this.label2IndexMap = new HashMap<>(100);
+    this.feature2IndexMap = new HashMap<>(1000000);
+    this.featureArrayDirty = true;
+    this.labelArrayDirty = true;
   }
 
 
-  public Alphabet(String alphabetFile)
+  public Alphabet(String alphabetFileName)
       throws IOException {
-    FileInputStream in = new FileInputStream(alphabetFile);
-    BufferedInputStream bis = new BufferedInputStream(in, 8000);
-    InputStreamReader ir = new InputStreamReader(bis, "UTF8");
-    BufferedReader fr = new BufferedReader(ir);
-    String line;
-    int c = 0;
-    this.maxLabelIndex = 1;
-    this.maxIndex = 1;
-    this.labelIndexMap = new HashMap<String, Integer>(1000000);
-    this.valueToIndexMap = new HashMap<String, Integer>(100);
-    this.indexLabelArray = new String[this.labelIndexMap.size() + 1];
-    this.indexToValueArray = new String[this.valueToIndexMap.size() + 1];
-    while ((line = fr.readLine()) != null) {
-      if (line.length() == 0) {
-        c++;
-      } else {
-        String[] lineArray;
-        if (c == 0) {
+
+    this(new FileInputStream(alphabetFileName));
+  }
+
+
+  public Alphabet(InputStream inputStream)
+      throws IOException {
+
+    this();
+
+    try (BufferedReader in = new BufferedReader(
+        new InputStreamReader(new BufferedInputStream(inputStream), StandardCharsets.UTF_8))) {
+      int c = 0;
+      String line;
+      while ((line = in.readLine()) != null) {
+        if (line.trim().length() == 0) {
+          c++;
+        } else {
+          String[] lineArray;
           lineArray = line.split(" ");
-          this.labelIndexMap.put(lineArray[1], Integer.valueOf(lineArray[0]));
-          //indexLabelArray[maxLabelIndex] = lineArray[1];
-          this.maxLabelIndex++;
-        } else if (c == 1) {
-          lineArray = line.split(" ");
-          this.valueToIndexMap.put(lineArray[1], Integer.valueOf(lineArray[0]));
-          //indexToValueArray[maxIndex] = lineArray[1];
-          this.maxIndex++;
+          if (c == 0) {
+            this.label2IndexMap.put(lineArray[1], Integer.valueOf(lineArray[0]));
+          } else if (c == 1) {
+            this.feature2IndexMap.put(lineArray[1], Integer.valueOf(lineArray[0]));
+          }
         }
       }
     }
-    fr.close();
-    createIndexToValueArray();
   }
 
 
-  public Alphabet(InputStream is)
-      throws IOException {
-    BufferedInputStream bis = new BufferedInputStream(is, 8000);
-    InputStreamReader ir = new InputStreamReader(bis, "UTF8");
-    BufferedReader fr = new BufferedReader(ir);
-    String line;
-    int c = 0;
-    this.maxLabelIndex = 1;
-    this.maxIndex = 1;
-    this.labelIndexMap = new HashMap<String, Integer>(1000000);
-    this.valueToIndexMap = new HashMap<String, Integer>(100);
-    this.indexLabelArray = new String[this.labelIndexMap.size() + 1];
-    this.indexToValueArray = new String[this.valueToIndexMap.size() + 1];
-    while ((line = fr.readLine()) != null) {
-      if (line.length() == 0) {
-        c++;
-      } else {
-        String[] lineArray;
-        if (c == 0) {
-          lineArray = line.split(" ");
-          this.labelIndexMap.put(lineArray[1], Integer.valueOf(lineArray[0]));
-          //indexLabelArray[maxLabelIndex] = lineArray[1];
-          this.maxLabelIndex++;
-        } else if (c == 1) {
-          lineArray = line.split(" ");
-          this.valueToIndexMap.put(lineArray[1], Integer.valueOf(lineArray[0]));
-          this.maxIndex++;
-        }
+  private String[] getIndex2LabelArray() {
+
+    if (this.labelArrayDirty) {
+      // update array
+      this.index2LabelArray = new String[this.label2IndexMap.size() + 1];
+      for (Map.Entry<String, Integer> oneLabelIndexPair : this.label2IndexMap.entrySet()) {
+        String curLabel = oneLabelIndexPair.getKey();
+        Integer curIndex = oneLabelIndexPair.getValue();
+        this.index2LabelArray[curIndex] = curLabel;
       }
+      this.labelArrayDirty = false;
     }
-    fr.close();
-    createIndexToValueArray();
+
+    return this.index2LabelArray;
   }
 
 
-  public Integer getFeatureIndex(String value) {
+  private String[] getIndex2FeatureArray() {
 
-    return this.valueToIndexMap.get(value);
+    if (this.featureArrayDirty) {
+      // update array
+      this.index2FeatureArray = new String[this.feature2IndexMap.size() + 1];
+      for (Map.Entry<String, Integer> oneFeatureIndexPair : this.feature2IndexMap.entrySet()) {
+        String curFeature = oneFeatureIndexPair.getKey();
+        Integer curIndex = oneFeatureIndexPair.getValue();
+        this.index2FeatureArray[curIndex] = curFeature;
+      }
+      this.featureArrayDirty = false;
+    }
+
+    return this.index2FeatureArray;
   }
 
 
-  public void setValueToIndexMap(HashMap<String, Integer> valueToIndexMap) {
+  public int getNumberOfLabels() {
 
-    this.valueToIndexMap = valueToIndexMap;
+    return this.label2IndexMap.size();
   }
 
 
-  public HashMap<String, Integer> getValueToIndexMap() {
+  public int getNumberOfFeatures() {
 
-    return this.valueToIndexMap;
+    return this.feature2IndexMap.size();
   }
 
 
-  public void setMaxIndex(int maxIndex) {
+  public Integer getLabelIndex(String label) {
 
-    this.maxIndex = maxIndex;
+    return this.label2IndexMap.get(label);
   }
 
 
-  public int getMaxIndex() {
+  public String getLabel(int index) {
 
-    return this.maxIndex;
+    return this.getIndex2LabelArray()[index];
   }
 
 
-  public void setMaxLabelIndex(int maxIndex) {
+  public Integer getFeatureIndex(String feature) {
 
-    this.maxLabelIndex = maxIndex;
+    return this.feature2IndexMap.get(feature);
   }
 
 
-  public int getMaxLabelIndex() {
+  public String getFeature(int index) {
 
-    return this.maxLabelIndex;
-  }
-
-
-  public void addFeature(String featureString) {
-
-    this.valueToIndexMap.put(featureString, this.maxIndex);
-    this.maxIndex++;
+    return this.getIndex2FeatureArray()[index];
   }
 
 
   public void addLabel(String label) {
 
-    Integer index = this.labelIndexMap.get(label);
+    Integer index = this.label2IndexMap.get(label);
     if (index == null) {
-      this.labelIndexMap.put(label, this.maxLabelIndex);
-      this.maxLabelIndex++;
-    }
-
-  }
-
-
-  public void createIndexToValueArray() {
-
-    this.indexToValueArray = new String[this.maxIndex];
-    Iterator<String> keyIter = this.valueToIndexMap.keySet().iterator();
-    while (keyIter.hasNext()) {
-      String curKey = keyIter.next();
-      Integer curVal = this.valueToIndexMap.get(curKey);
-      this.indexToValueArray[curVal] = curKey;
-    }
-    this.indexLabelArray = new String[this.maxLabelIndex];
-    keyIter = this.labelIndexMap.keySet().iterator();
-    while (keyIter.hasNext()) {
-      String curKey = keyIter.next();
-      Integer curVal = this.labelIndexMap.get(curKey);
-      this.indexLabelArray[curVal] = curKey;
+      this.label2IndexMap.put(label, this.label2IndexMap.size() + 1);
+      this.labelArrayDirty = true;
     }
   }
 
 
-  public void printToFile(String alphabetFile) throws IOException {
+  public void addFeature(String feature) {
 
-    createIndexToValueArray();
-    FileOutputStream out = new FileOutputStream(alphabetFile);
-    OutputStreamWriter or = new OutputStreamWriter(out, "UTF-8");
-    BufferedWriter fw = new BufferedWriter(or);
-    for (int i = 1; i < this.maxLabelIndex; i++) {
-      String line = String.format("%d %s\n", i, this.indexLabelArray[i]);
-      fw.append(line);
+    Integer index = this.feature2IndexMap.get(feature);
+    if (index == null) {
+      this.feature2IndexMap.put(feature, this.feature2IndexMap.size() + 1);
+      this.featureArrayDirty = true;
     }
-    fw.append("\n");
-    for (int i = 1; i < this.maxIndex; i++) {
-      String val = this.indexToValueArray[i];
-      if (val != null) {
-        String line = i + " " + val + "\n";
-        fw.append(line);
+  }
+
+
+  public void removeNeverUsedFeatures(Set<Integer> neverUsedFeatures) {
+
+    int indexCount = 1;
+    Map<String, Integer> updatedFeature2IndexMap =
+        new HashMap<>(this.feature2IndexMap.size() - neverUsedFeatures.size());
+    String[] index2Feature = this.getIndex2FeatureArray();
+    for (int i = 1; i < index2Feature.length; i++) {
+      if (!neverUsedFeatures.contains(i)) {
+        updatedFeature2IndexMap.put(index2Feature[i], indexCount);
+        indexCount++;
       }
     }
-    fw.close();
+    this.feature2IndexMap = updatedFeature2IndexMap;
+    this.featureArrayDirty = true;
   }
 
 
-  public void setIndexToValueArray(String[] indexToValueArray) {
+  public void writeToFile(String alphabetFileName)
+      throws IOException {
 
-    this.indexToValueArray = indexToValueArray;
+    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+        Paths.get(alphabetFileName), StandardCharsets.UTF_8))) {
+      String[] index2Label = this.getIndex2LabelArray();
+      for (int i = 1; i < index2Label.length; i++) {
+        out.println(String.format("%d %s", i, index2Label[i]));
+      }
+      out.println();
+      String[] index2Feature = this.getIndex2FeatureArray();
+      for (int i = 1; i < index2Feature.length; i++) {
+        String feature = index2Feature[i];
+        if (feature != null) {
+          out.println(i + " " + feature);
+        }
+      }
+    }
   }
 
 
-  public String[] getIndexToValueArray() {
+  public void writeToFile(String alphabetFileName, int[][] compactArray)
+      throws IOException {
 
-    return this.indexToValueArray;
+    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+        Paths.get(alphabetFileName), StandardCharsets.UTF_8))) {
+      String[] index2label = this.getIndex2LabelArray();
+      for (int i = 1; i < index2label.length; i++) {
+        out.println(String.format("%d %s", i, index2label[i]));
+      }
+      out.println();
+      int[] newToOld = compactArray[0];
+      boolean notFinished = true;
+      String[] index2Feature = this.getIndex2FeatureArray();
+      for (int i = 1; notFinished && i < newToOld.length; i++) {
+        int newIndex = i;
+        int oldIndex = newToOld[i];
+        if (oldIndex == 0) {
+          notFinished = false;
+        } else {
+          String feature = index2Feature[oldIndex];
+          out.println(newIndex + " " + feature);
+        }
+      }
+    }
   }
-
-
-  public void setIndexLabelArray(String[] indexLabelArray) {
-
-    this.indexLabelArray = indexLabelArray;
-  }
-
-
-  public String[] getIndexLabelArray() {
-
-    return this.indexLabelArray;
-  }
-
-
-  public void setLabelIndexMap(HashMap<String, Integer> labelIndexMap) {
-
-    this.labelIndexMap = labelIndexMap;
-  }
-
-
-  public HashMap<String, Integer> getLabelIndexMap() {
-
-    return this.labelIndexMap;
-  }
-
-
 }

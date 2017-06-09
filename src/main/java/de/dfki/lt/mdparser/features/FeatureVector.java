@@ -56,7 +56,7 @@ public class FeatureVector {
   public void addFeature(Feature feature, Alphabet alpha, boolean train) {
 
     this.featureList.add(feature);
-    if (train && !alpha.getValueToIndexMap().keySet().contains((feature.getFeatureString()))) {
+    if (train) {
       alpha.addFeature(feature.getFeatureString());
     }
   }
@@ -79,7 +79,7 @@ public class FeatureVector {
 
     StringBuilder builder = new StringBuilder();
     List<Integer> indexList = new ArrayList<Integer>();
-    builder.append(alpha.getLabelIndexMap().get(this.label));
+    builder.append(alpha.getLabelIndex(this.label));
     for (Feature oneFeature : this.featureList) {
       Integer featureIndex = null;
       if (labels) {

@@ -126,7 +126,7 @@ public class TrainerMem {
     // NOTE: the static and dynamic feature-values are added to the alphabet class as a side-effect
     // via the selected model (CovingtonFeatureModel()) and are now saved in a file.
     // HIERIX
-    alphaParser.printToFile(alphabetFileParser);
+    alphaParser.writeToFile(alphabetFileParser);
 
     // merging split maps parser
     Map<String, String> newSplitMap = new HashMap<String, String>();
@@ -212,8 +212,7 @@ public class TrainerMem {
           //  + Double.valueOf(MemoryUtil.deepMemoryUsageOf(model))/1024/1024 + " MB");
           //use weights but with old indexes
           //saveModel(model,compactMap.get(nValForCurFeature), new File(splitModelsDir+"/"+nValForCurFeature+".txt"));
-          Trainer.saveAlphabet(alphaParser, compactMap.get(nValForCurFeature),
-              new File("splitA/" + nValForCurFeature + ".txt"));
+          alphaParser.writeToFile("splitA/" + nValForCurFeature + ".txt", compactMap.get(nValForCurFeature));
           // old
           libModel.save(new File(splitModelsDir + "/" + nValForCurFeature + ".txt"));
           // edit immediately
@@ -236,17 +235,16 @@ public class TrainerMem {
   private static Map<String, int[][]> compactiseTrainingDataFiles(
       Alphabet alphaParser, Map<String, List<FeatureVector>> mergedMap) {
 
-    int maxIndex = alphaParser.getMaxIndex();
-    alphaParser.createIndexToValueArray();
+    int numberOfFeatures = alphaParser.getNumberOfFeatures();
     Map<String, int[][]> compactMap = new HashMap<String, int[][]>();
     for (Map.Entry<String, List<FeatureVector>> oneEntry : mergedMap.entrySet()) {
       String curFeature = oneEntry.getKey();
       List<FeatureVector> curTrainingData = oneEntry.getValue();
       int[][] compactArray = new int[4][];
-      int[] newToOld = new int[maxIndex + 1];
-      int[] oldToNew = new int[maxIndex + 1];
-      int[] newToOldL = new int[alphaParser.getMaxLabelIndex() + 1];
-      int[] oldToNewL = new int[alphaParser.getMaxLabelIndex() + 1];
+      int[] newToOld = new int[numberOfFeatures + 1];
+      int[] oldToNew = new int[numberOfFeatures + 1];
+      int[] newToOldL = new int[alphaParser.getNumberOfLabels() + 1];
+      int[] oldToNewL = new int[alphaParser.getNumberOfLabels() + 1];
       compactArray[0] = newToOld;
       compactArray[1] = oldToNew;
       compactArray[2] = newToOldL;
@@ -305,7 +303,7 @@ public class TrainerMem {
     for (int i = 0; i < featureVectorList.size(); i++) {
       FeatureVector featureVector = featureVectorList.get(i);
       FeatureNode[] featureNodeArray = featureVector.getLiblinearRepresentation(true, labels, alpha);
-      int y = alpha.getLabelIndexMap().get(featureVector.getLabel());
+      int y = alpha.getLabelIndex(featureVector.getLabel());
       //TODO Integer x = 0;
       yList.add(y);
       xList.add(featureNodeArray);
@@ -317,16 +315,17 @@ public class TrainerMem {
 
   private static void guaranteeOrder(Map<String, List<FeatureVector>> splitMap, Alphabet alpha) {
 
+    int numberOfLabels = alpha.getNumberOfLabels();
     for (List<FeatureVector> curList : splitMap.values()) {
-      for (int i = 0; i < alpha.getMaxLabelIndex(); i++) {
+      for (int i = 0; i < numberOfLabels + 1; i++) {
         curList.add(curList.get(i));
       }
-      boolean[] b = new boolean[alpha.getMaxLabelIndex()];
+      boolean[] b = new boolean[numberOfLabels + 1];
       int curIndex = 1;
-      for (int i = alpha.getMaxLabelIndex(); i < curList.size() && curIndex < alpha.getMaxLabelIndex(); i++) {
+      for (int i = numberOfLabels + 1; i < curList.size() && curIndex < numberOfLabels + 1; i++) {
         FeatureVector featureVector = curList.get(i);
         String label = featureVector.getLabel();
-        int labelIndex = alpha.getLabelIndexMap().get(label);
+        int labelIndex = alpha.getLabelIndex(label);
         if (!b[labelIndex - 1]) {
           curList.set(labelIndex - 1, featureVector);
           curIndex++;

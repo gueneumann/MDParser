@@ -70,9 +70,10 @@ public class ModelEditor {
   }
 
 
-  public void editAlphabetAndModel(String alphabetFile, String modelFileParam) throws IOException {
+  public void editAlphabetAndModel(String alphabetFileName, String modelFileParam) throws IOException {
 
-    editAlphabet(this.neverUsed, alphabetFile);
+    this.alpha.removeNeverUsedFeatures(this.neverUsed);
+    this.alpha.writeToFile(alphabetFileName);
     editModel(this.neverUsed, modelFileParam);
   }
 
@@ -89,7 +90,7 @@ public class ModelEditor {
     this.label = fr.readLine();
     //nr_feature = fr.readLine();
     fr.readLine();
-    this.nrFeature = "nr_feature " + String.valueOf(this.alpha.getMaxIndex() - 1);
+    this.nrFeature = "nr_feature " + this.alpha.getNumberOfFeatures();
     this.numberOfClasses = Integer.valueOf(this.nrClass.split(" ")[1]);
     this.bias = fr.readLine();
     fr.readLine();
@@ -117,29 +118,6 @@ public class ModelEditor {
     }
     fr.close();
     printToFile(modelFileParam);
-  }
-
-
-  private void editAlphabet(Set<Integer> neverUsedParam, String alphabetFile) throws IOException {
-
-    int maxIndex = 1;
-    HashMap<String, Integer> valueToIndexMap = this.alpha.getValueToIndexMap();
-    HashMap<String, Integer> newValueToIndexMap =
-        new HashMap<String, Integer>(valueToIndexMap.size() - neverUsedParam.size() + 1);
-    String[] indexToValueArray = this.alpha.getIndexToValueArray();
-    String[] newIndexToValueArray = new String[valueToIndexMap.size() - neverUsedParam.size() + 1];
-    for (int i = 1; i < this.alpha.getMaxIndex(); i++) {
-      if (!neverUsedParam.contains(i)) {
-        String oldString = indexToValueArray[i];
-        newValueToIndexMap.put(oldString, maxIndex);
-        newIndexToValueArray[maxIndex] = oldString;
-        maxIndex++;
-      }
-    }
-    this.alpha.setMaxIndex(maxIndex);
-    this.alpha.setValueToIndexMap(newValueToIndexMap);
-    this.alpha.setIndexToValueArray(newIndexToValueArray);
-    this.alpha.printToFile(alphabetFile);
   }
 
 
@@ -298,7 +276,7 @@ public class ModelEditor {
 
   public void secureOldAlphabet(String oldAlphaFile) throws IOException {
 
-    this.alpha.printToFile(oldAlphaFile);
+    this.alpha.writeToFile(oldAlphaFile);
   }
 
 

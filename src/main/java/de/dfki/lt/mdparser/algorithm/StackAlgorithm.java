@@ -148,7 +148,7 @@ public class StackAlgorithm extends ParsingAlgorithm {
       }
       int labelInt = (int)Linear.predict(
           curModel, featureVector.getLiblinearRepresentation(false, false, featureModel.getParserAlphabet()));
-      String label = featureModel.getParserAlphabet().getIndexLabelArray()[labelInt];
+      String label = featureModel.getParserAlphabet().getLabel(labelInt);
       //System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
       String labelTrans = "";
       String labelDepRel = "";

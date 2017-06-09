@@ -152,7 +152,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
           int labelInt = (int)Linear.predict(
               curModel, featureVector.getLiblinearRepresentation(false, false, covFeatureModel.getParserAlphabet()));
 
-          String label = covFeatureModel.getParserAlphabet().getIndexLabelArray()[labelInt];
+          String label = covFeatureModel.getParserAlphabet().getLabel(labelInt);
           //System.out.println(j+" "+i+" "+label+" "+fvParser);
           String labelTrans = "";
           String labelDepRel = "";
