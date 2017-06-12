@@ -33,15 +33,16 @@ public class SplitWorker {
       String line;
       while ((line = in.readLine()) != null) {
         String[] lineArray = line.split(" ");
-        String splitVal = "";
+        String splitVal = null;
         Integer splitIndex = 0;
         int fIndex = 1;
-        while (splitVal.equals("")) {
+        while (splitVal == null) {
           int index = Integer.valueOf(lineArray[fIndex].split(":")[0]);
           String pos = this.posMap.get(index);
           if (pos != null) {
             splitVal = pos;
             splitIndex = index;
+            // breaks, because splitVal is no longer null
           } else {
             fIndex++;
           }

@@ -98,17 +98,17 @@ public class Trainer {
       //     the feature model in the training mode.
       //     the result is then a list of parser states in form of feature vectors whose values are based
       //     one the specific training example
-      List<FeatureVector> parserList = algorithm.processCombined(sent, featureModel, noLabels);
+      List<FeatureVector> featureVectorList = algorithm.processCombined(sent, featureModel, noLabels);
 
       //System.out.println(parserList.toString());
 
       // GN: for each feature vector (which represents a parser state) do
-      for (int i = 0; i < parserList.size(); i++) {
+      for (int i = 0; i < featureVectorList.size(); i++) {
         // GN: for each state/feature vector store them in internal format in a file
         // buffer whose name depends on the label-value of the feature vector
         // store in the label-value/buffer in opMap hash.
         // NOTE: token level, so duplicates
-        FeatureVector featureVector = parserList.get(i);
+        FeatureVector featureVector = featureVectorList.get(i);
         String operation = featureVector.getLabel();
         // GN: Lookup up label-index and use it to create/extend buffer
         Integer index = alphaParser.getLabelIndex(operation);
@@ -187,8 +187,8 @@ public class Trainer {
     String curFile = null;
     String lastFile = null;
     String curSplitVal = null;
-    for (int f = 0; f < trainingFiles.length; f++) {
-      curSplitVal = trainingFiles[f].getName();
+    for (File oneTrainingFile : trainingFiles) {
+      curSplitVal = oneTrainingFile.getName();
 
       if (curWriter == null) {
         curFile = curSplitVal;
@@ -196,7 +196,7 @@ public class Trainer {
             Files.newBufferedWriter(Paths.get("split/" + curFile), StandardCharsets.UTF_8));
       }
 
-      try (BufferedReader in = Files.newBufferedReader(trainingFiles[f].toPath(), StandardCharsets.UTF_8)) {
+      try (BufferedReader in = Files.newBufferedReader(oneTrainingFile.toPath(), StandardCharsets.UTF_8)) {
         String line;
         while ((line = in.readLine()) != null) {
           curWriter.println(line);
@@ -384,7 +384,7 @@ public class Trainer {
 
 
   public static int[][] compactiseTrainingDataFile(
-      File curentTrainingFile, int numberOfFeatures, File splitC) throws IOException {
+      File curentTrainingFile, int numberOfFeatures) throws IOException {
 
     int[][] compactArray = new int[2][];
     // feature indices start at 1, so we have to add 1 to the size
@@ -395,7 +395,7 @@ public class Trainer {
 
     try (PrintWriter out = new PrintWriter(
         Files.newBufferedWriter(
-            Paths.get(splitC.getName() + "/" + curentTrainingFile.getName()), StandardCharsets.UTF_8));
+            Paths.get("splitC/" + curentTrainingFile.getName()), StandardCharsets.UTF_8));
         BufferedReader in = Files.newBufferedReader(curentTrainingFile.toPath(), StandardCharsets.UTF_8)) {
       String line;
       int maxIndex = 1;

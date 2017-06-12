@@ -38,8 +38,8 @@ public class CompactiseWorker {
       System.out.println("... Steps: compactifize/sort training file " + file);
       System.out.println("... and store in splitC; read problem and call trainer, "
           + "and finally save models and alphabet, and edit them. ");
-      int[][] compactArray = Trainer.compactiseTrainingDataFile(
-          file, this.alphaParser.getNumberOfFeatures(), new File("splitC"));
+      int[][] compactArray =
+          Trainer.compactiseTrainingDataFile(file, this.alphaParser.getNumberOfFeatures());
 
       //System.out.println("new to old size: "+compactArray[0].length);
 
