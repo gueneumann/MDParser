@@ -158,6 +158,9 @@ public class Trainer {
     List<File> filesToSplit = Arrays.asList(splitO.listFiles());
     SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
     int trainingThreads = GlobalConfig.getInt(ConfigKeys.TRAINING_THREADS);
+    if (trainingThreads < 0) {
+      trainingThreads = Runtime.getRuntime().availableProcessors();
+    }
     if (trainingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
       ForkJoinPool forkJoinPool = new ForkJoinPool(trainingThreads);

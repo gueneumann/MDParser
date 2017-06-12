@@ -11,6 +11,7 @@ public final class ConfigKeys {
   public static final String MODEL_OUTPUT_FOLDER = "model.output.folder";
   public static final String TRAINING_THREADS = "training.threads";
   public static final String PARSING_THREADS = "parsing.threads";
+  public static final String DETERMINISTIC = "deterministic";
 
 
   private ConfigKeys() {

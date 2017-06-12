@@ -101,6 +101,9 @@ public final class Parser {
     long processStart = System.currentTimeMillis();
     List<Sentence> sentencesList = Arrays.asList(data.getSentences());
     int parsingThreads = GlobalConfig.getInt(ConfigKeys.PARSING_THREADS);
+    if (parsingThreads < 0) {
+      parsingThreads = Runtime.getRuntime().availableProcessors();
+    }
     if (parsingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
       ForkJoinPool forkJoinPool = new ForkJoinPool(parsingThreads);
