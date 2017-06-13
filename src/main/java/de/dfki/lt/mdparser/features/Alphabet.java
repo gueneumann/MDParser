@@ -162,14 +162,14 @@ public class Alphabet {
   }
 
 
-  public void removeNeverUsedFeatures(Set<Integer> neverUsedFeatures) {
+  public void removeUnusedFeatures(Set<Integer> unusedFeatures) {
 
     int indexCount = 1;
     Map<String, Integer> updatedFeature2IndexMap =
-        new HashMap<>(this.feature2IndexMap.size() - neverUsedFeatures.size());
+        new HashMap<>(this.feature2IndexMap.size() - unusedFeatures.size());
     String[] index2Feature = this.getIndex2FeatureArray();
     for (int i = 1; i < index2Feature.length; i++) {
-      if (!neverUsedFeatures.contains(i)) {
+      if (!unusedFeatures.contains(i)) {
         updatedFeature2IndexMap.put(index2Feature[i], indexCount);
         indexCount++;
       }

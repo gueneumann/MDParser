@@ -532,4 +532,114 @@ public class Trainer {
 
     return prob;
   }
+
+
+  static Set<Integer> getUnusedFeatures(String modelFileName) {
+
+    Set<Integer> unusedFeatures = new HashSet<>();
+
+    try (BufferedReader in = Files.newBufferedReader(
+        Paths.get(modelFileName), StandardCharsets.UTF_8)) {
+      // skip first 6 lines
+      for (int k = 0; k < 6; k++) {
+        in.readLine();
+      }
+
+      int wIndex = 1;
+      String line;
+      while ((line = in.readLine()) != null) {
+        String[] lineArray = line.split("\\s+");
+        boolean zeroLine = true;
+        for (int k = 0; k < lineArray.length && zeroLine; k++) {
+          if (Math.abs(Double.valueOf(lineArray[k])) > 0.1) {
+            zeroLine = false;
+          }
+        }
+        if (zeroLine) {
+          unusedFeatures.add(wIndex);
+        }
+        wIndex++;
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return unusedFeatures;
+  }
+
+
+  static void removeUnusedFeaturesFromModel(
+      String modelFileName, Set<Integer> unusedFeatures, int numberOfFeatures)
+          throws IOException {
+
+    BufferedReader in = Files.newBufferedReader(Paths.get(modelFileName), StandardCharsets.UTF_8);
+    String solverType = in.readLine();
+    String nrClass = in.readLine();
+    String label = in.readLine();
+    // don't use the 'number of features' value from the model
+    //String nrFeature = in.readLine();
+    in.readLine();
+    String nrFeature = "nr_feature " + numberOfFeatures;
+    int numberOfClasses = Integer.valueOf(nrClass.split(" ")[1]);
+    String bias = in.readLine();
+    in.readLine();
+    double[] weights;
+    if (numberOfClasses != 2) {
+      weights = new double[Integer.valueOf(nrFeature.split(" ")[1]) * numberOfClasses];
+    } else {
+      weights = new double[Integer.valueOf(nrFeature.split(" ")[1])];
+    }
+    int k = 0;
+    int l = 1;
+    String line;
+    while ((line = in.readLine()) != null) {
+      if (!unusedFeatures.contains(l)) {
+        String[] weightsArray = line.split(" ");
+        if (numberOfClasses != 2) {
+          for (int c = 0; c < numberOfClasses; c++) {
+            weights[k * numberOfClasses + c] = Double.valueOf(weightsArray[c]);
+          }
+          k++;
+        } else {
+          weights[k] = Double.valueOf(weightsArray[0]);
+          k++;
+        }
+      }
+      l++;
+    }
+    in.close();
+
+    // re-write model
+    PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+        Paths.get(modelFileName), StandardCharsets.UTF_8));
+    out.println(solverType);
+    out.println(nrClass);
+    out.println(label);
+    out.println(nrFeature);
+    out.println(bias);
+    out.println("w");
+    if (numberOfClasses != 2) {
+      for (int i = 0; i < weights.length / numberOfClasses; i++) {
+        for (int c = 0; c < numberOfClasses; c++) {
+          if (weights[i * numberOfClasses + c] == 0) {
+            out.print("0");
+          } else {
+            out.print(String.valueOf(weights[i * numberOfClasses + c]));
+          }
+          out.print(" ");
+        }
+        out.println();
+      }
+    } else {
+      for (int i = 0; i < weights.length; i++) {
+        if (weights[i] == 0) {
+          out.print("0");
+        } else {
+          out.print(String.valueOf(weights[i]));
+        }
+        out.println(" ");
+      }
+    }
+    out.close();
+  }
 }

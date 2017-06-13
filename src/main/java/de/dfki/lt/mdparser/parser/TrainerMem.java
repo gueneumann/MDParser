@@ -30,7 +30,6 @@ import de.dfki.lt.mdparser.features.Feature;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
-import de.dfki.lt.mdparser.model.ModelEditor;
 
 public class TrainerMem {
 
@@ -212,14 +211,20 @@ public class TrainerMem {
           //  + Double.valueOf(MemoryUtil.deepMemoryUsageOf(model))/1024/1024 + " MB");
           //use weights but with old indexes
           //saveModel(model,compactMap.get(nValForCurFeature), new File(splitModelsDir+"/"+nValForCurFeature+".txt"));
-          alphaParser.writeToFile("splitA/" + nValForCurFeature + ".txt", compactMap.get(nValForCurFeature));
+          String alphaFileName = "splitA/" + nValForCurFeature + ".txt";
+          String modelFileName = splitModelsDir + "/" + nValForCurFeature + ".txt";
+          alphaParser.writeToFile(alphaFileName, compactMap.get(nValForCurFeature));
           // old
-          libModel.save(new File(splitModelsDir + "/" + nValForCurFeature + ".txt"));
+          libModel.save(new File(modelFileName));
           // edit immediately
-          ModelEditor me = new ModelEditor(new File(splitModelsDir + "/" + nValForCurFeature + ".txt"),
-              "splitA/" + nValForCurFeature + ".txt", true);
-          me.editAlphabetAndModel("splitA/" + nValForCurFeature + ".txt",
-              splitModelsDir + "/" + nValForCurFeature + ".txt");
+
+          Set<Integer> unusedFeatures = Trainer.getUnusedFeatures(modelFileName);
+
+          Alphabet compactAlpha = new Alphabet(alphaFileName);
+          compactAlpha.removeUnusedFeatures(unusedFeatures);
+          compactAlpha.writeToFile(alphaFileName);
+
+          Trainer.removeUnusedFeaturesFromModel(modelFileName, unusedFeatures, compactAlpha.getNumberOfFeatures());
           b[n] = true;
         }
       }
