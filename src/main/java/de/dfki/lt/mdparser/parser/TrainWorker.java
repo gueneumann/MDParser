@@ -12,7 +12,7 @@ import de.bwaldvogel.liblinear.Problem;
 import de.bwaldvogel.liblinear.SolverType;
 import de.dfki.lt.mdparser.features.Alphabet;
 
-public class CompactiseWorker {
+public class TrainWorker {
 
   private Alphabet alpha;
   private double bias;
@@ -20,7 +20,7 @@ public class CompactiseWorker {
   private String splitModelsDir;
 
 
-  public CompactiseWorker(Alphabet alpha, String splitModelsDir, double bias) {
+  public TrainWorker(Alphabet alpha, String splitModelsDir, double bias) {
 
     this.alpha = alpha;
     this.bias = bias;

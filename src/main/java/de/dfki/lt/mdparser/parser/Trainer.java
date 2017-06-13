@@ -283,7 +283,7 @@ public class Trainer {
 
     // compact files
     List<File> filesToCompact = Arrays.asList(new File("split").listFiles());
-    CompactiseWorker compactiseWorker = new CompactiseWorker(alphaParser, splitModelsDirParam, this.bias);
+    TrainWorker compactiseWorker = new TrainWorker(alphaParser, splitModelsDirParam, this.bias);
     if (trainingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
       ForkJoinPool compactingForkJoinPool = new ForkJoinPool(trainingThreads);
