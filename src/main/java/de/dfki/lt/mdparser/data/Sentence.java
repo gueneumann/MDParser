@@ -11,21 +11,16 @@ public class Sentence {
 
 
   public Sentence(Integer sentSize, int infoSize) {
+
     this.sentArray = new String[sentSize][infoSize];
     this.rootPosition = -1;
   }
 
 
   public Sentence(String[][] sentArray) {
+
     this.sentArray = sentArray;
     this.rootPosition = -1;
-  }
-
-
-  // setters and getters
-  public void setSentArray(String[][] sentArray) {
-
-    this.sentArray = sentArray;
   }
 
 
@@ -35,27 +30,27 @@ public class Sentence {
   }
 
 
+  public Integer getRootPosition() {
+  
+    return this.rootPosition;
+  }
+
+
   public void setRootPosition(int rootPosition) {
 
     this.rootPosition = rootPosition;
   }
 
 
-  public Integer getRootPosition() {
-
-    return this.rootPosition;
+  public Feature[][][] getStaticFeatures() {
+  
+    return this.staticFeatures;
   }
 
 
   public void setStaticFeatures(Feature[][][] staticFeatures) {
 
     this.staticFeatures = staticFeatures;
-  }
-
-
-  public Feature[][][] getStaticFeatures() {
-
-    return this.staticFeatures;
   }
 
 
@@ -76,5 +71,4 @@ public class Sentence {
     }
     return sb.toString();
   }
-
 }

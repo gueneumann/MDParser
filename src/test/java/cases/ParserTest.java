@@ -32,7 +32,7 @@ public class ParserTest {
 
       long s4 = System.currentTimeMillis();
       System.out.println("Parsing time: " + ((s4 - s3)) + " milliseconds.");
-      d.printToFile(resultFile);
+      d.writeToFile(resultFile);
 
       Eval ev = new Eval(goldFile, resultFile, 6, 6, 7, 7);
       System.out.println("Parent accuracy: " + ev.getParentsAccuracy());

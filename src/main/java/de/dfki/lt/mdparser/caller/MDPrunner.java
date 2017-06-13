@@ -32,7 +32,7 @@ public final class MDPrunner {
 
     Parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
 
-    data.printToFile(resultFile);
+    data.writeToFile(resultFile);
     Eval evaluator = new Eval(conllFile, resultFile, 6, 6, 7, 7);
     System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
     System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
