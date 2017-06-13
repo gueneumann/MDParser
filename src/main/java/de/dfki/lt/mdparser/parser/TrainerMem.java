@@ -38,7 +38,7 @@ public class TrainerMem {
 
   // XXX GN: this is used for training
   public void createAndTrainWithSplittingFromMemory(
-      String algorithmId, String inputFile, String splitModelsDir, String alphabetFileParser, String splitFile)
+      String algorithmId, String inputFileName, String splitModelsDir, String alphaFileName, String splitFileName)
       throws IOException {
 
     boolean noLabels = false;
@@ -48,18 +48,18 @@ public class TrainerMem {
     System.out.println("Start training with createAndTrainWithSplittingFromMemory!");
 
     // GN: internalize CONLL data in 2-Dim sentences
-    System.out.println("Internalize training data from: " + inputFile);
+    System.out.println("Internalize training data from: " + inputFileName);
 
-    Data data = new Data(inputFile, true);
-    Alphabet alphaParser = new Alphabet();
+    Data data = new Data(inputFileName, true);
+    Alphabet alpha = new Alphabet();
     Sentence[] sentences = data.getSentences();
     FeatureModel model = null;
     ParsingAlgorithm algorithm = null;
     if (algorithmId.equals("covington")) {
-      model = new CovingtonFeatureModel(alphaParser);
+      model = new CovingtonFeatureModel(alpha);
       algorithm = new CovingtonAlgorithm();
     } else if (algorithmId.equals("stack")) {
-      model = new StackFeatureModel(alphaParser);
+      model = new StackFeatureModel(alpha);
       algorithm = new StackAlgorithm();
     } else {
       System.err.println("unkown algorithm " + algorithmId);
@@ -125,14 +125,14 @@ public class TrainerMem {
     // NOTE: the static and dynamic feature-values are added to the alphabet class as a side-effect
     // via the selected model (CovingtonFeatureModel()) and are now saved in a file.
     // HIERIX
-    alphaParser.writeToFile(alphabetFileParser);
+    alpha.writeToFile(alphaFileName);
 
     // merging split maps parser
     Map<String, String> newSplitMap = new HashMap<String, String>();
     int curCount = 0;
     int t = 10000;
     int n = 1;
-    List<FeatureVector> curList = new ArrayList<FeatureVector>();
+    List<FeatureVector> curFeatureVectorList = new ArrayList<FeatureVector>();
     Map<String, List<FeatureVector>> mergedMap = new HashMap<String, List<FeatureVector>>();
     // find all that are > t
     Set<String> toRemove = new HashSet<String>();
@@ -152,7 +152,7 @@ public class TrainerMem {
       String key = oneEntry.getKey();
       if (!toRemove.contains(key)) {
         List<FeatureVector> listForThisSplitVal = oneEntry.getValue();
-        curList.addAll(listForThisSplitVal);
+        curFeatureVectorList.addAll(listForThisSplitVal);
         newSplitMap.put(key, String.valueOf(n));
         int count = splitMap.get(key).size();
         curCount += count;
@@ -165,7 +165,7 @@ public class TrainerMem {
       }
     }
     //if (!curList.isEmpty() && curList.size() > (t/2)) {
-    mergedMap.put(String.valueOf(n), curList);
+    mergedMap.put(String.valueOf(n), curFeatureVectorList);
     //}
     /*
     else {
@@ -174,16 +174,16 @@ public class TrainerMem {
       mergedMap.put(String.valueOf(n), previousList);
     }
     */
-    guaranteeOrder(mergedMap, alphaParser);
+    guaranteeOrder(mergedMap, alpha);
     long endTime = System.currentTimeMillis();
     System.out.println("Training data creating time: " + (endTime - startTime) / 1000 + " seconds.");
 
     //smaller indexes for each model
-    Map<String, int[][]> compactMap = compactiseTrainingDataFiles(alphaParser, mergedMap);
+    Map<String, int[][]> compactMap = compactiseTrainingDataFiles(alpha, mergedMap);
 
     //train parser
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-        Paths.get(splitFile), StandardCharsets.UTF_8))) {
+        Paths.get(splitFileName), StandardCharsets.UTF_8))) {
       // solver, penalty C, epsilon Eps
       Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
       boolean[] b = new boolean[100];
@@ -195,9 +195,9 @@ public class TrainerMem {
         n = Integer.valueOf(nValForCurFeature);
         out.println(curFeature + " " + "split/" + nValForCurFeature + ".txt " + nValForCurFeature + ".txt");
         if (!b[n]) {
-          curList = mergedMap.get(nValForCurFeature);
+          curFeatureVectorList = mergedMap.get(nValForCurFeature);
           //System.out.println(nValForCurFeature + " " + mergedMap.get(nValForCurFeature).size());
-          Problem prob = readProblem(alphaParser, false, curList, this.bias);
+          Problem prob = readProblem(alpha, false, curFeatureVectorList, this.bias);
           //myReadProblem(compactMap.get(nValForCurFeature), alphaParser, false, curList);
           //System.out.println(curList.get(0));
           //System.out.println(curList.get(1));
@@ -211,27 +211,27 @@ public class TrainerMem {
           //  + Double.valueOf(MemoryUtil.deepMemoryUsageOf(model))/1024/1024 + " MB");
           //use weights but with old indexes
           //saveModel(model,compactMap.get(nValForCurFeature), new File(splitModelsDir+"/"+nValForCurFeature+".txt"));
-          String alphaFileName = "splitA/" + nValForCurFeature + ".txt";
-          String modelFileName = splitModelsDir + "/" + nValForCurFeature + ".txt";
-          alphaParser.writeToFile(alphaFileName, compactMap.get(nValForCurFeature));
+          String curAlphaFileName = "splitA/" + nValForCurFeature + ".txt";
+          String curModelFileName = splitModelsDir + "/" + nValForCurFeature + ".txt";
+          alpha.writeToFile(curAlphaFileName, compactMap.get(nValForCurFeature));
           // old
-          libModel.save(new File(modelFileName));
+          libModel.save(new File(curModelFileName));
           // edit immediately
 
-          Set<Integer> unusedFeatures = Trainer.getUnusedFeatures(modelFileName);
+          Set<Integer> unusedFeatures = Trainer.getUnusedFeatures(curModelFileName);
 
-          Alphabet compactAlpha = new Alphabet(alphaFileName);
+          Alphabet compactAlpha = new Alphabet(curAlphaFileName);
           compactAlpha.removeUnusedFeatures(unusedFeatures);
-          compactAlpha.writeToFile(alphaFileName);
+          compactAlpha.writeToFile(curAlphaFileName);
 
-          Trainer.removeUnusedFeaturesFromModel(modelFileName, unusedFeatures, compactAlpha.getNumberOfFeatures());
+          Trainer.removeUnusedFeaturesFromModel(curModelFileName, unusedFeatures, compactAlpha.getNumberOfFeatures());
           b[n] = true;
         }
       }
     }
 
     // recreate alphabet and models
-    Trainer.recreateOneAlphabetAndAdjustModels(alphabetFileParser, "splitA", splitModelsDir);
+    Trainer.recreateOneAlphabetAndAdjustModels(alphaFileName, "splitA", splitModelsDir);
     long end2 = System.currentTimeMillis();
     System.out.println("... done : " + (end2 - startTime) / 1000 + " seconds.");
   }
