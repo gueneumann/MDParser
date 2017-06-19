@@ -21,6 +21,17 @@ import org.slf4j.LoggerFactory;
  */
 public final class GlobalConfig {
 
+  public static final Path SPLIT_ALPHA_FOLDER = getModelBuildFolder().resolve("split_alphas"); // splitA
+
+  public static final Path FEATURE_VECTORS_FOLDER = getModelBuildFolder().resolve("1_initial_feature_vectors"); //splitO
+  public static final Path SPLIT_INITIAL_FOLDER = getModelBuildFolder().resolve("2_initial_splits"); //splitF
+  public static final Path SPLIT_ADJUST_FOLDER = getModelBuildFolder().resolve("3_adjusted_splits"); //split
+  public static final Path SPLIT_COMPACT_FOLDER = getModelBuildFolder().resolve("4_compacted_splits"); // splitC
+  public static final Path SPLIT_MODELS_FOLDER = getModelBuildFolder().resolve("split_models"); // splitModels
+
+  public static final Path SPLIT_FILE = getModelBuildFolder().resolve("split.txt"); // temp/split.txt
+  public static final Path ALPHA_FILE = getModelBuildFolder().resolve("alpha.txt"); // temp/alphaParser.txt
+
   private static final Logger logger = LoggerFactory.getLogger(GlobalConfig.class);
   private static PropertiesConfiguration instance;
 

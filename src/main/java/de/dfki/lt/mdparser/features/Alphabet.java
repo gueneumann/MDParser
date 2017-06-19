@@ -2,14 +2,13 @@ package de.dfki.lt.mdparser.features;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -39,10 +38,10 @@ public class Alphabet {
   }
 
 
-  public Alphabet(String alphabetFileName)
+  public Alphabet(Path alphabetPath)
       throws IOException {
 
-    this(new FileInputStream(alphabetFileName));
+    this(Files.newInputStream(alphabetPath));
   }
 
 
@@ -179,11 +178,14 @@ public class Alphabet {
   }
 
 
-  public void writeToFile(String alphabetFileName)
+  public void writeToFile(Path alphabetPath)
       throws IOException {
 
+    if (alphabetPath.getParent() != null) {
+      Files.createDirectories(alphabetPath.getParent());
+    }
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-        Paths.get(alphabetFileName), StandardCharsets.UTF_8))) {
+        alphabetPath, StandardCharsets.UTF_8))) {
       String[] index2Label = this.getIndex2LabelArray();
       for (int i = 1; i < index2Label.length; i++) {
         out.println(String.format("%d %s", i, index2Label[i]));
@@ -200,11 +202,12 @@ public class Alphabet {
   }
 
 
-  public void writeToFile(String alphabetFileName, int[][] compactArray)
+  public void writeToFile(Path alphabetPath, int[][] compactArray)
       throws IOException {
 
+    Files.createDirectories(alphabetPath.getParent());
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-        Paths.get(alphabetFileName), StandardCharsets.UTF_8))) {
+        alphabetPath, StandardCharsets.UTF_8))) {
       String[] index2label = this.getIndex2LabelArray();
       for (int i = 1; i < index2label.length; i++) {
         out.println(String.format("%d %s", i, index2label[i]));

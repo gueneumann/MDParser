@@ -1,13 +1,14 @@
 package de.dfki.lt.mdparser.parser;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Map;
+
+import de.dfki.lt.mdparser.config.GlobalConfig;
 
 public class SplitWorker {
 
@@ -15,21 +16,23 @@ public class SplitWorker {
   private Map<String, PrintWriter> splitMap;
 
 
-  public SplitWorker(Map<Integer, String> posMap, Map<String, PrintWriter> splitMap) {
+  public SplitWorker(Map<Integer, String> posMap, Map<String, PrintWriter> splitMap)
+      throws IOException {
 
     this.posMap = posMap;
     this.splitMap = splitMap;
+
+    Files.createDirectories(GlobalConfig.SPLIT_INITIAL_FOLDER);
   }
 
 
-  public void processFile(File file) {
+  public void processFile(Path path) {
 
     long threadId = Thread.currentThread().getId();
-    System.out.println("Hello from Thread in SplitWorkerThread " + threadId);
-    System.out.println("processing " + file);
+    System.out.println("Hello from SplitWorker in thread " + threadId);
+    System.out.println("processing " + path);
 
-    try (BufferedReader in = Files.newBufferedReader(
-        file.toPath(), StandardCharsets.UTF_8)) {
+    try (BufferedReader in = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
       String line;
       while ((line = in.readLine()) != null) {
         String[] lineArray = line.split(" ");
@@ -51,7 +54,7 @@ public class SplitWorker {
           PrintWriter curBw = this.splitMap.get(splitVal);
           if (curBw == null) {
             curBw = new PrintWriter(Files.newBufferedWriter(
-                Paths.get("splitF/" + splitIndex + ".txt"), StandardCharsets.UTF_8));
+                GlobalConfig.SPLIT_INITIAL_FOLDER.resolve(splitIndex + ".txt"), StandardCharsets.UTF_8));
             this.splitMap.put(splitVal, curBw);
           }
           curBw.println(line);

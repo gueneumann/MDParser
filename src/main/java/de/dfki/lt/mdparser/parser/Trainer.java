@@ -2,14 +2,12 @@ package de.dfki.lt.mdparser.parser;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,8 +43,7 @@ public class Trainer {
 
 
   // XXX GN: this is used for training
-  public void createAndTrainWithSplittingFromDisk(
-      String algorithmId, String inputFile, String splitModelsDirParam, String alphabetFileParser)
+  public void createAndTrainWithSplittingFromDisk(String algorithmId, String inputFile)
       throws IOException {
 
     boolean noLabels = false;
@@ -74,12 +71,6 @@ public class Trainer {
       System.err.println("unknown algorithm " + algorithmId);
       return;
     }
-    File splitA = new File("splitA");
-    splitA.mkdir();
-    File splitO = new File("splitO");
-    splitO.mkdir();
-    File splitF = new File("splitF");
-    splitF.mkdir();
     //print training data
     Map<Integer, PrintWriter> outputMap = new HashMap<>();
     Map<Integer, String> posMap = new HashMap<>();
@@ -87,7 +78,8 @@ public class Trainer {
     // GN: for each training sentence example do:
     // NOTE: this is a sequential step
     System.out.println("Create feature vectors for data: " + sentences.length);
-    System.out.println("Create files in split0 ");
+    System.out.println("Create files in " + GlobalConfig.FEATURE_VECTORS_FOLDER);
+    Files.createDirectories(GlobalConfig.FEATURE_VECTORS_FOLDER);
     for (int n = 0; n < sentences.length; n++) {
       Sentence sent = sentences[n];
       // featureModel.initializeStaticFeaturesCombined(sent, true);
@@ -120,7 +112,8 @@ public class Trainer {
           curWriter =
               new PrintWriter(
                   Files.newBufferedWriter(
-                      Paths.get(String.format("splitO/%03d.txt", index)), StandardCharsets.UTF_8));
+                      GlobalConfig.FEATURE_VECTORS_FOLDER.resolve(String.format("%03d.txt", index)),
+                      StandardCharsets.UTF_8));
           outputMap.put(index, curWriter);
         }
         String sentenceIntegerString = featureVector.getIntegerRepresentation(alphaParser, false);
@@ -138,8 +131,8 @@ public class Trainer {
     // GN: the next code basically creates the split training files
     // using a distributed approach based on the available processors
     // stores and adjust the split files in folder split/
-    // and finally calls the trainer on each file ion parallel
-    alphaParser.writeToFile(alphabetFileParser);
+    // and finally calls the trainer on each file in parallel
+    alphaParser.writeToFile(GlobalConfig.ALPHA_FILE);
     int numberOfFeatures = alphaParser.getNumberOfFeatures();
     // feature indices start at 1, so we iterate until num + 1
     for (int v = 1; v <= numberOfFeatures; v++) {
@@ -155,7 +148,8 @@ public class Trainer {
 
     // split files
     Map<String, PrintWriter> splitMap = new HashMap<>();
-    List<File> filesToSplit = Arrays.asList(splitO.listFiles());
+    List<Path> filesToSplit = new ArrayList<>();
+    Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER).forEach(x -> filesToSplit.add(x));
     SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
     int trainingThreads = GlobalConfig.getInt(ConfigKeys.TRAINING_THREADS);
     if (trainingThreads < 0) {
@@ -179,10 +173,11 @@ public class Trainer {
     }
 
     // GN: First version of split files are generated in splitF/
-    // adjust them and store them in split/merge into files of acceptable size
-    File[] trainingFiles = new File("splitF").listFiles();
-
-    System.out.println("Adjust splitting files in splitF and store them in split/ ");
+    // adjust them and store them in split and merge into files of acceptable size
+    System.out.println(
+        "Adjust splitting files in " + GlobalConfig.SPLIT_INITIAL_FOLDER
+        + " and store them in " + GlobalConfig.SPLIT_ADJUST_FOLDER);
+    Files.createDirectories(GlobalConfig.SPLIT_ADJUST_FOLDER);
     Map<String, String> newSplitMap = new TreeMap<>();
     int curSize = 0;
     int splitThreshold = 3000;
@@ -190,16 +185,16 @@ public class Trainer {
     String curFile = null;
     String lastFile = null;
     String curSplitVal = null;
-    for (File oneTrainingFile : trainingFiles) {
-      curSplitVal = oneTrainingFile.getName();
+    for (Path oneTrainingFile : Files.newDirectoryStream(GlobalConfig.SPLIT_INITIAL_FOLDER)) {
+      curSplitVal = oneTrainingFile.getFileName().toString();
 
       if (curWriter == null) {
         curFile = curSplitVal;
         curWriter = new PrintWriter(
-            Files.newBufferedWriter(Paths.get("split/" + curFile), StandardCharsets.UTF_8));
+            Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8));
       }
 
-      try (BufferedReader in = Files.newBufferedReader(oneTrainingFile.toPath(), StandardCharsets.UTF_8)) {
+      try (BufferedReader in = Files.newBufferedReader(oneTrainingFile, StandardCharsets.UTF_8)) {
         String line;
         while ((line = in.readLine()) != null) {
           curWriter.println(line);
@@ -225,7 +220,7 @@ public class Trainer {
         StringBuilder builder = new StringBuilder();
 
         try (BufferedReader in = Files.newBufferedReader(
-            Paths.get("split/" + lastFile), StandardCharsets.UTF_8)) {
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(lastFile), StandardCharsets.UTF_8)) {
           String line;
           while ((line = in.readLine()) != null) {
             builder.append(String.format("%s%n", line));
@@ -233,7 +228,7 @@ public class Trainer {
         }
 
         try (BufferedReader in = Files.newBufferedReader(
-            Paths.get("split/" + curFile), StandardCharsets.UTF_8)) {
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8)) {
           String line;
           while ((line = in.readLine()) != null) {
             builder.append(String.format("%s%n", line));
@@ -241,12 +236,11 @@ public class Trainer {
         }
 
         try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-            Paths.get("split/" + lastFile), StandardCharsets.UTF_8))) {
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(lastFile), StandardCharsets.UTF_8))) {
           out.print(builder.toString());
         }
-
-        File f = new File("split/" + curFile);
-        f.delete();
+        // delete the curFile that was just appended to lastFile
+        Files.delete(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile));
 
         newSplitMap.put(curSplitVal, lastFile);
         Set<String> toSubstitute = new HashSet<String>();
@@ -267,57 +261,66 @@ public class Trainer {
     //System.out.println(newSplitMap);
     //printSplitMap
 
-    alphaParser.writeToFile(alphabetFileParser);
+    alphaParser.writeToFile(GlobalConfig.ALPHA_FILE);
+    if (GlobalConfig.SPLIT_FILE.getParent() != null) {
+      Files.createDirectories(GlobalConfig.SPLIT_FILE.getParent());
+    }
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-        Paths.get("temp/split.txt"), StandardCharsets.UTF_8))) {
+        GlobalConfig.SPLIT_FILE, StandardCharsets.UTF_8))) {
       for (Map.Entry<String, String> oneSplitValFilePair : newSplitMap.entrySet()) {
         String splitVal = oneSplitValFilePair.getKey();
         String newFile = oneSplitValFilePair.getValue();
         Integer index = Integer.valueOf(splitVal.split("\\.")[0]);
         String featureString = alphaParser.getFeature(index);
-        out.println(featureString + " " + "split/" + newFile + " " + splitVal);
+        // normalize separators
+        String normalizedPath =
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(newFile).toString().replaceAll("\\" + File.separator, "/");
+        out.println(String.format("%s %s %s", featureString, normalizedPath, splitVal));
       }
     }
 
-    System.out.println("Compute the weights and the final model files in splitModels/ and alphabet files in splitA/ !");
+    System.out.println(
+        "Compute the weights and the final model files in " + GlobalConfig.SPLIT_MODELS_FOLDER
+        + " and alphabet files in " + GlobalConfig.SPLIT_ALPHA_FOLDER);
 
     // compact files
-    List<File> filesToCompact = Arrays.asList(new File("split").listFiles());
-    TrainWorker compactiseWorker = new TrainWorker(alphaParser, splitModelsDirParam, this.bias);
+    List<Path> filesToCompact = new ArrayList<>();
+    Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER).forEach(x -> filesToCompact.add(x));
+    TrainWorker trainWorker = new TrainWorker(alphaParser, this.bias);
     if (trainingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
       ForkJoinPool compactingForkJoinPool = new ForkJoinPool(trainingThreads);
       try {
         compactingForkJoinPool.submit(
-            () -> filesToCompact.stream().parallel().forEach(x -> compactiseWorker.processFile(x))).get();
+            () -> filesToCompact.stream().parallel().forEach(x -> trainWorker.processFile(x))).get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
     } else {
-      filesToCompact.stream().forEach(x -> compactiseWorker.processFile(x));
+      filesToCompact.stream().forEach(x -> trainWorker.processFile(x));
     }
 
-    System.out.println("Make single alphabet file from splitA files " + alphabetFileParser);
-    recreateOneAlphabetAndAdjustModels(alphabetFileParser, "splitA", splitModelsDirParam);
+    System.out.println("Make single alphabet file " + GlobalConfig.ALPHA_FILE + " from splitA files");
+    recreateOneAlphabetAndAdjustModels(
+        GlobalConfig.ALPHA_FILE, GlobalConfig.SPLIT_ALPHA_FOLDER, GlobalConfig.SPLIT_MODELS_FOLDER);
   }
 
 
   static void recreateOneAlphabetAndAdjustModels(
-      String alphabetFile, String splitAlphaDir, String splitModelsDir)
+      Path alphabetPath, Path splitAlphaDir, Path splitModelsDir)
       throws IOException {
 
     Alphabet alpha = uniteAlphabets(splitAlphaDir);
     restoreModels(splitModelsDir, alpha, splitAlphaDir);
-    alpha.writeToFile(alphabetFile);
+    alpha.writeToFile(alphabetPath);
   }
 
 
-  private static Alphabet uniteAlphabets(String splitAlphaDir) throws IOException {
+  private static Alphabet uniteAlphabets(Path splitAlphaDir) throws IOException {
 
     Alphabet alphasUnited = null;
-    File[] alphabetFiles = new File(splitAlphaDir).listFiles();
-    for (int i = 0; i < alphabetFiles.length; i++) {
-      Alphabet curAlpha = new Alphabet(new FileInputStream(alphabetFiles[i]));
+    for (Path oneAlphaFile : Files.newDirectoryStream(splitAlphaDir)) {
+      Alphabet curAlpha = new Alphabet(Files.newInputStream(oneAlphaFile));
       if (alphasUnited == null) {
         // init union with first alphabet to unite
         alphasUnited = curAlpha;
@@ -335,18 +338,17 @@ public class Trainer {
   }
 
 
-  private static void restoreModels(String splitModelsDir, Alphabet alpha, String splitA) throws IOException {
+  private static void restoreModels(Path splitModelsDir, Alphabet alpha, Path splitAlphaDir) throws IOException {
 
-    File[] models = new File(splitModelsDir).listFiles();
-    for (int i = 0; i < models.length; i++) {
-      System.out.println("Model file: " + models[i]);
-      Model model = Linear.loadModel(models[i]);
+    for (Path oneModelFile : Files.newDirectoryStream(splitModelsDir)) {
+      System.out.println("Model file: " + oneModelFile);
+      Model model = Linear.loadModel(oneModelFile.toFile());
       double[] wArray = model.getFeatureWeights();
-      String alphaName = splitA + "/" + models[i].getName();
-      Alphabet a = new Alphabet(new FileInputStream(new File(alphaName)));
+      Path alphaPath = splitAlphaDir.resolve(oneModelFile.getFileName());
+      Alphabet a = new Alphabet(Files.newInputStream(alphaPath));
       int numberOfClasses = model.getNrClass();
 
-      try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(models[i].toPath(), StandardCharsets.UTF_8))) {
+      try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
         out.println("solver_type MCSVM_CS");
         out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
 
@@ -387,7 +389,7 @@ public class Trainer {
 
 
   public static int[][] compactiseTrainingDataFile(
-      File curentTrainingFile, int numberOfFeatures) throws IOException {
+      Path curentTrainingFile, int numberOfFeatures) throws IOException {
 
     int[][] compactArray = new int[2][];
     // feature indices start at 1, so we have to add 1 to the size
@@ -398,8 +400,8 @@ public class Trainer {
 
     try (PrintWriter out = new PrintWriter(
         Files.newBufferedWriter(
-            Paths.get("splitC/" + curentTrainingFile.getName()), StandardCharsets.UTF_8));
-        BufferedReader in = Files.newBufferedReader(curentTrainingFile.toPath(), StandardCharsets.UTF_8)) {
+            GlobalConfig.SPLIT_COMPACT_FOLDER.resolve(curentTrainingFile.getFileName()), StandardCharsets.UTF_8));
+        BufferedReader in = Files.newBufferedReader(curentTrainingFile, StandardCharsets.UTF_8)) {
       String line;
       int maxIndex = 1;
       Set<Integer> encountered = new HashSet<>(numberOfFeatures + 1);
@@ -433,7 +435,7 @@ public class Trainer {
   }
 
 
-  static Problem readProblem(String fileName, double bias)
+  static Problem readProblem(Path path, double bias)
       throws InvalidInputDataException {
 
     List<Integer> yList = new ArrayList<Integer>();
@@ -441,7 +443,7 @@ public class Trainer {
     int maxIndex = 0;
 
     try (BufferedReader in = Files.newBufferedReader(
-        Paths.get(fileName), StandardCharsets.UTF_8)) {
+        path, StandardCharsets.UTF_8)) {
       String line;
       int lineNr = 0;
       while ((line = in.readLine()) != null) {
@@ -452,7 +454,7 @@ public class Trainer {
         try {
           yList.add(Integer.parseInt(token));
         } catch (NumberFormatException e) {
-          throw new InvalidInputDataException("invalid label: " + token, fileName, lineNr, e);
+          throw new InvalidInputDataException("invalid label: " + token, path.toString(), lineNr, e);
         }
 
         int m = st.countTokens() / 2;
@@ -470,15 +472,15 @@ public class Trainer {
           try {
             index = Integer.parseInt(token);
           } catch (NumberFormatException e) {
-            throw new InvalidInputDataException("invalid index: " + token, fileName, lineNr, e);
+            throw new InvalidInputDataException("invalid index: " + token, path.toString(), lineNr, e);
           }
 
           // assert that indices are valid and sorted
           if (index < 0) {
-            throw new InvalidInputDataException("invalid index: " + index, fileName, lineNr);
+            throw new InvalidInputDataException("invalid index: " + index, path.toString(), lineNr);
           }
           if (index <= indexBefore) {
-            throw new InvalidInputDataException("indices must be sorted in ascending order", fileName, lineNr);
+            throw new InvalidInputDataException("indices must be sorted in ascending order", path.toString(), lineNr);
           }
           indexBefore = index;
 
@@ -487,7 +489,7 @@ public class Trainer {
             double value = Double.parseDouble(token);
             x[j] = new FeatureNode(index, value);
           } catch (NumberFormatException e) {
-            throw new InvalidInputDataException("invalid value: " + token, fileName, lineNr);
+            throw new InvalidInputDataException("invalid value: " + token, path.toString(), lineNr);
           }
         }
         if (m > 0) {
@@ -534,12 +536,11 @@ public class Trainer {
   }
 
 
-  static Set<Integer> getUnusedFeatures(String modelFileName) {
+  static Set<Integer> getUnusedFeatures(Path modelPath) {
 
     Set<Integer> unusedFeatures = new HashSet<>();
 
-    try (BufferedReader in = Files.newBufferedReader(
-        Paths.get(modelFileName), StandardCharsets.UTF_8)) {
+    try (BufferedReader in = Files.newBufferedReader(modelPath, StandardCharsets.UTF_8)) {
       // skip first 6 lines
       for (int k = 0; k < 6; k++) {
         in.readLine();
@@ -569,10 +570,10 @@ public class Trainer {
 
 
   static void removeUnusedFeaturesFromModel(
-      String modelFileName, Set<Integer> unusedFeatures, int numberOfFeatures)
+      Path modelPath, Set<Integer> unusedFeatures, int numberOfFeatures)
           throws IOException {
 
-    BufferedReader in = Files.newBufferedReader(Paths.get(modelFileName), StandardCharsets.UTF_8);
+    BufferedReader in = Files.newBufferedReader(modelPath, StandardCharsets.UTF_8);
     String solverType = in.readLine();
     String nrClass = in.readLine();
     String label = in.readLine();
@@ -610,8 +611,7 @@ public class Trainer {
     in.close();
 
     // re-write model
-    PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-        Paths.get(modelFileName), StandardCharsets.UTF_8));
+    PrintWriter out = new PrintWriter(Files.newBufferedWriter(modelPath, StandardCharsets.UTF_8));
     out.println(solverType);
     out.println(nrClass);
     out.println(label);

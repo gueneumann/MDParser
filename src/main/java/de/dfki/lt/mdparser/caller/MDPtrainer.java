@@ -1,20 +1,22 @@
 package de.dfki.lt.mdparser.caller;
 
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 
 import de.dfki.lt.mdparser.archive.Archivator;
+import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.parser.Trainer;
 import de.dfki.lt.mdparser.parser.TrainerMem;
 
 public final class MDPtrainer {
 
-  private static final String[] DIRS = { "split", "splitA", "splitF", "splitO", "splitC", "splitModels", "temp" };
   private static final String ALGORITHM = "covington";
-  private static final String SPLIT_MODELS_DIR = "splitModels";
-  private static final String SPLIT_FILE = "temp/split.txt";
-  private static final String ALPHABET_FILE_PARSER = "temp/alphaParser.txt";
 
 
   private MDPtrainer() {
@@ -26,17 +28,14 @@ public final class MDPtrainer {
   public static void train(String trainFileParam, String archiveName)
       throws IOException {
 
-
-    deleteOldDirs();
-    createNewDirs();
+    deleteModelBuildeFolder();
 
     Archivator arch = new Archivator(archiveName);
     Trainer trainer = new Trainer();
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromDisk(
-        ALGORITHM, trainFileParam, SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER);
+    trainer.createAndTrainWithSplittingFromDisk(ALGORITHM, trainFileParam);
 
     long s2 = System.currentTimeMillis();
 
@@ -44,26 +43,20 @@ public final class MDPtrainer {
 
     //ModelEditorTest.main(null);
     arch.pack();
-    arch.delTemp();
-
-    deleteOldDirs();
   }
 
 
   public static void trainMem(String trainFileParam, String archiveName)
       throws IOException {
 
-
-    deleteOldDirs();
-    createNewDirs();
+    deleteModelBuildeFolder();
 
     Archivator arch = new Archivator(archiveName);
     TrainerMem trainer = new TrainerMem();
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromMemory(
-        ALGORITHM, trainFileParam, SPLIT_MODELS_DIR, ALPHABET_FILE_PARSER, SPLIT_FILE);
+    trainer.createAndTrainWithSplittingFromMemory(ALGORITHM, trainFileParam);
 
     long s2 = System.currentTimeMillis();
 
@@ -71,36 +64,61 @@ public final class MDPtrainer {
 
     //ModelEditorTest.main(null);
     arch.pack();
-    arch.delTemp();
-
-    deleteOldDirs();
   }
 
 
-  public static void createNewDirs() {
+  private static void deleteModelBuildeFolder()
+      throws IOException {
 
-    for (int i = 0; i < DIRS.length; i++) {
-      String dir = DIRS[i];
-      File d = new File(dir);
-      if (!d.exists()) {
-        d.mkdir();
+    if (GlobalConfig.getModelBuildFolder().toString().trim().length() == 0) {
+      deleteFolder(GlobalConfig.SPLIT_ALPHA_FOLDER);
+      deleteFolder(GlobalConfig.FEATURE_VECTORS_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_INITIAL_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_ADJUST_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_COMPACT_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_MODELS_FOLDER);
+      deleteFolder(GlobalConfig.FEATURE_VECTORS_FOLDER);
+      try {
+        Files.delete(GlobalConfig.ALPHA_FILE);
+      } catch (NoSuchFileException e) {
+        // nothing to do, file already deleted
       }
+      try {
+        Files.delete(GlobalConfig.SPLIT_FILE);
+      } catch (NoSuchFileException e) {
+        // nothing to do, file already deleted
+      }
+    } else {
+      deleteFolder(GlobalConfig.getModelBuildFolder());
     }
   }
 
 
-  public static void deleteOldDirs() {
+  private static void deleteFolder(Path path)
+      throws IOException {
 
-    for (int i = 0; i < DIRS.length; i++) {
-      File[] files = new File(DIRS[i]).listFiles();
-      if (files != null) {
-        for (int k = 0; k < files.length; k++) {
-          boolean b = files[k].delete();
-          if (!b) {
-            System.out.println("Failed to delete " + files[k]);
-          }
+    try {
+      Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+            throws IOException {
+
+          Files.delete(file);
+          return FileVisitResult.CONTINUE;
         }
-      }
+
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+            throws IOException {
+
+          Files.delete(dir);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    } catch (NoSuchFileException e) {
+      // nothing to do, file already deleted
     }
   }
 

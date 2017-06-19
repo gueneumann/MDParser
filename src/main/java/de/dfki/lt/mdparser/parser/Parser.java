@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -60,11 +62,11 @@ public final class Parser {
     Map<String, Model> modelId2ModelMap = new HashMap<>();
     Map<String, String> feature2ModelFileNameMap = readSplitFile(arch.getSplitFileInputStream());
     for (Map.Entry<String, String> oneFeature2ModelFileName : feature2ModelFileNameMap.entrySet()) {
-      String modelId = oneFeature2ModelFileName.getValue().substring(6);
+      String modelId = Paths.get(oneFeature2ModelFileName.getValue()).getFileName().toString();
       Model model = modelId2ModelMap.get(modelId);
       if (null == model) {
-        String modelFileName = "splitModels/" + modelId;
-        InputStream is = arch.getInputStream(modelFileName);
+        Path modelPath = GlobalConfig.SPLIT_MODELS_FOLDER.resolve(modelId);
+        InputStream is = arch.getInputStream(modelPath.toString());
         model = Model.load(new InputStreamReader(is));
       }
       feature2ModelMap.put(oneFeature2ModelFileName.getKey(), model);

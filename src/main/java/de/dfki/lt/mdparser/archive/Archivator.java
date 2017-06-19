@@ -2,14 +2,15 @@ package de.dfki.lt.mdparser.archive;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -17,12 +18,9 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-public class Archivator {
+import de.dfki.lt.mdparser.config.GlobalConfig;
 
-  private String splitModelsDir;
-  private String splitAlphabetsDir;
-  private String alphabetParser;
-  private String splitFile;
+public class Archivator {
 
   private String archiveName;
 
@@ -33,32 +31,6 @@ public class Archivator {
 
     this.archiveName = archiveName;
     this.archiveMap = new HashMap<String, InputStream>();
-    this.alphabetParser = "temp/alphaParser.txt";
-    this.splitFile = "temp/split.txt";
-    this.splitModelsDir = "splitModels";
-    this.splitAlphabetsDir = "splitA";
-  }
-
-
-  public void delTemp() {
-
-    File f = new File(this.splitFile);
-    f.delete();
-    f = new File(this.alphabetParser);
-    f.delete();
-    File[] files = new File(this.splitModelsDir).listFiles();
-    for (int i = 0; i < files.length; i++) {
-      files[i].delete();
-    }
-    files = new File("split").listFiles();
-    for (int i = 0; i < files.length; i++) {
-      files[i].delete();
-    }
-    f = new File("temp");
-    if (f.listFiles().length == 0) {
-      f.delete();
-    }
-
   }
 
 
@@ -66,23 +38,14 @@ public class Archivator {
 
     FileOutputStream dest = new FileOutputStream(this.archiveName);
     ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(dest));
-    List<String> filesToPack = new ArrayList<String>();
-    filesToPack.add(this.alphabetParser);
-    filesToPack.add(this.splitFile);
-    File[] models = new File(this.splitModelsDir).listFiles();
-    for (int i = 0; i < models.length; i++) {
-      filesToPack.add(models[i].getPath());
-    }
-    File[] alphabets = new File(this.splitAlphabetsDir).listFiles();
-    for (int i = 0; i < alphabets.length; i++) {
-      filesToPack.add(alphabets[i].getPath());
-    }
-    Iterator<String> iter = filesToPack.iterator();
-    while (iter.hasNext()) {
-      String curFile = iter.next();
-      curFile = curFile.replaceAll("\\" + System.getProperty("file.separator"), "/");
-      zip.putNextEntry(new ZipEntry(curFile));
-      BufferedInputStream origin = new BufferedInputStream(new FileInputStream(curFile));
+    List<Path> filesToPack = new ArrayList<>();
+    filesToPack.add(GlobalConfig.ALPHA_FILE);
+    filesToPack.add(GlobalConfig.SPLIT_FILE);
+    Files.newDirectoryStream(GlobalConfig.SPLIT_MODELS_FOLDER).forEach(x -> filesToPack.add(x));
+    Files.newDirectoryStream(GlobalConfig.SPLIT_ALPHA_FOLDER).forEach(x -> filesToPack.add(x));
+    for (Path onePath : filesToPack) {
+      zip.putNextEntry(new ZipEntry(onePath.toString()));
+      BufferedInputStream origin = new BufferedInputStream(Files.newInputStream(onePath));
       int count = 0;
       byte[] data = new byte[20480];
       while ((count = origin.read(data, 0, 20480)) != -1) {
@@ -101,7 +64,7 @@ public class Archivator {
     ZipInputStream zis = new ZipInputStream(new FileInputStream(this.archiveName));
     ZipEntry entry;
     while ((entry = zis.getNextEntry()) != null) {
-      this.archiveMap.put(entry.getName(), zip.getInputStream(entry));
+      this.archiveMap.put(Paths.get(entry.getName()).toString(), zip.getInputStream(entry));
     }
   }
 
@@ -114,12 +77,12 @@ public class Archivator {
 
   public InputStream getParserAlphabetInputStream() {
 
-    return this.archiveMap.get("temp/alphaParser.txt");
+    return this.archiveMap.get(GlobalConfig.ALPHA_FILE.toString());
   }
 
 
   public InputStream getSplitFileInputStream() {
 
-    return this.archiveMap.get("temp/split.txt");
+    return this.archiveMap.get(GlobalConfig.SPLIT_FILE.toString());
   }
 }
