@@ -32,6 +32,8 @@ public final class MDPrunner {
 
     Parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
 
+    arch.close();
+
     data.writeToFile(resultFile);
     Eval evaluator = new Eval(conllFile, resultFile, 6, 6, 7, 7);
     System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
@@ -49,6 +51,8 @@ public final class MDPrunner {
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
     Parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
+
+    arch.close();
 
     data.testLinearizedToFile(resultFile);
   }

@@ -23,8 +23,9 @@ import de.dfki.lt.mdparser.config.GlobalConfig;
 public class Archivator {
 
   private String archiveName;
-
   private Map<String, InputStream> archiveMap;
+  private ZipFile zip;
+  private ZipInputStream zis;
 
 
   public Archivator(String archiveName) {
@@ -37,34 +38,48 @@ public class Archivator {
   public void pack() throws IOException {
 
     FileOutputStream dest = new FileOutputStream(this.archiveName);
-    ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(dest));
+    ZipOutputStream zipOut = new ZipOutputStream(new BufferedOutputStream(dest));
     List<Path> filesToPack = new ArrayList<>();
     filesToPack.add(GlobalConfig.ALPHA_FILE);
     filesToPack.add(GlobalConfig.SPLIT_FILE);
     Files.newDirectoryStream(GlobalConfig.SPLIT_MODELS_FOLDER).forEach(x -> filesToPack.add(x));
     Files.newDirectoryStream(GlobalConfig.SPLIT_ALPHA_FOLDER).forEach(x -> filesToPack.add(x));
     for (Path onePath : filesToPack) {
-      zip.putNextEntry(new ZipEntry(onePath.toString()));
+      zipOut.putNextEntry(new ZipEntry(onePath.toString()));
       BufferedInputStream origin = new BufferedInputStream(Files.newInputStream(onePath));
       int count = 0;
       byte[] data = new byte[20480];
       while ((count = origin.read(data, 0, 20480)) != -1) {
-        zip.write(data, 0, count);
+        zipOut.write(data, 0, count);
       }
       count = 0;
       origin.close();
     }
-    zip.close();
+    zipOut.close();
   }
 
 
   public void extract() throws IOException {
 
-    ZipFile zip = new ZipFile(this.archiveName);
-    ZipInputStream zis = new ZipInputStream(new FileInputStream(this.archiveName));
+    this.zip = new ZipFile(this.archiveName);
+    this.zis = new ZipInputStream(new FileInputStream(this.archiveName));
     ZipEntry entry;
-    while ((entry = zis.getNextEntry()) != null) {
-      this.archiveMap.put(Paths.get(entry.getName()).toString(), zip.getInputStream(entry));
+    while ((entry = this.zis.getNextEntry()) != null) {
+      this.archiveMap.put(Paths.get(entry.getName()).toString(), this.zip.getInputStream(entry));
+    }
+  }
+
+
+  public void close() {
+
+    try {
+      for (InputStream oneIn : this.archiveMap.values()) {
+        oneIn.close();
+      }
+      this.zis.close();
+      this.zip.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
