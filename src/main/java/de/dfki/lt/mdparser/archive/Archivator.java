@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,8 +43,12 @@ public class Archivator {
     List<Path> filesToPack = new ArrayList<>();
     filesToPack.add(GlobalConfig.ALPHA_FILE);
     filesToPack.add(GlobalConfig.SPLIT_FILE);
-    Files.newDirectoryStream(GlobalConfig.SPLIT_MODELS_FOLDER).forEach(x -> filesToPack.add(x));
-    Files.newDirectoryStream(GlobalConfig.SPLIT_ALPHA_FOLDER).forEach(x -> filesToPack.add(x));
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_MODELS_FOLDER)) {
+      stream.forEach(x -> filesToPack.add(x));
+    }
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ALPHA_FOLDER)) {
+      stream.forEach(x -> filesToPack.add(x));
+    }
     for (Path onePath : filesToPack) {
       zipOut.putNextEntry(new ZipEntry(onePath.toString()));
       BufferedInputStream origin = new BufferedInputStream(Files.newInputStream(onePath));

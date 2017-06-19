@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -149,7 +150,9 @@ public class Trainer {
     // split files
     Map<String, PrintWriter> splitMap = new HashMap<>();
     List<Path> filesToSplit = new ArrayList<>();
-    Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER).forEach(x -> filesToSplit.add(x));
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER)) {
+      stream.forEach(x -> filesToSplit.add(x));
+    }
     SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
     int trainingThreads = GlobalConfig.getInt(ConfigKeys.TRAINING_THREADS);
     if (trainingThreads < 0) {
@@ -185,30 +188,32 @@ public class Trainer {
     String curFile = null;
     String lastFile = null;
     String curSplitVal = null;
-    for (Path oneTrainingFile : Files.newDirectoryStream(GlobalConfig.SPLIT_INITIAL_FOLDER)) {
-      curSplitVal = oneTrainingFile.getFileName().toString();
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_INITIAL_FOLDER)) {
+      for (Path oneTrainingFile : stream) {
+        curSplitVal = oneTrainingFile.getFileName().toString();
 
-      if (curWriter == null) {
-        curFile = curSplitVal;
-        curWriter = new PrintWriter(
-            Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8));
-      }
-
-      try (BufferedReader in = Files.newBufferedReader(oneTrainingFile, StandardCharsets.UTF_8)) {
-        String line;
-        while ((line = in.readLine()) != null) {
-          curWriter.println(line);
-          curSize++;
+        if (curWriter == null) {
+          curFile = curSplitVal;
+          curWriter = new PrintWriter(
+              Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8));
         }
-      }
 
-      if (curSize > splitThreshold) {
-        curWriter.close();
-        curWriter = null;
-        curSize = 0;
-        lastFile = curFile;
+        try (BufferedReader in = Files.newBufferedReader(oneTrainingFile, StandardCharsets.UTF_8)) {
+          String line;
+          while ((line = in.readLine()) != null) {
+            curWriter.println(line);
+            curSize++;
+          }
+        }
+
+        if (curSize > splitThreshold) {
+          curWriter.close();
+          curWriter = null;
+          curSize = 0;
+          lastFile = curFile;
+        }
+        newSplitMap.put(curSplitVal, curFile);
       }
-      newSplitMap.put(curSplitVal, curFile);
     }
     //if the last file is too small add to the second to last
 
@@ -285,7 +290,9 @@ public class Trainer {
 
     // compact files
     List<Path> filesToCompact = new ArrayList<>();
-    Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER).forEach(x -> filesToCompact.add(x));
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
+      stream.forEach(x -> filesToCompact.add(x));
+    }
     TrainWorker trainWorker = new TrainWorker(alphaParser, this.bias);
     if (trainingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
@@ -319,69 +326,72 @@ public class Trainer {
   private static Alphabet uniteAlphabets(Path splitAlphaDir) throws IOException {
 
     Alphabet alphasUnited = null;
-    for (Path oneAlphaFile : Files.newDirectoryStream(splitAlphaDir)) {
-      Alphabet curAlpha = new Alphabet(Files.newInputStream(oneAlphaFile));
-      if (alphasUnited == null) {
-        // init union with first alphabet to unite
-        alphasUnited = curAlpha;
-        continue;
-      }
-      int numberOfFeatures = curAlpha.getNumberOfFeatures();
-      // feature indices start at 1, so we iterate until num + 1
-      for (int k = 1; k <= numberOfFeatures; k++) {
-        alphasUnited.addFeature(curAlpha.getFeature(k));
-        //System.out.println(features[k]);
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(splitAlphaDir)) {
+      for (Path oneAlphaFile : stream) {
+        Alphabet curAlpha = new Alphabet(Files.newInputStream(oneAlphaFile));
+        if (alphasUnited == null) {
+          // init union with first alphabet to unite
+          alphasUnited = curAlpha;
+          continue;
+        }
+        int numberOfFeatures = curAlpha.getNumberOfFeatures();
+        // feature indices start at 1, so we iterate until num + 1
+        for (int k = 1; k <= numberOfFeatures; k++) {
+          alphasUnited.addFeature(curAlpha.getFeature(k));
+          //System.out.println(features[k]);
+        }
       }
     }
-
     return alphasUnited;
   }
 
 
   private static void restoreModels(Path splitModelsDir, Alphabet alpha, Path splitAlphaDir) throws IOException {
 
-    for (Path oneModelFile : Files.newDirectoryStream(splitModelsDir)) {
-      System.out.println("Model file: " + oneModelFile);
-      Model model = Linear.loadModel(oneModelFile.toFile());
-      double[] wArray = model.getFeatureWeights();
-      Path alphaPath = splitAlphaDir.resolve(oneModelFile.getFileName());
-      Alphabet a = new Alphabet(Files.newInputStream(alphaPath));
-      int numberOfClasses = model.getNrClass();
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(splitModelsDir)) {
+      for (Path oneModelFile : stream) {
+        System.out.println("Model file: " + oneModelFile);
+        Model model = Linear.loadModel(oneModelFile.toFile());
+        double[] wArray = model.getFeatureWeights();
+        Path alphaPath = splitAlphaDir.resolve(oneModelFile.getFileName());
+        Alphabet a = new Alphabet(Files.newInputStream(alphaPath));
+        int numberOfClasses = model.getNrClass();
 
-      try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
-        out.println("solver_type MCSVM_CS");
-        out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
+        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
+          out.println("solver_type MCSVM_CS");
+          out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
 
-        for (int k = 0; k < model.getLabels().length; k++) {
-          out.print(model.getLabels()[k] + " ");
-        }
-        out.println();
-        int numberOfFeatures = alpha.getNumberOfFeatures();
-        boolean notFound = true;
-        int lastIndex = -1;
-        for (int k = numberOfFeatures; k > 1 && notFound; k--) {
-          if (a.getFeatureIndex(alpha.getFeature(k)) != null) {
-            lastIndex = k;
-            notFound = false;
-          }
-        }
-        out.println("nr_feature " + (lastIndex - 1));
-        out.println("bias " + model.getBias());
-        out.println("w");
-        for (int k = 1; k < lastIndex; k++) {
-          String feature = alpha.getFeature(k);
-          Integer oldIndex = a.getFeatureIndex(feature);
-          if (oldIndex == null) {
-            for (int m = 0; m < numberOfClasses; m++) {
-              out.print("0 ");
-            }
-          } else {
-            for (int l = 0; l < numberOfClasses; l++) {
-              double curWeight = wArray[(oldIndex - 1) * numberOfClasses + l];
-              out.print(curWeight + " ");
-            }
+          for (int k = 0; k < model.getLabels().length; k++) {
+            out.print(model.getLabels()[k] + " ");
           }
           out.println();
+          int numberOfFeatures = alpha.getNumberOfFeatures();
+          boolean notFound = true;
+          int lastIndex = -1;
+          for (int k = numberOfFeatures; k > 1 && notFound; k--) {
+            if (a.getFeatureIndex(alpha.getFeature(k)) != null) {
+              lastIndex = k;
+              notFound = false;
+            }
+          }
+          out.println("nr_feature " + (lastIndex - 1));
+          out.println("bias " + model.getBias());
+          out.println("w");
+          for (int k = 1; k < lastIndex; k++) {
+            String feature = alpha.getFeature(k);
+            Integer oldIndex = a.getFeatureIndex(feature);
+            if (oldIndex == null) {
+              for (int m = 0; m < numberOfClasses; m++) {
+                out.print("0 ");
+              }
+            } else {
+              for (int l = 0; l < numberOfClasses; l++) {
+                double curWeight = wArray[(oldIndex - 1) * numberOfClasses + l];
+                out.print(curWeight + " ");
+              }
+            }
+            out.println();
+          }
         }
       }
     }
