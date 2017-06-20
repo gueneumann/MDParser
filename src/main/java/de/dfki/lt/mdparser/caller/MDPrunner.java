@@ -43,6 +43,10 @@ public class MDPrunner {
 	// Class instantiation
 	public MDPrunner(){
 	}
+	
+	public MDPrunner(String algorithm){
+		this.algorithm = algorithm;
+	}
 
 	// Methods
 

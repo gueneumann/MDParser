@@ -10,6 +10,11 @@ import de.dfki.lt.mdparser.eval.Eval;
 
 public class MDPtester {
 	private Eval eval;
+	private String algorithm = "covington";
+	
+	public MDPtester(String algorithm){
+		this.algorithm = algorithm;
+	}
 	
 	private void trainLanguage(String trainConllFile, String modelFile) 
 			throws IOException, NoSuchAlgorithmException, InvalidInputDataException{
@@ -17,7 +22,7 @@ public class MDPtester {
 		String trainFile = trainConllFile;
 		String modelZipFileName = modelFile;
 
-		MDPtrainer mdpTrainer = new MDPtrainer();
+		MDPtrainer mdpTrainer = new MDPtrainer(this.algorithm);
 		
 		mdpTrainer.trainer(trainFile, modelZipFileName);
 	}
@@ -28,7 +33,7 @@ public class MDPtester {
 		String mdpResultFile = resultFile;
 		String modelZipFileName = modelFile;
 
-		MDPrunner mdpRunner = new MDPrunner();
+		MDPrunner mdpRunner = new MDPrunner(this.algorithm);
 		mdpRunner.conllFileParsingAndEval(testFile, mdpResultFile, modelZipFileName);
 
 		this.eval = mdpRunner.getEvaluator();
@@ -48,7 +53,7 @@ public class MDPtester {
 	
 	public static void main(String[] args) 
 			throws IOException, NoSuchAlgorithmException, InvalidInputDataException{
-		MDPtester mdpTester = new MDPtester();
+		MDPtester mdpTester = new MDPtester("covington");
 		
 //		mdpTester.trainAndTest("resources/input/ptb3-std-training.conll", "ptb3-std.zip", 
 //				"resources/input/ptb3-std-test.conll", "resources/input/ptb3-std-result.conll");

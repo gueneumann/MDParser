@@ -109,8 +109,8 @@ public class StackFeatureModel extends FeatureModel {
 		fvParser.addFeature(fpip1_fpip2_fpip3, alphaParser, train);
 		Feature dist = fe.templateDistance(st1,buf1);
 		fvParser.addFeature(dist, alphaParser, train);
-		//	Feature deprelj = fe.templateDepRel(st1, "depj", curSent, train);
-		//	fvParser.addFeature(deprelj, alphaParser, train);
+//			Feature deprelj = fe.templateDepRel(st1, "depj", curSent, train);
+//			fvParser.addFeature(deprelj, alphaParser, train);
 		return fvParser;
 	}
 

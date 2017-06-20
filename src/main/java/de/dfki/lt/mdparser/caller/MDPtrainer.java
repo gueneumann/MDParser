@@ -35,6 +35,10 @@ public class MDPtrainer {
 
 	public MDPtrainer(){
 	}
+	
+	public MDPtrainer(String algorithm){
+		this.algorithm = algorithm;
+	}
 
 
 	public static void createNew(String[] dirs) {
