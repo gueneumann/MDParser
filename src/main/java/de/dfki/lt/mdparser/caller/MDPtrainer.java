@@ -16,9 +16,6 @@ import de.dfki.lt.mdparser.parser.TrainerMem;
 
 public final class MDPtrainer {
 
-  private static final String ALGORITHM = "covington";
-
-
   private MDPtrainer() {
 
     // private constructor to enforce noninstantiability
@@ -35,7 +32,7 @@ public final class MDPtrainer {
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromDisk(ALGORITHM, trainFileParam);
+    trainer.createAndTrainWithSplittingFromDisk(trainFileParam);
 
     long s2 = System.currentTimeMillis();
 
@@ -56,7 +53,7 @@ public final class MDPtrainer {
 
     long s1 = System.currentTimeMillis();
 
-    trainer.createAndTrainWithSplittingFromMemory(ALGORITHM, trainFileParam);
+    trainer.createAndTrainWithSplittingFromMemory(trainFileParam);
 
     long s2 = System.currentTimeMillis();
 

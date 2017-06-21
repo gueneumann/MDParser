@@ -44,7 +44,7 @@ public class Trainer {
 
 
   // XXX GN: this is used for training
-  public void createAndTrainWithSplittingFromDisk(String algorithmId, String inputFile)
+  public void createAndTrainWithSplittingFromDisk(String inputFile)
       throws IOException {
 
     boolean noLabels = false;
@@ -62,6 +62,8 @@ public class Trainer {
     Sentence[] sentences = data.getSentences();
     FeatureModel featureModel = null;
     ParsingAlgorithm algorithm = null;
+    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
+    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
     if (algorithmId.equals("covington")) {
       featureModel = new CovingtonFeatureModel(alpha);
       algorithm = new CovingtonAlgorithm();

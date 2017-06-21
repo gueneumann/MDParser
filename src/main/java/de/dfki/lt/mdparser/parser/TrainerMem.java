@@ -23,6 +23,7 @@ import de.bwaldvogel.liblinear.SolverType;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
+import de.dfki.lt.mdparser.config.ConfigKeys;
 import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
@@ -39,7 +40,7 @@ public class TrainerMem {
 
 
   // XXX GN: this is used for training
-  public void createAndTrainWithSplittingFromMemory(String algorithmId, String inputFileName)
+  public void createAndTrainWithSplittingFromMemory(String inputFileName)
       throws IOException {
 
     boolean noLabels = false;
@@ -56,6 +57,8 @@ public class TrainerMem {
     Sentence[] sentences = data.getSentences();
     FeatureModel model = null;
     ParsingAlgorithm algorithm = null;
+    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
+    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
     if (algorithmId.equals("covington")) {
       model = new CovingtonFeatureModel(alpha);
       algorithm = new CovingtonAlgorithm();

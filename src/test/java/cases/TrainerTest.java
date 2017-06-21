@@ -11,9 +11,8 @@ public class TrainerTest {
     String inputFile = args[0];
 
     Trainer trainer = new Trainer();
-    String algorithm = "covington";
     try {
-      trainer.createAndTrainWithSplittingFromDisk(algorithm, inputFile);
+      trainer.createAndTrainWithSplittingFromDisk(inputFile);
     } catch (IOException e) {
       e.printStackTrace();
     }

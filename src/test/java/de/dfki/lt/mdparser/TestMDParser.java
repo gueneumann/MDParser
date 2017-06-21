@@ -36,10 +36,11 @@ public class TestMDParser {
 
 
   @Test
-  public void testTrainEvalFiles() throws IOException {
+  public void testTrainEvalFilesCovington() throws IOException {
 
     // parallel training is not deterministic, so restrict number of threads to 1
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
+    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, "covington");
 
     String modelName = "de-2009.zip";
 
@@ -88,8 +89,10 @@ public class TestMDParser {
 
 
   @Test
-  public void testTrainEvalMemory()
+  public void testTrainEvalMemoryCovington()
       throws IOException {
+
+    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, "covington");
 
     String modelName = "de-2009.zip";
 

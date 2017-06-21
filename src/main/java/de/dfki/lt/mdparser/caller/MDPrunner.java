@@ -11,9 +11,6 @@ import de.dfki.lt.mdparser.parser.Parser;
 
 public final class MDPrunner {
 
-  private static final String ALGORITHM = "covington";
-
-
   private MDPrunner() {
 
     // private constructor to enforce noninstantiability
@@ -30,7 +27,7 @@ public final class MDPrunner {
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
 
-    Parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
+    Parser.parseCombined(data, arch, alphabetParser, false);
 
     arch.close();
 
@@ -48,7 +45,7 @@ public final class MDPrunner {
     Archivator arch = new Archivator(modelFile);
     arch.extract();
     Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-    Parser.parseCombined(ALGORITHM, data, arch, alphabetParser, false);
+    Parser.parseCombined(data, arch, alphabetParser, false);
 
     arch.close();
 

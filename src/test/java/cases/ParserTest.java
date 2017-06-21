@@ -26,9 +26,8 @@ public class ParserTest {
       arch.extract();
       Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
 
-      String algorithm = "covington";
       long s3 = System.currentTimeMillis();
-      Parser.parseCombined(algorithm, d, arch, alphabetParser, false);
+      Parser.parseCombined(d, arch, alphabetParser, false);
 
       long s4 = System.currentTimeMillis();
       System.out.println("Parsing time: " + ((s4 - s3)) + " milliseconds.");

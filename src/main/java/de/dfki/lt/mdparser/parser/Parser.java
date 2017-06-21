@@ -77,8 +77,7 @@ public final class Parser {
 
 
   // GN: de.dfki.lt.mdparser.caller.MDPrunner.conllFileParsingAndEval(String, String, String)
-  public static void parseCombined(
-      String algorithmId, Data data, Archivator arch, Alphabet alphabetParser, boolean noLabels)
+  public static void parseCombined(Data data, Archivator arch, Alphabet alphabetParser, boolean noLabels)
       throws IOException {
 
     long modelReadStart = System.currentTimeMillis();
@@ -89,6 +88,8 @@ public final class Parser {
     //gds readSplitModelsL(arch);
     final FeatureModel featureModel;
     final ParsingAlgorithm algorithm;
+    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
+    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
     if (algorithmId.equals("covington")) {
       featureModel = new CovingtonFeatureModel(alphabetParser);
       algorithm = new CovingtonAlgorithm();
@@ -133,8 +134,7 @@ public final class Parser {
 
 
   //TODO the non-parallel version
-  public static void parseCombinedMem(
-      String algorithmId, Data data, Archivator arch, Alphabet alphabetParser, boolean noLabels)
+  public static void parseCombinedMem(Data data, Archivator arch, Alphabet alphabetParser, boolean noLabels)
       throws IOException {
 
     long modelReadStart = System.currentTimeMillis();
@@ -145,6 +145,8 @@ public final class Parser {
     Sentence[] sentences = data.getSentences();
     FeatureModel model = null;
     ParsingAlgorithm algorithm = null;
+    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
+    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
     if (algorithmId.equals("covington")) {
       model = new CovingtonFeatureModel(alphabetParser);
       algorithm = new CovingtonAlgorithm();
