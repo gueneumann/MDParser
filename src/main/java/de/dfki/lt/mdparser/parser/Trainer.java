@@ -12,11 +12,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 
@@ -181,7 +181,7 @@ public class Trainer {
         "Adjust splitting files in " + GlobalConfig.SPLIT_INITIAL_FOLDER
         + " and store them in " + GlobalConfig.SPLIT_ADJUST_FOLDER);
     Files.createDirectories(GlobalConfig.SPLIT_ADJUST_FOLDER);
-    Map<String, String> newSplitMap = new TreeMap<>();
+    Map<String, String> newSplitMap = new LinkedHashMap<>();
     int curSize = 0;
     int splitThreshold = 3000;
     PrintWriter curWriter = null;

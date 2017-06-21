@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -126,7 +127,7 @@ public class TrainerMem {
     alpha.writeToFile(GlobalConfig.ALPHA_FILE);
 
     // merging split maps parser
-    Map<String, String> newSplitMap = new HashMap<String, String>();
+    Map<String, String> newSplitMap = new LinkedHashMap<String, String>();
     int curCount = 0;
     int t = 10000;
     int n = 1;
