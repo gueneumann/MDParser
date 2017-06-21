@@ -20,7 +20,7 @@ public final class MDPrunner {
   }
 
 
-  public static void conllFileParsingAndEval(String conllFile, String resultFile, String modelFile)
+  public static Eval conllFileParsingAndEval(String conllFile, String resultFile, String modelFile)
       throws IOException {
 
     Data data = new Data(conllFile, false);
@@ -35,9 +35,7 @@ public final class MDPrunner {
     arch.close();
 
     data.writeToFile(resultFile);
-    Eval evaluator = new Eval(conllFile, resultFile, 6, 6, 7, 7);
-    System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
-    System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
+    return new Eval(conllFile, resultFile, 6, 6, 7, 7);
   }
 
 
@@ -69,7 +67,9 @@ public final class MDPrunner {
     resultFile = "resources/input/ptb3-std-test.conll-result.conll";
     modelFile = "ptb3-std.zip";
 
-    conllFileParsingAndEval(conllFile, resultFile, modelFile);
+    Eval evaluator = conllFileParsingAndEval(conllFile, resultFile, modelFile);
+    System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
+    System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
     //conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
   }
 }

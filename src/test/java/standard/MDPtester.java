@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import de.dfki.lt.mdparser.caller.MDPrunner;
 import de.dfki.lt.mdparser.caller.MDPtrainer;
+import de.dfki.lt.mdparser.eval.Eval;
 
 public class MDPtester {
 
@@ -23,7 +24,9 @@ public class MDPtester {
     String mdpResultFile = resultFile;
     String modelZipFileName = modelFile;
 
-    MDPrunner.conllFileParsingAndEval(testFile, mdpResultFile, modelZipFileName);
+    Eval evaluator = MDPrunner.conllFileParsingAndEval(testFile, mdpResultFile, modelZipFileName);
+    System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
+    System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
   }
 
 
