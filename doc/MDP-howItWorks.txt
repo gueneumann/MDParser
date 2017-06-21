@@ -44,8 +44,18 @@ Called with trainingFile.conll and archiveFile.zip
 
 -	now split LibLienar training file
 	HIERIX
+
+
 	
 B) Parsing algorithms
+
+NOTE:
+Parsing algorithm is used in training and testing.
+
+In training it is used for oracle, where the gold dependency tree is used as "model"
+In testing it is used for applying a model to predict transitions.
+
+Main function - in twp versions - is processCombined()
 
 B.1) Covington
 
@@ -73,3 +83,125 @@ B.1) Covington
 		-	store all in file split0/
 
 B.2) Stack
+
+A transition-based parser: use "stack" instead of "covington"
+
+Uses same feature extraction class as "covington": 
+1.) FeatureExtractor fe = new FeatureExtractor();
+
+  Returns a set of feature generation methods, which are applied on current token of sentence and eventually other tokens in context.
+  When applied on current data, return a feature as a specific string of form "featureName=value"
+
+2.) Then specific stack parser is initialized:
+
+ParsingAlgorithm pa = null;
+    if (algorithm.equals("stack")) {
+      fm = new StackFeatureModel(alphaParser,fe);
+      pa = new StackAlgorithm();
+    }
+
+2.1) StackFeatureModel: Provides a method applyCombined() which is called with a current state StackParserState:
+      - a tuple of <token stack, token buffer, sentence, depTree> 
+      - it selects the relevant stack/buffer elements
+      - and applies all feature templates on current tokens of stack/buffer and sentence
+      - and creates a feature vector for the sentence  
+    
+
+3.) Then, on each training instance, during training, feature vector is created:
+
+      // GN: call the parser on each training example to "re-play" the parser configurations
+      //     and to compute the operations in form of a list of feature vectors for each state.
+      //     this means that all feature functions are applied on the parsed sentence by applying
+      //     the feature model in the training mode.
+      //     the result is then a list of parser states in form of feature vectors whose values are based
+      //     one the specific training example
+      List<FeatureVector> parserList = pa.processCombined(sent, fm, noLabels);
+      
+      
+      
+Problems with stack parser:
+
+It crashes for 
+
+//   mdpTester.trainAndTest("resources/input/ptb3-std-training.conll", "ptb3-std.zip", 
+//        "resources/input/ptb3-std-test.conll", "resources/input/ptb3-std-result.conll");
+    
+    mdpTester.trainAndTest("resources/input/german_tiger_train.conll", "tiger.zip", 
+        "resources/input/german_tiger_test.conll", "resources/input/german_tiger_result.conll");
+
+//    mdpTester.trainAndTest("resources/input/en-train-2009.conll", "en-2009.zip", 
+//        "resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
+
+with 
+
+Exception in thread "main" java.io.EOFException: unexpected EOF
+  at de.bwaldvogel.liblinear.Linear.loadModel(Linear.java:299)
+  at de.bwaldvogel.liblinear.Linear.loadModel(Linear.java:321)
+  at de.dfki.lt.mdparser.parser.Trainer.restoreModels(Trainer.java:439)
+  at de.dfki.lt.mdparser.parser.Trainer.recreateOneAlphabetAndAdjustModels(Trainer.java:430)
+  at de.dfki.lt.mdparser.parser.Trainer.createAndTrainWithSplittingFromDisk(Trainer.java:423)
+  at de.dfki.lt.mdparser.caller.MDPtrainer.trainer(MDPtrainer.java:78)
+  at standard.MDPtester.trainLanguage(MDPtester.java:27)
+  at standard.MDPtester.trainAndTest(MDPtester.java:46)
+  at standard.MDPtester.main(MDPtester.java:58)
+  
+  it works for
+  
+      mdpTester.trainAndTest("resources/input/de-train-2009.conll", "de-2009.zip", 
+        "resources/input/de-test-2009.conll", "resources/input/de-result-2009.conll");
+        
+        
+
+C) What are the differences and commonalities ?
+
+Difference: 
+parsing strategy
+specific applyCombine methods
+
+At least for de-test-2009.conll: 
+covington is about 4% accuracy better than stack, but about factor 2 slower
+
+Commonalities:
+
+feature templates
+feature vector representation
+learning
+parallel processing
+CONLL format used
+
+D) Feature extraction and representation
+
+More precisely, how CONLL format and feature templates and instantiation interact, 
+so that it can be generalized eventually for AMR or in order to improve MDP by integrating morphology etc.
+
+D.1) CONLL Format
+
+
+- Data d = new Data(inputFile, true);
+  - internalize CONLL data in 2-Dim sentences; max 0-12 conll columns are considered
+    - can be changed in de.dfki.lt.mdparser.data.Data.infoSize = 12 
+      -> I changed value to 10/14; training/testing seems to work
+    - useful for adding additional CONLL information
+    - currently sets COLUMNs 6, 7, 8, 9 (test) and 8, 9 (train) to "_"
+    - if other information should be used, we need to adapt this here
+    
+    CONLL 2D-array format returned by the parser 
+    Format/meaning of columns/features
+    
+    word/feature  0   1     2     3       4       5     6     7     8     9     10   11   12
+                  ID FORM LEMMA CPOSTAG POSTAG FEATS HEAD DEPREL PHEAD PDEPREL PRED ARG1 ARG2
+        w_1
+        w_2
+        ...
+        w_n
+     
+      using the information from field 0, 1, 3, 6, 7
+      during training/testing, 8, 9 are used to get the dependency relation of head of index, which is parent dependency relation PDEPREL at cell s[9]
+      (grandpa dependencies)
+      all other columns are not used and set to "_" dummy value 
+      
+     
+     
+      a dependency structure DependencyStructure is created, where each token w_i is represented as a dependency link:
+      (modID:form:POS label headID:hForm:hPOS) 
+     
