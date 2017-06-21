@@ -266,7 +266,6 @@ public class Trainer {
     //System.out.println(newSplitMap);
     //printSplitMap
 
-    alphaParser.writeToFile(GlobalConfig.ALPHA_FILE);
     if (GlobalConfig.SPLIT_FILE.getParent() != null) {
       Files.createDirectories(GlobalConfig.SPLIT_FILE.getParent());
     }
