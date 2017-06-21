@@ -585,19 +585,19 @@ public class Trainer {
     BufferedReader in = Files.newBufferedReader(modelPath, StandardCharsets.UTF_8);
     String solverType = in.readLine();
     String nrClass = in.readLine();
+    int numberOfClasses = Integer.valueOf(nrClass.split(" ")[1]);
     String label = in.readLine();
     // don't use the 'number of features' value from the model
     //String nrFeature = in.readLine();
     in.readLine();
-    String nrFeature = "nr_feature " + numberOfFeatures;
-    int numberOfClasses = Integer.valueOf(nrClass.split(" ")[1]);
     String bias = in.readLine();
+    // read "w":
     in.readLine();
     double[] weights;
     if (numberOfClasses != 2) {
-      weights = new double[Integer.valueOf(nrFeature.split(" ")[1]) * numberOfClasses];
+      weights = new double[numberOfFeatures * numberOfClasses];
     } else {
-      weights = new double[Integer.valueOf(nrFeature.split(" ")[1])];
+      weights = new double[numberOfFeatures];
     }
     int k = 0;
     int l = 1;
@@ -628,7 +628,7 @@ public class Trainer {
       out.println("nr_class 1");
     }
     out.println(label);
-    out.println(nrFeature);
+    out.println("nr_feature " + numberOfFeatures);
     out.println(bias);
     out.println("w");
     if (numberOfClasses != 2) {
