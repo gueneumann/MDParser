@@ -622,7 +622,11 @@ public class Trainer {
     // re-write model
     PrintWriter out = new PrintWriter(Files.newBufferedWriter(modelPath, StandardCharsets.UTF_8));
     out.println(solverType);
-    out.println(nrClass);
+    if (numberOfClasses != 2) {
+      out.println("nr_class " + numberOfClasses);
+    } else {
+      out.println("nr_class 1");
+    }
     out.println(label);
     out.println(nrFeature);
     out.println(bias);
