@@ -54,19 +54,19 @@ public class Trainer {
     System.out.println("Internalize training data from: " + inputFile);
     Data data = new Data(inputFile, true);
 
-    // GN: alphaParser is used for the mapping of integer to feature name
+    // GN: alpha is used for the mapping of integer to feature name
     // it is incrementally built during training for all features that are added
     // to the model
-    Alphabet alphaParser = new Alphabet();
+    Alphabet alpha = new Alphabet();
     // GN: the feature templates functions
     Sentence[] sentences = data.getSentences();
     FeatureModel featureModel = null;
     ParsingAlgorithm algorithm = null;
     if (algorithmId.equals("covington")) {
-      featureModel = new CovingtonFeatureModel(alphaParser);
+      featureModel = new CovingtonFeatureModel(alpha);
       algorithm = new CovingtonAlgorithm();
     } else if (algorithmId.equals("stack")) {
-      featureModel = new StackFeatureModel(alphaParser);
+      featureModel = new StackFeatureModel(alpha);
       algorithm = new StackAlgorithm();
     } else {
       System.err.println("unknown algorithm " + algorithmId);
@@ -104,7 +104,7 @@ public class Trainer {
         FeatureVector featureVector = featureVectorList.get(i);
         String operation = featureVector.getLabel();
         // GN: Lookup up label-index and use it to create/extend buffer
-        Integer index = alphaParser.getLabelIndex(operation);
+        Integer index = alpha.getLabelIndex(operation);
         // GN: create label-index many different split0 files, so that each files contains just the feature vectors
         // of each edge feature vector and its label instance
         // The label-index buffers are kept in a hash array
@@ -117,7 +117,7 @@ public class Trainer {
                       StandardCharsets.UTF_8));
           outputMap.put(index, curWriter);
         }
-        String sentenceIntegerString = featureVector.getIntegerRepresentation(alphaParser, false);
+        String sentenceIntegerString = featureVector.getIntegerRepresentation(alpha, false);
         //System.out.println(sentenceIntegerString+"\n");
         curWriter.println(sentenceIntegerString);
       }
@@ -133,11 +133,11 @@ public class Trainer {
     // using a distributed approach based on the available processors
     // stores and adjust the split files in folder split/
     // and finally calls the trainer on each file in parallel
-    alphaParser.writeToFile(GlobalConfig.ALPHA_FILE);
-    int numberOfFeatures = alphaParser.getNumberOfFeatures();
+    alpha.writeToFile(GlobalConfig.ALPHA_FILE);
+    int numberOfFeatures = alpha.getNumberOfFeatures();
     // feature indices start at 1, so we iterate until num + 1
     for (int v = 1; v <= numberOfFeatures; v++) {
-      String val = alphaParser.getFeature(v);
+      String val = alpha.getFeature(v);
       if (val.split("=")[0].equals("pj")) {
         posMap.put(v, val);
       }
@@ -275,7 +275,7 @@ public class Trainer {
         String splitVal = oneSplitValFilePair.getKey();
         String newFile = oneSplitValFilePair.getValue();
         Integer index = Integer.valueOf(splitVal.split("\\.")[0]);
-        String featureString = alphaParser.getFeature(index);
+        String featureString = alpha.getFeature(index);
         // normalize separators
         String normalizedPath =
             GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(newFile).toString().replaceAll("\\" + File.separator, "/");
@@ -292,7 +292,7 @@ public class Trainer {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
       stream.forEach(x -> filesToCompact.add(x));
     }
-    TrainWorker trainWorker = new TrainWorker(alphaParser, this.bias);
+    TrainWorker trainWorker = new TrainWorker(alpha, this.bias);
     if (trainingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
       ForkJoinPool compactingForkJoinPool = new ForkJoinPool(trainingThreads);

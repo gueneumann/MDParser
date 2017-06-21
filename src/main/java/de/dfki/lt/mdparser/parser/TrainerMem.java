@@ -204,7 +204,7 @@ public class TrainerMem {
           curFeatureVectorList = mergedMap.get(nValForCurFeature);
           //System.out.println(nValForCurFeature + " " + mergedMap.get(nValForCurFeature).size());
           Problem prob = readProblem(alpha, false, curFeatureVectorList, this.bias);
-          //myReadProblem(compactMap.get(nValForCurFeature), alphaParser, false, curList);
+          //myReadProblem(compactMap.get(nValForCurFeature), alpha, false, curList);
           //System.out.println(curList.get(0));
           //System.out.println(curList.get(1));
           //System.out.println(curList.get(2));
@@ -245,9 +245,9 @@ public class TrainerMem {
 
 
   private static Map<String, int[][]> compactiseTrainingDataFiles(
-      Alphabet alphaParser, Map<String, List<FeatureVector>> mergedMap) {
+      Alphabet alpha, Map<String, List<FeatureVector>> mergedMap) {
 
-    int numberOfFeatures = alphaParser.getNumberOfFeatures();
+    int numberOfFeatures = alpha.getNumberOfFeatures();
     Map<String, int[][]> compactMap = new HashMap<String, int[][]>();
     for (Map.Entry<String, List<FeatureVector>> oneEntry : mergedMap.entrySet()) {
       String curFeature = oneEntry.getKey();
@@ -255,8 +255,8 @@ public class TrainerMem {
       int[][] compactArray = new int[4][];
       int[] newToOld = new int[numberOfFeatures + 1];
       int[] oldToNew = new int[numberOfFeatures + 1];
-      int[] newToOldL = new int[alphaParser.getNumberOfLabels() + 1];
-      int[] oldToNewL = new int[alphaParser.getNumberOfLabels() + 1];
+      int[] newToOldL = new int[alpha.getNumberOfLabels() + 1];
+      int[] oldToNewL = new int[alpha.getNumberOfLabels() + 1];
       compactArray[0] = newToOld;
       compactArray[1] = oldToNew;
       compactArray[2] = newToOldL;
@@ -271,7 +271,7 @@ public class TrainerMem {
         FeatureVector newFeatureVector = new FeatureVector();
         String label = oneFeatureVector.getLabel();
         //System.out.println(label);
-        //TODO Integer labelOld = alphaParser.getLabelIndexMap().get(label);
+        //TODO Integer labelOld = alpha.getLabelIndexMap().get(label);
         /*
         Integer labelNew = -1;
         if (!alreadyProcessedLabels.contains(labelOld)) {
@@ -286,7 +286,7 @@ public class TrainerMem {
         List<Feature> featureList = oneFeatureVector.getFeatureList();
         List<Feature> newFeatureList = new ArrayList<Feature>();
         for (Feature oneFeature : featureList) {
-          Integer oldIndex = alphaParser.getFeatureIndex(oneFeature.getFeatureString());
+          Integer oldIndex = alpha.getFeatureIndex(oneFeature.getFeatureString());
           if (!alreadyProcessed.contains(oldIndex)) {
             alreadyProcessed.add(oldIndex);
             oldToNew[oldIndex] = curMaxIndex;
