@@ -1,633 +1,660 @@
 package de.dfki.lt.mdparser.parser;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
-import pi.ParIterator;
-import pi.ParIteratorFactory;
-import de.bwaldvogel.liblinear.*;
+import de.bwaldvogel.liblinear.FeatureNode;
+import de.bwaldvogel.liblinear.InvalidInputDataException;
+import de.bwaldvogel.liblinear.Linear;
+import de.bwaldvogel.liblinear.Model;
+import de.bwaldvogel.liblinear.Problem;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
+import de.dfki.lt.mdparser.config.ConfigKeys;
+import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
-import de.dfki.lt.mdparser.features.FeatureExtractor;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
 
 public class Trainer {
 
-	private double    bias             = -1;
-	private Problem   prob             = null;
-	// solver, penalty C, epsilon Eps
-	private Parameter param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
-	private int totalConfigurations;
+  private double bias = -1;
 
-	// GN: added 8.7.2014
-	public Parameter getParam() {
-		return param;
-	}
 
-	public void setParam(Parameter param) {
-		this.param = param;
-	}
-	
-	//
+  // XXX GN: this is used for training
+  public void createAndTrainWithSplittingFromDisk(String inputFile)
+      throws IOException {
 
-	static double atof(String s) {
-		if (s == null || s.length() < 1) throw new IllegalArgumentException("Can't convert empty string to integer");
-		double d = Double.parseDouble(s);
-		if (Double.isNaN(d) || Double.isInfinite(d)) {
-			throw new IllegalArgumentException("NaN or Infinity in input: " + s);
-		}
-		return (d);
-	}
+    boolean noLabels = false;
+    System.out.println("Start training with createAndTrainWithSplittingFromDisk!");
 
-	static int atoi(String s) throws NumberFormatException {
-		if (s == null || s.length() < 1) throw new IllegalArgumentException("Can't convert empty string to integer");
-		// Integer.parseInt doesn't accept '+' prefixed strings
-		if (s.charAt(0) == '+') s = s.substring(1);
-		return Integer.parseInt(s);
-	}
+    // GN: internalize CONLL data in 2-Dim sentences; max 0-12 conll columns are considered
+    System.out.println("Internalize training data from: " + inputFile);
+    Data data = new Data(inputFile, true);
 
-	public void readProblem(String filename) throws IOException, InvalidInputDataException {
-		BufferedReader fp = new BufferedReader(new FileReader(filename));
-		List<Integer> vy = new ArrayList<Integer>();
-		List<FeatureNode[]> vx = new ArrayList<FeatureNode[]>();
-		int max_index = 0;
-		int lineNr = 0;
+    // GN: alpha is used for the mapping of integer to feature name
+    // it is incrementally built during training for all features that are added
+    // to the model
+    Alphabet alpha = new Alphabet();
+    // GN: the feature templates functions
+    Sentence[] sentences = data.getSentences();
+    FeatureModel featureModel = null;
+    ParsingAlgorithm algorithm = null;
+    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
+    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
+    if (algorithmId.equals("covington")) {
+      featureModel = new CovingtonFeatureModel(alpha);
+      algorithm = new CovingtonAlgorithm();
+    } else if (algorithmId.equals("stack")) {
+      featureModel = new StackFeatureModel(alpha);
+      algorithm = new StackAlgorithm();
+    } else {
+      System.err.println("unknown algorithm " + algorithmId);
+      return;
+    }
+    //print training data
+    Map<Integer, PrintWriter> outputMap = new HashMap<>();
+    Map<Integer, String> posMap = new HashMap<>();
 
-		try {
-			while (true) {
-				String line = fp.readLine();
-				if (line == null) break;
-				lineNr++;
+    // GN: for each training sentence example do:
+    // NOTE: this is a sequential step
+    System.out.println("Create feature vectors for data: " + sentences.length);
+    System.out.println("Create files in " + GlobalConfig.FEATURE_VECTORS_FOLDER);
+    Files.createDirectories(GlobalConfig.FEATURE_VECTORS_FOLDER);
+    for (int n = 0; n < sentences.length; n++) {
+      Sentence sent = sentences[n];
+      // featureModel.initializeStaticFeaturesCombined(sent, true);
 
-				StringTokenizer st = new StringTokenizer(line, " \t\n\r\f:");
-				String token = st.nextToken();
+      // GN: call the parser on each training example to "re-play" the parser configurations
+      //     and to compute the operations in form of a list of feature vectors for each state.
+      //     this means that all feature functions are applied on the parsed sentence by applying
+      //     the feature model in the training mode.
+      //     the result is then a list of parser states in form of feature vectors whose values are based
+      //     one the specific training example
+      List<FeatureVector> featureVectorList = algorithm.processCombined(sent, featureModel, noLabels);
 
-				try {
+      //System.out.println(parserList.toString());
 
-					vy.add(atoi(token));
-				} catch (NumberFormatException e) {
-					throw new InvalidInputDataException("invalid label: " + token, filename, lineNr, e);
-				}
+      // GN: for each feature vector (which represents a parser state) do
+      for (int i = 0; i < featureVectorList.size(); i++) {
+        // GN: for each state/feature vector store them in internal format in a file
+        // buffer whose name depends on the label-value of the feature vector
+        // store in the label-value/buffer in opMap hash.
+        // NOTE: token level, so duplicates
+        FeatureVector featureVector = featureVectorList.get(i);
+        String operation = featureVector.getLabel();
+        // GN: Lookup up label-index and use it to create/extend buffer
+        Integer index = alpha.getLabelIndex(operation);
+        // GN: create label-index many different split0 files, so that each files contains just the feature vectors
+        // of each edge feature vector and its label instance
+        // The label-index buffers are kept in a hash array
+        PrintWriter curWriter = outputMap.get(index);
+        if (curWriter == null) {
+          curWriter =
+              new PrintWriter(
+                  Files.newBufferedWriter(
+                      GlobalConfig.FEATURE_VECTORS_FOLDER.resolve(String.format("%03d.txt", index)),
+                      StandardCharsets.UTF_8));
+          outputMap.put(index, curWriter);
+        }
+        String sentenceIntegerString = featureVector.getIntegerRepresentation(alpha, false);
+        //System.out.println(sentenceIntegerString+"\n");
+        curWriter.println(sentenceIntegerString);
+      }
+    }
 
-				int m = st.countTokens() / 2;
-				FeatureNode[] x;
-				if (bias >= 0) {
-					x = new FeatureNode[m + 1];
-				} else {
-					x = new FeatureNode[m];
-				}
-				int indexBefore = 0;
-				for (int j = 0; j < m; j++) {
+    // GN: and finally close all the writers
+    for (PrintWriter oneWriter : outputMap.values()) {
+      oneWriter.close();
+    }
 
-					token = st.nextToken();
-					int index;
-					try {
-						index = atoi(token);
-					} catch (NumberFormatException e) {
-						throw new InvalidInputDataException("invalid index: " + token, filename, lineNr, e);
-					}
+    //XXX HIERIX -MDP-howItWorks.txt
+    // GN: the next code basically creates the split training files
+    // using a distributed approach based on the available processors
+    // stores and adjust the split files in folder split/
+    // and finally calls the trainer on each file in parallel
+    alpha.writeToFile(GlobalConfig.ALPHA_FILE);
+    int numberOfFeatures = alpha.getNumberOfFeatures();
+    // feature indices start at 1, so we iterate until num + 1
+    for (int v = 1; v <= numberOfFeatures; v++) {
+      String val = alpha.getFeature(v);
+      if (val.split("=")[0].equals("pj")) {
+        posMap.put(v, val);
+      }
+    }
 
-					// assert that indices are valid and sorted
-					if (index < 0) throw new InvalidInputDataException("invalid index: " + index, filename, lineNr);
-					if (index <= indexBefore) throw new InvalidInputDataException("indices must be sorted in ascending order", filename, lineNr);
-					indexBefore = index;
+    System.out.println("Create splitting training files!");
 
-					token = st.nextToken();
-					try {
-						double value = atof(token);
-						x[j] = new FeatureNode(index, value);
-					} catch (NumberFormatException e) {
-						throw new InvalidInputDataException("invalid value: " + token, filename, lineNr);
-					}
-				}
-				if (m > 0) {
-					max_index = Math.max(max_index, x[m - 1].index);
-				}
+    // GN: for each label-specific feature vector integer encoded file do
 
-				vx.add(x);
-			}
-			prob = constructProblem(vy, vx, max_index);
-		}
-		finally {
-			fp.close();
-		}
-	}
-	
-	// XXX GN: this is used for training
-	public void createAndTrainWithSplittingFromDisk(String algorithm,
-			String inputFile, String splitModelsDir, 
-			String alphabetFileParser, String alphabetFileLabeler,
-			String splitFile) throws IOException, InvalidInputDataException {
-		boolean noLabels = false;
-		System.out.println("Start training with createAndTrainWithSplittingFromDisk!");
-		
-		// GN: internalize CONLL data in 2-Dim sentences; max 0-12 conll columns are considered
-		System.out.println("Internalize training data from: " + inputFile);
-		Data d = new Data(inputFile, true);
-		
-		// GN: alphaParser is used for the mapping of integer to feature name
-		//		it is incrementally built during training for all features that are added
-		//		to the model
-		Alphabet alphaParser = new Alphabet();
-		// GN: the feature templates functions
-		FeatureExtractor fe = new FeatureExtractor();
-		Sentence[] sentences = d.getSentences();
-		FeatureModel fm = null;
-		ParsingAlgorithm pa = null;
-		if (algorithm.equals("covington")) {
-			fm = new CovingtonFeatureModel(alphaParser, fe);
-			pa = new CovingtonAlgorithm();
-		}
-		else if (algorithm.equals("stack")) {
-			fm = new StackFeatureModel(alphaParser,fe);
-			pa = new StackAlgorithm();
-		}
-		setTotalConfigurations(0);
-		File splitA = new File("splitA");
-		splitA.mkdir();
-		File splitO = new File("splitO");
-		splitO.mkdir();
-		File splitF = new File("splitF");
-		splitF.mkdir();
-		//print training data
-		HashMap<Integer,BufferedWriter> opMap = new HashMap<Integer, BufferedWriter>();
-		HashMap<Integer,String> posMap = new HashMap<Integer,String>();
-		
-		// GN: for each training sentence example do:
-		// NOTE: this is a sequential step
-		System.out.println("Create feature vectors for data: " + sentences.length);
-		System.out.println("Create files in split0 ");
-		for (int n=0; n < sentences.length;n++) {
-			Sentence sent = sentences[n];
-			//	fm.initializeStaticFeaturesCombined(sent, true);
-			
-			// GN: call the parser on each training example to "re-play" the parser configurations
-			//     and to compute the operations in form of a list of feature vectors for each state.
-			//     this means that all feature functions are applied on the parsed sentence by applying
-			//     the feature model in the training mode.
-			//	   the result is then a list of parser states in form of feature vectors whose values are based
-			//     one the specific training example
-			List<FeatureVector> parserList = pa.processCombined(sent, fm, noLabels);
-			
-//			System.out.println(parserList.toString());
-			totalConfigurations += parserList.size();
-			
-			// GN: for each feature vector (which represents a parser state) do
-			for (int i=0; i < parserList.size(); i++) {
-				// GN: for each state/feature vector store them in internal format in a file
-				//		buffer whose name depends on the label-value of the feature vector
-				//      store in the label-value/buffer in opMap hash.
-				//		NOTE: token level, so duplicates
-				FeatureVector fv = parserList.get(i);	
-				String operation = fv.getLabel();
-				// GN: Lookup up label-index and use it to create/extend buffer
-				Integer index = alphaParser.getLabelIndexMap().get(operation);
-				// GN: create label-index many different split0 files, so that each files contains just the feature vectors
-				// of each edge feature vector and its label instance
-				// The label-index buffers are kept in a hash array
-				BufferedWriter curBw = opMap.get(index);
-				if (curBw == null) {
-					FileOutputStream out = new FileOutputStream(String.format("splitO/%03d.txt",index));
-					OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
-					curBw = new BufferedWriter(or);
-					opMap.put(index,curBw);
-	
-				}
-				String sentenceIntegerString = fv.getIntegerRepresentation(alphaParser, false);
-//				System.out.println(sentenceIntegerString+"\n");
-				curBw.append(sentenceIntegerString+"\n");
-			}
-		}
-		
-		// GN: and finally close all the buffers
-		Iterator<Integer> opIter = opMap.keySet().iterator();
-		while (opIter.hasNext()) {
-			Integer curOp = opIter.next();
-			opMap.get(curOp).close();
-		}
-		
-		HashMap<String, BufferedWriter> splitMap = new HashMap<String, BufferedWriter>(); 
-		
-		//XXX HIERIX -MDP-howItWorks.txt
-		// GN: the next code basically creates the split training files
-		// 		using a distributed approach based on the available processors
-		//		stores and adjust the split files in folder split/
-		//		and finally calls the trainer on each file ion parallel
-		alphaParser.createIndexToValueArray();		
-		String[] valArray = alphaParser.getIndexToValueArray();
-		alphaParser.printToFile(alphabetFileParser);
-		for (int v=1; v < valArray.length;v++) {
-			String val = valArray[v];			
-			if (val.split("=")[0].equals("pj")) {
-				posMap.put(v, val);
-			}
-		}
-		
-		System.out.println("Create splitting training files!");
-		
-		// GN: for each label-specific feature vector integer encoded file do
-		File[] trainingFiles = splitO.listFiles();
-		Runtime runtime = Runtime.getRuntime();
-		
-		// GN: the number of available processor is determined !
-		int numberOfProcessors = runtime.availableProcessors();
-		int threadCount = numberOfProcessors;		
-		//    int threadCount = 10;
-		System.out.println("Parallel processing on " + threadCount + " processors !");
-		
-		List<File> filesList = new ArrayList<File>(trainingFiles.length);
-		for (int n=0; n < trainingFiles.length;n++) {
-			filesList.add(trainingFiles[n]);
-		}
-		
-		// GN: distribute the split files equally to parallel iterators
-		ParIterator<File> iter = ParIteratorFactory.createParIterator(filesList, threadCount);
-		Thread[] threadPool = new SplitWorkerThread[threadCount];
-		for (int k = 0; k < threadCount; k++) {
-			threadPool[k] = new SplitWorkerThread(k, iter, posMap,splitMap);
-			threadPool[k].start();
-		}
-		for (int k = 0; k < threadCount; k++) {
-			try {
-				threadPool[k].join();
-			} catch(InterruptedException e) {
-				e.printStackTrace();
-			}
-		}   
-		
-		System.out.println("Splitting files created in splitF");
-		Iterator<String> splitIter = splitMap.keySet().iterator();
-		while (splitIter.hasNext()) {
-			String curSplitVal = splitIter.next();
-			splitMap.get(curSplitVal).close();
-		}
-		
-		// GN: First version of split files are generated in splitF/
-		//		adjust them and store them in split/ 
-		//merge into files of acceptable size
-		trainingFiles = new File("splitF").listFiles();
-		
-		System.out.println("Adjust splitting files in splitF and store them in split/ ");
-		HashMap<String, String> newSplitMap = new HashMap<String, String>();
-		int curSize = 0;
-		int splitThreshold = 3000;
-		BufferedWriter curBw = null;
-		String curFile = null;
-		String lastFile = null;
-		String curSplitVal = null;
-		for (int f=0; f < trainingFiles.length;f++) {
-			curSplitVal = trainingFiles[f].getName();
-			FileInputStream in = new FileInputStream(trainingFiles[f]);	
-			BufferedInputStream bis = new BufferedInputStream(in, 8000);
-			InputStreamReader ir = new InputStreamReader(bis,"UTF8");
-			BufferedReader fr = new BufferedReader(ir);
-			if (curBw == null) {
-				curFile = curSplitVal;
-				OutputStreamWriter or = new OutputStreamWriter(new FileOutputStream("split/"+curFile),"UTF-8");
-				curBw = new BufferedWriter(or);
-			}
-			String line;
-			while ((line = fr.readLine())!= null) {
-				curBw.append(line+"\n");
-				curSize++;
-			}
-			fr.close();
-			if (curSize > splitThreshold) {
-				curBw.close();
-				curBw = null;
-				curSize = 0;
-				lastFile = curFile;
-			}
-			newSplitMap.put(curSplitVal, curFile);
-	
-		}
-		//if the last file is too small add to the second to last
-		
-		System.out.println("Eventually adjust last split/ file. ");
-		if (curBw != null) {
-			curBw.close();
-			if (lastFile != null) {
-				FileInputStream in = new FileInputStream("split/"+lastFile);
-				BufferedInputStream bis = new BufferedInputStream(in, 8000);
-				InputStreamReader ir = new InputStreamReader(bis,"UTF8");
-				BufferedReader fr = new BufferedReader(ir);
-				String line = "";
-				StringBuilder sb = new StringBuilder();
-				while ((line = fr.readLine())!= null) {
-					sb.append(line+"\n");
-				}
-				in = new FileInputStream("split/"+curFile);
-				bis = new BufferedInputStream(in, 8000);
-				ir = new InputStreamReader(bis,"UTF8");
-				fr = new BufferedReader(ir);
-				while ((line = fr.readLine())!= null) {
-					sb.append(line+"\n");
-				}
-				fr.close();
-				FileOutputStream out = new FileOutputStream("split/"+lastFile);
-				OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
-				curBw = new BufferedWriter(or);
-				curBw.append(sb.toString());
-				curBw.close();
-				File f = new File("split/"+curFile);
-				f.delete();
-	
-				newSplitMap.put(curSplitVal, lastFile);
-	
-				Set<String> toSubstitute = new HashSet<String>();
-				Iterator<String> keysIter = newSplitMap.keySet().iterator();
-				while (keysIter.hasNext()) {
-					String key = keysIter.next();
-					String curF = newSplitMap.get(key);
-					if (curF.equals(curFile)) {
-						toSubstitute.add(key);
-					}
-				}
-				if (!toSubstitute.isEmpty()) {
-					keysIter = toSubstitute.iterator();
-					while (keysIter.hasNext()) {
-						String key = keysIter.next();
-						newSplitMap.put(key,lastFile);
-					}
-				}
-			}
-			else {
-				newSplitMap.put(curFile,curFile);
-			}
-		}
-		//	System.out.println(newSplitMap);
-		//printSplitMap
-		FileOutputStream out = new FileOutputStream("temp/split.txt");
-		OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
-		curBw = new BufferedWriter(or);
-		Iterator<String> splitValIter = newSplitMap.keySet().iterator();
-		alphaParser.printToFile(alphabetFileParser);
-		while (splitValIter.hasNext()) {
-			curSplitVal = splitValIter.next();
-			String newFile = newSplitMap.get(curSplitVal);
-			Integer index = Integer.valueOf(curSplitVal.split("\\.")[0]);
-			//		String featureString = posMap.get(index);
-			String featureString = alphaParser.getIndexToValueArray()[index];
-			//	curBw.append(featureString+" split/"+newFile+" "+newFile+"\n");
-			curBw.append(featureString+" "+"split/"+newFile+" "+curSplitVal+"\n");
-		}
-		curBw.close();
-		File[] files = new File("split").listFiles();	
-		filesList = new ArrayList<File>(files.length);
-		for (int n=0; n < files.length;n++) {
-			filesList.add(files[n]);
-		}
-		
-		System.out.println("Compute the weights and the final model files in splitModels/ and alphabet files in splitA/ !");
-		// XXX GN: Perform parallel training
-		// For each file in split create call the trainer on that file -> means a new trainer object is created for each thread
-		//			via de.dfki.lt.mdparser.parser.CompactiseWorkerThread.CompactiseWorkerThread(int, ParIterator<File>, Alphabet, String)
-		iter = ParIteratorFactory.createParIterator(filesList, threadCount);
-		threadPool = new CompactiseWorkerThread[threadCount];
-		for (int m = 0; m < threadCount; m++) {
-			threadPool[m] = new CompactiseWorkerThread(m, iter,alphaParser, splitModelsDir);
-			threadPool[m].start();
-		}
-		for (int m = 0; m < threadCount; m++) {
-			try {
-				threadPool[m].join();
-			} catch(InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		System.out.println("Make single alphabet file from splitA files " + alphabetFileParser);
-		recreateOneAlphabetAndAdjustModels(alphabetFileParser, "splitA",splitModelsDir);
-	
-	
-	}
-	
-	private void recreateOneAlphabetAndAdjustModels(String alphabetFile, String splitAlphaDir, String splitModelsDir) throws IOException{
-		Alphabet alpha = unionAlphabets(alphabetFile,splitAlphaDir);
-		restoreModels(splitModelsDir,alpha, splitAlphaDir);
-		alpha.printToFile(alphabetFile);
-	}
+    // split files
+    Map<String, PrintWriter> splitMap = new HashMap<>();
+    List<Path> filesToSplit = new ArrayList<>();
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER)) {
+      stream.forEach(x -> filesToSplit.add(x));
+    }
+    SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
+    int trainingThreads = GlobalConfig.getInt(ConfigKeys.TRAINING_THREADS);
+    if (trainingThreads < 0) {
+      trainingThreads = Runtime.getRuntime().availableProcessors();
+    }
+    if (trainingThreads > 1) {
+      // we use our own thread pool to be able to better control parallelization
+      ForkJoinPool forkJoinPool = new ForkJoinPool(trainingThreads);
+      System.out.println("Parallel processing on " + trainingThreads + " processors !");
+      try {
+        forkJoinPool.submit(
+            () -> filesToSplit.stream().parallel().forEach(x -> splitWorker.processFile(x))).get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    } else {
+      filesToSplit.stream().forEach(x -> splitWorker.processFile(x));
+    }
+    for (PrintWriter oneWriter : splitMap.values()) {
+      oneWriter.close();
+    }
 
-	private void restoreModels(String splitModelsDir, Alphabet alpha, String splitA) throws IOException {
-		File[] models = new File(splitModelsDir).listFiles();
-		alpha.createIndexToValueArray();
-		for (int i=0; i < models.length; i++) {
-			System.out.println("Model file: " + models[i]);
-			Model model = Linear.loadModel(models[i]);
-			double[] wArray = model.getFeatureWeights();
-			String alphaName = splitA+"/"+models[i].getName();
-			Alphabet a = new Alphabet(new FileInputStream(new File(alphaName)));
-			int numberOfClasses = model.getNrClass();
-			FileOutputStream out = new FileOutputStream(models[i]);
-			OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
-			BufferedWriter bw = new BufferedWriter(or);
-			bw.append("solver_type MCSVM_CS\n");
-			bw.append("nr_class "+model.getNrClass()+"\nlabel ");
+    // GN: First version of split files are generated in splitF/
+    // adjust them and store them in split and merge into files of acceptable size
+    System.out.println(
+        "Adjust splitting files in " + GlobalConfig.SPLIT_INITIAL_FOLDER
+        + " and store them in " + GlobalConfig.SPLIT_ADJUST_FOLDER);
+    Files.createDirectories(GlobalConfig.SPLIT_ADJUST_FOLDER);
+    Map<String, String> newSplitMap = new LinkedHashMap<>();
+    int curSize = 0;
+    int splitThreshold = 3000;
+    PrintWriter curWriter = null;
+    String curFile = null;
+    String lastFile = null;
+    String curSplitVal = null;
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_INITIAL_FOLDER)) {
+      for (Path oneTrainingFile : stream) {
+        curSplitVal = oneTrainingFile.getFileName().toString();
 
-			for (int k=0; k <model.getLabels().length;k++) {
-				bw.append(model.getLabels()[k]+" ");
-			}
-			bw.append("\n");
-			String[] features = alpha.getIndexToValueArray();
-			//	System.out.println(features);
-			boolean notFound = true;
-			Set<String> thisAlphabetFeatures = a.getValueToIndexMap().keySet();
-			int lastIndex = -1;
-			for (int k=features.length-1; k > 1 && notFound;k--) {
-				if (thisAlphabetFeatures.contains(features[k])) {
-					lastIndex = k;
-					notFound = false;
-				}
-			}
-			bw.append("nr_feature "+(lastIndex-1)+"\n");
-			bw.append("bias "+model.getBias()+"\nw\n");
-			HashMap<String,Integer> valToIndexMap = a.getValueToIndexMap();
-			for (int k=1; k < lastIndex;k++) {
-				String feature = features[k];
-				Integer oldIndex = valToIndexMap.get(feature);
-				if (oldIndex == null) {
-					for (int m=0; m < numberOfClasses;m++) {
-						bw.append("0 ");
-					}					
-				}
-				else {
-					for (int l=0; l < numberOfClasses; l++) {
-						double curWeight = wArray[(oldIndex-1)*numberOfClasses+l];
-						bw.append(String.valueOf(curWeight)+" ");
-					}
-				}
-				bw.append("\n");		
+        if (curWriter == null) {
+          curFile = curSplitVal;
+          curWriter = new PrintWriter(
+              Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8));
+        }
 
-			}
-			bw.close();
-		}
-	}
+        try (BufferedReader in = Files.newBufferedReader(oneTrainingFile, StandardCharsets.UTF_8)) {
+          String line;
+          while ((line = in.readLine()) != null) {
+            curWriter.println(line);
+            curSize++;
+          }
+        }
 
-	private Alphabet unionAlphabets(String alphabetFile, String splitAlphaDir) throws IOException {
-		Alphabet alpha = new Alphabet();
-		File[] alphabets = new File(splitAlphaDir).listFiles();
-		HashMap<String,Integer> map = alpha.getValueToIndexMap();
-		for (int i = 0; i < alphabets.length; i++) {
-			Alphabet curAlpha = new Alphabet(new FileInputStream(alphabets[i]));		
-			if (alpha.getLabelIndexMap().keySet().isEmpty()) {
-				alpha.setLabelIndexMap(curAlpha.getLabelIndexMap());
-				/*	String[] labels = curAlpha.getIndexLabelArray();
-				for (int k=0; k < labels.length;k++) {
-					alpha.addLabel(labels[k]);
-				}*/
-				alpha.setMaxLabelIndex(curAlpha.getLabelIndexMap().size()+1);
-			}		
-			String[] features = curAlpha.getIndexToValueArray();
-			//	System.out.println(curAlpha.getValueToIndexMap());
-			for (int k=1; k < features.length;k++) {
-				Integer index = map.get(features[k]);
-				//	System.out,.println(features)
-				if (index == null) {
-					alpha.addFeature(features[k]);
-					//			System.out.println(features[k]);
-				}
-			}
-		}
+        if (curSize > splitThreshold) {
+          curWriter.close();
+          curWriter = null;
+          curSize = 0;
+          lastFile = curFile;
+        }
+        newSplitMap.put(curSplitVal, curFile);
+      }
+    }
+    //if the last file is too small add to the second to last
 
-		return alpha;
+    System.out.println("Eventually adjust last split/ file. ");
+    if (curWriter != null) {
+      curWriter.close();
+      if (lastFile != null) {
 
-	}
+        StringBuilder builder = new StringBuilder();
 
-	void saveAlphabet(Alphabet alphaParser, Model model,int[][] compactArray, File file) throws IOException {
-		int[] newToOld = compactArray[0];
-		FileOutputStream out = new FileOutputStream(file);
-		OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
-		BufferedWriter bw = new BufferedWriter(or);
-		String[] indexLabelArray = alphaParser.getIndexLabelArray();
-		for (int i=1; i < alphaParser.getMaxLabelIndex();i++) {
-			bw.append(i+" "+indexLabelArray[i]+"\n");
-		}
-		// GN: seems to cause problem in training with algorithm=stack
-		bw.append("\n");
-		String[] indexToValue = alphaParser.getIndexToValueArray();
-		boolean notFinished = true;
-		for (int i=1; notFinished && i < newToOld.length;i++) {
-			int newIndex = i;
-			int oldIndex = newToOld[i];
-			if (oldIndex == 0) {
-				notFinished = false;
-			}
-			else {
-				String stringValue = indexToValue[oldIndex];
-				bw.append(newIndex+" "+stringValue+"\n");
-			}
-		}
-		bw.close();
-	}
+        try (BufferedReader in = Files.newBufferedReader(
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(lastFile), StandardCharsets.UTF_8)) {
+          String line;
+          while ((line = in.readLine()) != null) {
+            builder.append(String.format("%s%n", line));
+          }
+        }
 
-	int[][] compactiseTrainingDataFile(File curentTrainingFile,int absoluteMax, File splitC) throws IOException {
-		int[][] compactArray = new int[2][];
-		int[] oldToNew = new int[absoluteMax];
-		int[] newToOld = new int[absoluteMax];
-		compactArray[0] = newToOld;
-		compactArray[1] = oldToNew;
-		FileInputStream in = new FileInputStream(curentTrainingFile);
-		BufferedInputStream bis = new BufferedInputStream(in, 8000);
-		InputStreamReader ir = new InputStreamReader(bis,"UTF8");
-		BufferedReader fr = new BufferedReader(ir);
-		String line;
-		Integer maxIndex = 1;
-		File outputFile = new File(splitC.getName()+"/"+curentTrainingFile.getName());
-		FileOutputStream out = new FileOutputStream(outputFile);
-		OutputStreamWriter or = new OutputStreamWriter(out,"UTF-8");
-		BufferedWriter curBw = new BufferedWriter(or);
-		Set<Integer> encountered = new HashSet<Integer>(absoluteMax);
-		while ((line = fr.readLine())!= null) {
-			String[] lineArray = line.split(" ");
-			curBw.append(lineArray[0]);
-			List<Integer> featureList = new ArrayList<Integer>();
-			for (int i=1; i < lineArray.length;i++ ) {
-				Integer curFeature = Integer.valueOf(lineArray[i].split(":")[0]);
-				Integer newValue = oldToNew[curFeature];
-				if (!encountered.contains(curFeature)) {
-					newValue = maxIndex;
-					oldToNew[curFeature] = newValue;
-					newToOld[newValue] = curFeature;
-					encountered.add(curFeature);
-					maxIndex++;
-				}
-				if (!featureList.contains(newValue)) {
-					featureList.add(newValue);
-				}
-			}
-			Collections.sort(featureList);
-			for (int i=0; i < featureList.size();i++) {
-				curBw.append(" "+featureList.get(i)+":1");
-			}
-			curBw.append("\n");
-		}
-		fr.close();
-		curBw.close();
-		return compactArray;
-	}
+        try (BufferedReader in = Files.newBufferedReader(
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8)) {
+          String line;
+          while ((line = in.readLine()) != null) {
+            builder.append(String.format("%s%n", line));
+          }
+        }
 
-	private  Problem constructProblem(List<Integer> vy, List<FeatureNode[]> vx, int max_index) {
-		Problem prob = new Problem();
-		prob.bias = bias;
-		prob.l = vy.size();
-		prob.n = max_index;
-		if (bias >= 0) {
-			prob.n++;
-		}
-		prob.x = new FeatureNode[prob.l][];
-		for (int i = 0; i < prob.l; i++) {
-			prob.x[i] = vx.get(i);
+        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(lastFile), StandardCharsets.UTF_8))) {
+          out.print(builder.toString());
+        }
+        // delete the curFile that was just appended to lastFile
+        Files.delete(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile));
 
-			if (bias >= 0) {
-				assert prob.x[i][prob.x[i].length - 1] == null;
-				prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, bias);
-			} else {
-				assert prob.x[i][prob.x[i].length - 1] != null;
-			}
-		}
+        newSplitMap.put(curSplitVal, lastFile);
+        Set<String> toSubstitute = new HashSet<String>();
+        for (Map.Entry<String, String> oneEntry : newSplitMap.entrySet()) {
+          if (oneEntry.getValue().equals(curFile)) {
+            toSubstitute.add(oneEntry.getKey());
+          }
+        }
+        if (!toSubstitute.isEmpty()) {
+          for (String oneSubstitute : toSubstitute) {
+            newSplitMap.put(oneSubstitute, lastFile);
+          }
+        }
+      } else {
+        newSplitMap.put(curFile, curFile);
+      }
+    }
+    //System.out.println(newSplitMap);
+    //printSplitMap
 
-		//GN, May, 2016
-		// prob.y = new int[prob.l];
-		prob.y = new double[prob.l];
-		for (int i = 0; i < prob.l; i++)
-			prob.y[i] = vy.get(i);
+    if (GlobalConfig.SPLIT_FILE.getParent() != null) {
+      Files.createDirectories(GlobalConfig.SPLIT_FILE.getParent());
+    }
+    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+        GlobalConfig.SPLIT_FILE, StandardCharsets.UTF_8))) {
+      for (Map.Entry<String, String> oneSplitValFilePair : newSplitMap.entrySet()) {
+        String splitVal = oneSplitValFilePair.getKey();
+        String newFile = oneSplitValFilePair.getValue();
+        Integer index = Integer.valueOf(splitVal.split("\\.")[0]);
+        String featureString = alpha.getFeature(index);
+        // normalize separators
+        String normalizedPath =
+            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(newFile).toString().replaceAll("\\" + File.separator, "/");
+        out.println(String.format("%s %s %s", featureString, normalizedPath, splitVal));
+      }
+    }
 
-		return prob;
-	}
+    System.out.println(
+        "Compute the weights and the final model files in " + GlobalConfig.SPLIT_MODELS_FOLDER
+        + " and alphabet files in " + GlobalConfig.SPLIT_ALPHA_FOLDER);
 
-	public void setTotalConfigurations(int totalConfigurations) {
-		this.totalConfigurations = totalConfigurations;
-	}
+    // compact files
+    List<Path> filesToCompact = new ArrayList<>();
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
+      stream.forEach(x -> filesToCompact.add(x));
+    }
+    TrainWorker trainWorker = new TrainWorker(alpha, this.bias);
+    if (trainingThreads > 1) {
+      // we use our own thread pool to be able to better control parallelization
+      ForkJoinPool compactingForkJoinPool = new ForkJoinPool(trainingThreads);
+      try {
+        compactingForkJoinPool.submit(
+            () -> filesToCompact.stream().parallel().forEach(x -> trainWorker.processFile(x))).get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    } else {
+      filesToCompact.stream().forEach(x -> trainWorker.processFile(x));
+    }
 
-	public int getTotalConfigurations() {
-		return totalConfigurations;
-	}
+    System.out.println("Make single alphabet file " + GlobalConfig.ALPHA_FILE + " from splitA files");
+    recreateOneAlphabetAndAdjustModels(
+        GlobalConfig.ALPHA_FILE, GlobalConfig.SPLIT_ALPHA_FOLDER, GlobalConfig.SPLIT_MODELS_FOLDER);
+  }
 
-	public Problem getProblem() {
-		return prob;
-	}
 
+  static void recreateOneAlphabetAndAdjustModels(
+      Path alphabetPath, Path splitAlphaDir, Path splitModelsDir)
+      throws IOException {
+
+    Alphabet alpha = uniteAlphabets(splitAlphaDir);
+    restoreModels(splitModelsDir, alpha, splitAlphaDir);
+    alpha.writeToFile(alphabetPath);
+  }
+
+
+  private static Alphabet uniteAlphabets(Path splitAlphaDir) throws IOException {
+
+    Alphabet alphasUnited = null;
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(splitAlphaDir)) {
+      for (Path oneAlphaFile : stream) {
+        Alphabet curAlpha = new Alphabet(Files.newInputStream(oneAlphaFile));
+        if (alphasUnited == null) {
+          // init union with first alphabet to unite
+          alphasUnited = curAlpha;
+          continue;
+        }
+        int numberOfFeatures = curAlpha.getNumberOfFeatures();
+        // feature indices start at 1, so we iterate until num + 1
+        for (int k = 1; k <= numberOfFeatures; k++) {
+          alphasUnited.addFeature(curAlpha.getFeature(k));
+          //System.out.println(features[k]);
+        }
+      }
+    }
+    return alphasUnited;
+  }
+
+
+  private static void restoreModels(Path splitModelsDir, Alphabet alpha, Path splitAlphaDir) throws IOException {
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(splitModelsDir)) {
+      for (Path oneModelFile : stream) {
+        System.out.println("Model file: " + oneModelFile);
+        Model model = Linear.loadModel(oneModelFile.toFile());
+        double[] wArray = model.getFeatureWeights();
+        Path alphaPath = splitAlphaDir.resolve(oneModelFile.getFileName());
+        Alphabet a = new Alphabet(Files.newInputStream(alphaPath));
+        int numberOfClasses = model.getNrClass();
+
+        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
+          out.println("solver_type MCSVM_CS");
+          out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
+
+          for (int k = 0; k < model.getLabels().length; k++) {
+            out.print(model.getLabels()[k] + " ");
+          }
+          out.println();
+          int numberOfFeatures = alpha.getNumberOfFeatures();
+          boolean notFound = true;
+          int lastIndex = -1;
+          for (int k = numberOfFeatures; k > 1 && notFound; k--) {
+            if (a.getFeatureIndex(alpha.getFeature(k)) != null) {
+              lastIndex = k;
+              notFound = false;
+            }
+          }
+          out.println("nr_feature " + (lastIndex - 1));
+          out.println("bias " + model.getBias());
+          out.println("w");
+          for (int k = 1; k < lastIndex; k++) {
+            String feature = alpha.getFeature(k);
+            Integer oldIndex = a.getFeatureIndex(feature);
+            if (oldIndex == null) {
+              for (int m = 0; m < numberOfClasses; m++) {
+                out.print("0 ");
+              }
+            } else {
+              for (int l = 0; l < numberOfClasses; l++) {
+                double curWeight = wArray[(oldIndex - 1) * numberOfClasses + l];
+                out.print(curWeight + " ");
+              }
+            }
+            out.println();
+          }
+        }
+      }
+    }
+  }
+
+
+  public static int[][] compactiseTrainingDataFile(
+      Path curentTrainingFile, int numberOfFeatures) throws IOException {
+
+    int[][] compactArray = new int[2][];
+    // feature indices start at 1, so we have to add 1 to the size
+    int[] oldToNew = new int[numberOfFeatures + 1];
+    int[] newToOld = new int[numberOfFeatures + 1];
+    compactArray[0] = newToOld;
+    compactArray[1] = oldToNew;
+
+    try (PrintWriter out = new PrintWriter(
+        Files.newBufferedWriter(
+            GlobalConfig.SPLIT_COMPACT_FOLDER.resolve(curentTrainingFile.getFileName()), StandardCharsets.UTF_8));
+        BufferedReader in = Files.newBufferedReader(curentTrainingFile, StandardCharsets.UTF_8)) {
+      String line;
+      int maxIndex = 1;
+      Set<Integer> encountered = new HashSet<>(numberOfFeatures + 1);
+      while ((line = in.readLine()) != null) {
+        String[] lineArray = line.split(" ");
+        out.print(lineArray[0]);
+        List<Integer> featureList = new ArrayList<Integer>();
+        for (int i = 1; i < lineArray.length; i++) {
+          Integer curFeature = Integer.valueOf(lineArray[i].split(":")[0]);
+          Integer newValue = oldToNew[curFeature];
+          if (!encountered.contains(curFeature)) {
+            newValue = maxIndex;
+            oldToNew[curFeature] = newValue;
+            newToOld[newValue] = curFeature;
+            encountered.add(curFeature);
+            maxIndex++;
+          }
+          if (!featureList.contains(newValue)) {
+            featureList.add(newValue);
+          }
+        }
+        Collections.sort(featureList);
+        for (int i = 0; i < featureList.size(); i++) {
+          out.print(" " + featureList.get(i) + ":1");
+        }
+        out.println();
+      }
+    }
+
+    return compactArray;
+  }
+
+
+  static Problem readProblem(Path path, double bias)
+      throws InvalidInputDataException {
+
+    List<Integer> yList = new ArrayList<Integer>();
+    List<FeatureNode[]> xList = new ArrayList<FeatureNode[]>();
+    int maxIndex = 0;
+
+    try (BufferedReader in = Files.newBufferedReader(
+        path, StandardCharsets.UTF_8)) {
+      String line;
+      int lineNr = 0;
+      while ((line = in.readLine()) != null) {
+        lineNr++;
+        StringTokenizer st = new StringTokenizer(line, " \t\n\r\f:");
+        String token = st.nextToken();
+
+        try {
+          yList.add(Integer.parseInt(token));
+        } catch (NumberFormatException e) {
+          throw new InvalidInputDataException("invalid label: " + token, path.toString(), lineNr, e);
+        }
+
+        int m = st.countTokens() / 2;
+        FeatureNode[] x;
+        if (bias >= 0) {
+          x = new FeatureNode[m + 1];
+        } else {
+          x = new FeatureNode[m];
+        }
+        int indexBefore = 0;
+        for (int j = 0; j < m; j++) {
+          token = st.nextToken();
+          int index;
+
+          try {
+            index = Integer.parseInt(token);
+          } catch (NumberFormatException e) {
+            throw new InvalidInputDataException("invalid index: " + token, path.toString(), lineNr, e);
+          }
+
+          // assert that indices are valid and sorted
+          if (index < 0) {
+            throw new InvalidInputDataException("invalid index: " + index, path.toString(), lineNr);
+          }
+          if (index <= indexBefore) {
+            throw new InvalidInputDataException("indices must be sorted in ascending order", path.toString(), lineNr);
+          }
+          indexBefore = index;
+
+          token = st.nextToken();
+          try {
+            double value = Double.parseDouble(token);
+            x[j] = new FeatureNode(index, value);
+          } catch (NumberFormatException e) {
+            throw new InvalidInputDataException("invalid value: " + token, path.toString(), lineNr);
+          }
+        }
+        if (m > 0) {
+          maxIndex = Math.max(maxIndex, x[m - 1].index);
+        }
+        xList.add(x);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return constructProblem(yList, xList, maxIndex, bias);
+  }
+
+
+  static Problem constructProblem(
+      List<Integer> yList, List<FeatureNode[]> xList, int max_index, double bias) {
+
+    Problem prob = new Problem();
+    prob.bias = bias;
+    prob.l = yList.size();
+    prob.n = max_index;
+    if (bias >= 0) {
+      prob.n++;
+    }
+    prob.x = new FeatureNode[prob.l][];
+    for (int i = 0; i < prob.l; i++) {
+      prob.x[i] = xList.get(i);
+
+      if (bias >= 0) {
+        assert prob.x[i][prob.x[i].length - 1] == null;
+        prob.x[i][prob.x[i].length - 1] = new FeatureNode(max_index + 1, bias);
+      } else {
+        assert prob.x[i][prob.x[i].length - 1] != null;
+      }
+    }
+
+    prob.y = new double[prob.l];
+    for (int i = 0; i < prob.l; i++) {
+      prob.y[i] = yList.get(i);
+    }
+
+    return prob;
+  }
+
+
+  static Set<Integer> getUnusedFeatures(Path modelPath) {
+
+    Set<Integer> unusedFeatures = new HashSet<>();
+
+    try (BufferedReader in = Files.newBufferedReader(modelPath, StandardCharsets.UTF_8)) {
+      // skip first 6 lines
+      for (int k = 0; k < 6; k++) {
+        in.readLine();
+      }
+
+      int wIndex = 1;
+      String line;
+      while ((line = in.readLine()) != null) {
+        String[] lineArray = line.split("\\s+");
+        boolean zeroLine = true;
+        for (int k = 0; k < lineArray.length && zeroLine; k++) {
+          if (Math.abs(Double.valueOf(lineArray[k])) > 0.1) {
+            zeroLine = false;
+          }
+        }
+        if (zeroLine) {
+          unusedFeatures.add(wIndex);
+        }
+        wIndex++;
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return unusedFeatures;
+  }
+
+
+  static void removeUnusedFeaturesFromModel(
+      Path modelPath, Set<Integer> unusedFeatures, int numberOfFeatures)
+          throws IOException {
+
+    BufferedReader in = Files.newBufferedReader(modelPath, StandardCharsets.UTF_8);
+    String solverType = in.readLine();
+    String nrClass = in.readLine();
+    int numberOfClasses = Integer.valueOf(nrClass.split(" ")[1]);
+    String label = in.readLine();
+    // don't use the 'number of features' value from the model
+    //String nrFeature = in.readLine();
+    in.readLine();
+    String bias = in.readLine();
+    // read "w":
+    in.readLine();
+    double[] weights;
+    if (numberOfClasses != 2) {
+      weights = new double[numberOfFeatures * numberOfClasses];
+    } else {
+      weights = new double[numberOfFeatures];
+    }
+    int k = 0;
+    int l = 1;
+    String line;
+    while ((line = in.readLine()) != null) {
+      if (!unusedFeatures.contains(l)) {
+        String[] weightsArray = line.split(" ");
+        if (numberOfClasses != 2) {
+          for (int c = 0; c < numberOfClasses; c++) {
+            weights[k * numberOfClasses + c] = Double.valueOf(weightsArray[c]);
+          }
+          k++;
+        } else {
+          weights[k] = Double.valueOf(weightsArray[0]);
+          k++;
+        }
+      }
+      l++;
+    }
+    in.close();
+
+    // re-write model
+    PrintWriter out = new PrintWriter(Files.newBufferedWriter(modelPath, StandardCharsets.UTF_8));
+    out.println(solverType);
+    if (numberOfClasses != 2) {
+      out.println("nr_class " + numberOfClasses);
+    } else {
+      out.println("nr_class 1");
+    }
+    out.println(label);
+    out.println("nr_feature " + numberOfFeatures);
+    out.println(bias);
+    out.println("w");
+    if (numberOfClasses != 2) {
+      for (int i = 0; i < weights.length / numberOfClasses; i++) {
+        for (int c = 0; c < numberOfClasses; c++) {
+          if (weights[i * numberOfClasses + c] == 0) {
+            out.print("0");
+          } else {
+            out.print(String.valueOf(weights[i * numberOfClasses + c]));
+          }
+          out.print(" ");
+        }
+        out.println();
+      }
+    } else {
+      for (int i = 0; i < weights.length; i++) {
+        if (weights[i] == 0) {
+          out.print("0");
+        } else {
+          out.print(String.valueOf(weights[i]));
+        }
+        out.println(" ");
+      }
+    }
+    out.close();
+  }
 }

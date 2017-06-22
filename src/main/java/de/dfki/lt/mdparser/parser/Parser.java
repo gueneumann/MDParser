@@ -1,278 +1,171 @@
 package de.dfki.lt.mdparser.parser;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
-import pi.ParIterator;
-import pi.ParIteratorFactory;
-
-import de.bwaldvogel.liblinear.*;
+import de.bwaldvogel.liblinear.Model;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
 import de.dfki.lt.mdparser.archive.Archivator;
+import de.dfki.lt.mdparser.config.ConfigKeys;
+import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
-import de.dfki.lt.mdparser.features.FeatureExtractor;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
 
-public class Parser {
+public final class Parser {
 
-	public static long time;
+  private Parser() {
 
-	private double[] weightsParser;
-	private int numberOfClassesParser;
-	private int numberOfClassesLabeler;
-	private int predictedSecondBestLabelIndex;
+    // private constructor to enforce noninstantiability
+  }
 
-	private HashMap<String,Model> splitModelMap;
-	private HashMap<String, String> splitMap;
-	private HashMap<String, Model> splitModelMapL;
-	private HashMap<String, String> splitMapL;
 
-	private HashMap<String,double[]> splitWeightsMap;
-	private HashMap<String,double[]> splitWeightsMapL;
+  // returns a mapping of features to model file names
+  private static Map<String, String> readSplitFile(InputStream splitFileInputStream) {
 
-	private HashMap<String,Alphabet> splitAlphabetsMap;
-	
-	public void setNumberOfClassesParser(int numberOfClassesParser) {
-		this.numberOfClassesParser = numberOfClassesParser;
-	}
+    Map<String, String> splitMap = new HashMap<>();
+    try (BufferedReader in = new BufferedReader(
+        new InputStreamReader(splitFileInputStream, StandardCharsets.UTF_8))) {
+      String line;
+      while ((line = in.readLine()) != null) {
+        String[] lineArray = line.split(" ");
+        splitMap.put(lineArray[0], lineArray[1]);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
-	public int getNumberOfClassesParser() {
-		return numberOfClassesParser;
-	}
+    return splitMap;
+  }
 
-	public double[] getWeightsParser() {
-		return weightsParser;
-	}
 
-	public void setWeightsParser(double[] featureWeights) {
-		this.weightsParser = featureWeights;
+  // returns a mapping of features to models
+  private static Map<String, Model> readModels(Archivator arch) throws IOException {
 
-	}
+    Map<String, Model> feature2ModelMap = new HashMap<>();
+    Map<String, Model> modelId2ModelMap = new HashMap<>();
+    Map<String, String> feature2ModelFileNameMap = readSplitFile(arch.getSplitFileInputStream());
+    for (Map.Entry<String, String> oneFeature2ModelFileName : feature2ModelFileNameMap.entrySet()) {
+      String modelId = Paths.get(oneFeature2ModelFileName.getValue()).getFileName().toString();
+      Model model = modelId2ModelMap.get(modelId);
+      if (null == model) {
+        Path modelPath = GlobalConfig.SPLIT_MODELS_FOLDER.resolve(modelId);
+        InputStream is = arch.getInputStream(modelPath.toString());
+        model = Model.load(new InputStreamReader(is));
+      }
+      feature2ModelMap.put(oneFeature2ModelFileName.getKey(), model);
+      modelId2ModelMap.put(modelId, model);
+    }
+    return feature2ModelMap;
+  }
 
-	public void setNumberOfClassesLabeler(int numberOfClassesLabeler) {
-		this.numberOfClassesLabeler = numberOfClassesLabeler;
-	}
 
-	public int getNumberOfClassesLabeler() {
-		return numberOfClassesLabeler;
-	}
+  // GN: de.dfki.lt.mdparser.caller.MDPrunner.conllFileParsingAndEval(String, String, String)
+  public static void parseCombined(Data data, Archivator arch, Alphabet alphabetParser, boolean noLabels)
+      throws IOException {
 
-	public void setWeightsLabeler(double[] featureWeights) {
+    long modelReadStart = System.currentTimeMillis();
+    Map<String, Model> feature2ModelMap = readModels(arch);
+    //readSplitAlphabets(arch);
+    long modelReadEnd = System.currentTimeMillis();
+    System.out.println("Time to read model (msec): " + (modelReadEnd - modelReadStart));
+    //gds readSplitModelsL(arch);
+    final FeatureModel featureModel;
+    final ParsingAlgorithm algorithm;
+    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
+    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
+    if (algorithmId.equals("covington")) {
+      featureModel = new CovingtonFeatureModel(alphabetParser);
+      algorithm = new CovingtonAlgorithm();
+    } else if (algorithmId.equals("stack")) {
+      featureModel = new StackFeatureModel(alphabetParser);
+      algorithm = new StackAlgorithm();
+    } else {
+      System.err.println("unknown algorithm " + algorithmId);
+      return;
+    }
 
-	}
+    long processStart = System.currentTimeMillis();
+    List<Sentence> sentencesList = Arrays.asList(data.getSentences());
+    int parsingThreads = GlobalConfig.getInt(ConfigKeys.PARSING_THREADS);
+    if (parsingThreads < 0) {
+      parsingThreads = Runtime.getRuntime().availableProcessors();
+    }
+    if (parsingThreads > 1) {
+      // we use our own thread pool to be able to better control parallelization
+      ForkJoinPool forkJoinPool = new ForkJoinPool(parsingThreads);
+      try {
+        forkJoinPool.submit(
+            () -> sentencesList.stream().parallel()
+            .forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap))).get();
+      } catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    } else {
+      sentencesList.stream().forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap));
+    }
 
-	public void setPredictedSecondBestLabelIndex(
-			int predictedSecondBestLabelIndex) {
-		this.predictedSecondBestLabelIndex = predictedSecondBestLabelIndex;
-	}
+    // System.out.println("All worker threads have completed.");
+    long processEnd = System.currentTimeMillis();
+    System.out.println("No. of threads: " + parsingThreads);
+    System.out.println("Time to parse (msec): " + (processEnd - processStart));
+    System.out.println("Speed (sent/s): " + (data.getSentences().length * 1000.0) / (processEnd - processStart));
+    System.out.println("Number of configurations: " + algorithm.getNumberOfConfigurations());
+    System.out.println(
+        "Average number of configurations per sentence: "
+            + algorithm.getNumberOfConfigurations() / data.getSentences().length);
+  }
 
-	public int getPredictedSecondBestLabelIndex() {
-		return predictedSecondBestLabelIndex;
-	}
 
-	public void setSplitModelMap(HashMap<String,Model> splitWeightsMap) {
-		this.splitModelMap = splitWeightsMap;
-	}
+  //TODO the non-parallel version
+  public static void parseCombinedMem(Data data, Archivator arch, Alphabet alphabetParser, boolean noLabels)
+      throws IOException {
 
-	public HashMap<String,Model> getSplitModelMap() {
-		return splitModelMap;
-	}
+    long modelReadStart = System.currentTimeMillis();
+    Map<String, Model> feature2ModelMap = readModels(arch);
 
-	public void setSplitModelMapL(HashMap<String,Model> splitWeightsMap) {
-		this.splitModelMapL = splitWeightsMap;
-	}
-
-	public HashMap<String,Model> getSplitModelMapL() {
-		return splitModelMapL;
-	}
-
-	public HashMap<String,String> getSplitMap() {
-		return this.splitMap;
-	}
-
-	public void setSplitMapL(HashMap<String, String> splitMapL) {
-		this.splitMapL = splitMapL;
-	}
-
-	public HashMap<String, String> getSplitMapL() {
-		return splitMapL;
-	}
-
-	public void setSplitWeightsMap(HashMap<String,double[]> splitWeightsMap) {
-		this.splitWeightsMap = splitWeightsMap;
-	}
-
-	public HashMap<String,double[]> getSplitWeightsMap() {
-		return splitWeightsMap;
-	}
-
-	public void setSplitWeightsMapL(HashMap<String,double[]> splitWeightsMapL) {
-		this.splitWeightsMapL = splitWeightsMapL;
-	}
-
-	public HashMap<String,double[]> getSplitWeightsMapL() {
-		return splitWeightsMapL;
-	}
-
-	public void setSplitAlphabetsMap(HashMap<String,Alphabet> splitAlphabetsMap) {
-		this.splitAlphabetsMap = splitAlphabetsMap;
-	}
-
-	public HashMap<String,Alphabet> getSplitAlphabetsMap() {
-		return splitAlphabetsMap;
-	}
-	
-	public HashMap<String,String> readSplitFile(String splitFile) throws IOException {
-		HashMap<String,String> splitMap = new HashMap<String,String>();
-		BufferedReader fp = new BufferedReader(new FileReader(splitFile));
-		String line;
-		while ((line = fp.readLine())!= null) {
-			String[] lineArray = line.split(" ");
-			//	System.out.println(line);
-			splitMap.put(lineArray[0], lineArray[1]);
-		}
-		fp.close();
-		return splitMap;
-	}
-
-	private HashMap<String,String> readSplitFile(InputStream splitFileIs) throws IOException {
-		HashMap<String,String> splitMap = new HashMap<String,String>();
-		InputStreamReader ir = new InputStreamReader(splitFileIs,"UTF8");
-		BufferedReader fr = new BufferedReader(ir);
-		String line;
-		while ((line = fr.readLine())!= null) {
-			String[] lineArray = line.split(" ");
-			splitMap.put(lineArray[0], lineArray[1]);
-		}
-		return splitMap;
-	}
-	
-	public void readSplitModels(Archivator arch) throws IOException {
-
-		splitWeightsMap = new HashMap<String,double[]>();
-		splitMap = readSplitFile(arch.getSplitFileInputStream());
-		splitModelMap = new HashMap<String,Model>();
-		Set<String> values = new HashSet<String>(splitMap.values());
-		Iterator<String> iter = values.iterator();
-		while (iter.hasNext()) {
-			String modelNameOriginal = iter.next();
-			String modelName = "splitModels/"+modelNameOriginal.substring(6);		
-			InputStream is = arch.getInputStream(modelName);
-			Model m = Model.load(new InputStreamReader(is));
-			splitModelMap.put(modelNameOriginal,m);
-			splitWeightsMap.put(modelNameOriginal,m.getFeatureWeights());
-		}
-	}
-
-	// GN: de.dfki.lt.mdparser.caller.MDPrunner.conllFileParsingAndEval(String, String, String)
-	public void parseCombined(String algorithm, Data d, Archivator arch, Alphabet alphabetParser,	 boolean noLabels) throws IOException {
-		long st = System.currentTimeMillis();
-		readSplitModels(arch);
-		//	readSplitAlphabets(arch);
-		long end = System.currentTimeMillis();
-		System.out.println("Time to read model (msec): " + (end-st));
-		//gds	readSplitModelsL(arch);
-		FeatureExtractor fe = new FeatureExtractor();
-		Sentence[] sentences = d.getSentences();
-		FeatureModel fm = null;
-		ParsingAlgorithm pa = null;
-		if (algorithm.equals("covington")) {
-			fm = new CovingtonFeatureModel(alphabetParser,  fe);
-			pa = new CovingtonAlgorithm();
-			pa.setNumberOfConfigurations(0);
-
-		}
-		else if (algorithm.equals("stack")) {
-			fm = new StackFeatureModel(alphabetParser, fe);
-			pa = new StackAlgorithm();
-			pa.setNumberOfConfigurations(0);
-		}
-		
-		pa.initLabelFreqMap();
-		pa.setParser(this);
-		long start = System.currentTimeMillis();
-		Runtime runtime = Runtime.getRuntime();
-		int numberOfProcessors = runtime.availableProcessors();
-		//  System.out.println("Number of processors used: "+numberOfProcessors);
-		int threadCount = numberOfProcessors;
-		//    int threadCount = 1;
-		List<Sentence> sentencesList = new ArrayList<Sentence>(sentences.length);
-		for (int n=0; n < sentences.length;n++) {
-			sentencesList.add(sentences[n]);
-		}
-		ParIterator<Sentence> iter = ParIteratorFactory.createParIterator(sentencesList, threadCount);
-		Thread[] threadPool = new ParserWorkerThread[threadCount];
-		for (int i = 0; i < threadCount; i++) {
-			threadPool[i] = new ParserWorkerThread(i, iter, pa,fm, noLabels,splitMap);
-			threadPool[i].start();
-		}
-		/*	for (int n=0; n < sentences.length;n++) {
-			pa.processCombined(sentences[n], fm, noLabels, splitMap);
-		}	*/
-		// Main thread waits for worker threads to complete
-		for (int i = 0; i < threadCount; i++) {
-			try {
-				threadPool[i].join();
-			} catch(InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		//	System.out.println("All worker threads have completed.");
-		long end2 = System.currentTimeMillis();
-		time+= end2-start;
-		System.out.println("No. of threads: " + threadCount);
-		System.out.println("Time to parse (msec): " + Double.valueOf(time));
-		System.out.println("Speed (sent/s): " + (sentences.length*1000)/Double.valueOf(time));
-		System.out.println("Number of configurations: "+pa.getNumberOfConfigurations());
-		System.out.println("Average number of configurations per sentence: "+pa.getNumberOfConfigurations()/sentences.length);
-	}
-	
-	//TODO the non-parallel version
-	public void parseCombinedMem(String algorithm, Data d, Archivator arch, Alphabet alphabetParser, boolean noLabels) throws IOException {
-		long st = System.currentTimeMillis();
-		readSplitModels(arch);
-		
-		long end = System.currentTimeMillis();
-		System.out.println("Time to read model (msec): " + (end-st));
-		FeatureExtractor fe = new FeatureExtractor();
-		Sentence[] sentences = d.getSentences();
-		FeatureModel fm = null;
-		ParsingAlgorithm pa = null;
-		if (algorithm.equals("covington")) {
-			fm = new CovingtonFeatureModel(alphabetParser,  fe);
-			pa = new CovingtonAlgorithm();
-			pa.setNumberOfConfigurations(0);
-		}
-		else if (algorithm.equals("stack")) {
-			fm = new StackFeatureModel(alphabetParser, fe);
-			pa = new StackAlgorithm();
-			pa.setNumberOfConfigurations(0);
-		}
-		pa.setParser(this);
-		long start = System.currentTimeMillis();
-		for (int n=0; n < sentences.length;n++) {
-			pa.processCombined(sentences[n], fm, noLabels, splitMap);
-		}	
-		long end2 = System.currentTimeMillis();
-		time+= end2-start;
-		System.out.println("Time to parse: "+Double.valueOf(time));
-		System.out.println("Speed (sent/s): " + (sentences.length*1000)/Double.valueOf(time));
-		System.out.println("Number of configurations: "+pa.getNumberOfConfigurations());
-		System.out.println("Average number of configurations per sentence: "+pa.getNumberOfConfigurations()/sentences.length);
-	}
+    long modelReadEnd = System.currentTimeMillis();
+    System.out.println("Time to read model (msec): " + (modelReadEnd - modelReadStart));
+    Sentence[] sentences = data.getSentences();
+    FeatureModel model = null;
+    ParsingAlgorithm algorithm = null;
+    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
+    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
+    if (algorithmId.equals("covington")) {
+      model = new CovingtonFeatureModel(alphabetParser);
+      algorithm = new CovingtonAlgorithm();
+    } else if (algorithmId.equals("stack")) {
+      model = new StackFeatureModel(alphabetParser);
+      algorithm = new StackAlgorithm();
+    } else {
+      System.err.println("unkown algorithm " + algorithmId);
+      return;
+    }
+    long processStart = System.currentTimeMillis();
+    for (int n = 0; n < sentences.length; n++) {
+      algorithm.processCombined(sentences[n], model, noLabels, feature2ModelMap);
+    }
+    long processEnd = System.currentTimeMillis();
+    System.out.println("Time to parse: " + (processEnd - processStart));
+    System.out.println("Speed (sent/s): " + (sentences.length * 1000.0) / (processEnd - processStart));
+    System.out.println("Number of configurations: " + algorithm.getNumberOfConfigurations());
+    System.out.println(
+        "Average number of configurations per sentence: " + algorithm.getNumberOfConfigurations() / sentences.length);
+  }
 }

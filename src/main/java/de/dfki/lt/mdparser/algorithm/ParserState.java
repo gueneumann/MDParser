@@ -1,5 +1,6 @@
 package de.dfki.lt.mdparser.algorithm;
 
-public class ParserState {
+public abstract class ParserState {
 
+  // common parent class of parser states
 }

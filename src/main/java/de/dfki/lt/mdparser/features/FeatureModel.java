@@ -7,51 +7,41 @@ import de.dfki.lt.mdparser.data.Sentence;
 
 
 public abstract class FeatureModel {
-	
-	private Alphabet alphabetParser;
-	private Alphabet alphabetLabeler;
-	private FeatureExtractor fe;
-	
-	public FeatureModel(Alphabet alphabetParser, Alphabet alphabetLabeler, FeatureExtractor fe) {
-		this.alphabetParser = alphabetParser;
-		this.alphabetLabeler = alphabetLabeler;
-		this.fe = fe;
-	}
-	
-	public FeatureModel(Alphabet alphabetParser, FeatureExtractor fe) {
-		this.alphabetParser = alphabetParser;
-		this.fe = fe;
-	}
-	
-	public abstract List<FeatureVector> apply(ParserState state, boolean train, boolean noLabels);	
-	
-	public abstract FeatureVector applyCombined(ParserState state, boolean train, boolean noLabels);		
-	
-	public abstract void initializeStaticFeaturesCombined(Sentence sent, boolean train);
-	
-	public void setAlphabetParser(Alphabet alphabetParser) {
-		this.alphabetParser = alphabetParser;
-	}
 
-	public Alphabet getAlphabetParser() {
-		return alphabetParser;
-	}
+  private Alphabet parserAlphabet;
+  private Alphabet labelerAlphabet;
 
-	public void setFeatureExtractor(FeatureExtractor fe) {
-		this.fe = fe;
-	}
 
-	public FeatureExtractor getFeatureExtractor() {
-		return fe;
-	}
+  public FeatureModel(Alphabet parserAlphabet, Alphabet labelerAlphabet) {
 
-	public void setAlphabetLabeler(Alphabet alphabetLabeler) {
-		this.alphabetLabeler = alphabetLabeler;
-	}
+    this.parserAlphabet = parserAlphabet;
+    this.labelerAlphabet = labelerAlphabet;
+  }
 
-	public Alphabet getAlphabetLabeler() {
-		return alphabetLabeler;
-	}
 
-	
+  public FeatureModel(Alphabet parserAlphabet) {
+
+    this.parserAlphabet = parserAlphabet;
+  }
+
+
+  public Alphabet getParserAlphabet() {
+
+    return this.parserAlphabet;
+  }
+
+
+  public Alphabet getLabelerAlphabet() {
+
+    return this.labelerAlphabet;
+  }
+
+
+  public abstract List<FeatureVector> apply(ParserState state, boolean train, boolean noLabels);
+
+
+  public abstract FeatureVector applyCombined(ParserState state, boolean train, boolean noLabels);
+
+
+  public abstract void initializeStaticFeaturesCombined(Sentence sent, boolean train);
 }
