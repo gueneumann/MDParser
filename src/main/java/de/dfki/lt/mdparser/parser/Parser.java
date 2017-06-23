@@ -131,41 +131,4 @@ public final class Parser {
         "Average number of configurations per sentence: "
             + algorithm.getNumberOfConfigurations() / data.getSentences().length);
   }
-
-
-  //TODO the non-parallel version
-  public static void parseCombinedMem(Data data, Archivator arch, Alphabet alphabetParser, boolean noLabels)
-      throws IOException {
-
-    long modelReadStart = System.currentTimeMillis();
-    Map<String, Model> feature2ModelMap = readModels(arch);
-
-    long modelReadEnd = System.currentTimeMillis();
-    System.out.println("Time to read model (msec): " + (modelReadEnd - modelReadStart));
-    Sentence[] sentences = data.getSentences();
-    FeatureModel model = null;
-    ParsingAlgorithm algorithm = null;
-    String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
-    System.out.println(String.format("using algorithm \"%s\"", algorithmId));
-    if (algorithmId.equals("covington")) {
-      model = new CovingtonFeatureModel(alphabetParser);
-      algorithm = new CovingtonAlgorithm();
-    } else if (algorithmId.equals("stack")) {
-      model = new StackFeatureModel(alphabetParser);
-      algorithm = new StackAlgorithm();
-    } else {
-      System.err.println("unkown algorithm " + algorithmId);
-      return;
-    }
-    long processStart = System.currentTimeMillis();
-    for (int n = 0; n < sentences.length; n++) {
-      algorithm.processCombined(sentences[n], model, noLabels, feature2ModelMap);
-    }
-    long processEnd = System.currentTimeMillis();
-    System.out.println("Time to parse: " + (processEnd - processStart));
-    System.out.println("Speed (sent/s): " + (sentences.length * 1000.0) / (processEnd - processStart));
-    System.out.println("Number of configurations: " + algorithm.getNumberOfConfigurations());
-    System.out.println(
-        "Average number of configurations per sentence: " + algorithm.getNumberOfConfigurations() / sentences.length);
-  }
 }

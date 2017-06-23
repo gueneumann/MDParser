@@ -38,18 +38,40 @@ public class TestMDParser {
   @Test
   public void testTrainEvalFilesCovington() throws IOException {
 
+    String algorithmId = "covington";
+    String modelName = "de-2009-" + algorithmId + ".zip";
+
+    double expectedParentAccuracy = 0.841186515716906;
+    double expectedLabelAccuracy = 0.8006767440389602;
+
+    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
     // parallel training is not deterministic, so restrict number of threads to 1
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
-    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, "covington");
 
-    String modelName = "de-2009.zip";
-
-    testTrainFiles(modelName);
-    testEvalFiles(modelName);
+    testTrainFiles(modelName, algorithmId);
+    testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
 
-  private void testTrainFiles(String modelName)
+  @Test
+  public void testTrainEvalFilesStack() throws IOException {
+
+    String algorithmId = "stack";
+    String modelName = "de-2009-" + algorithmId + ".zip";
+
+    double expectedParentAccuracy = 0.8100056922395801;
+    double expectedLabelAccuracy = 0.7698437796470812;
+
+    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
+    // parallel training is not deterministic, so restrict number of threads to 1
+    GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
+
+    testTrainFiles(modelName, algorithmId);
+    testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
+  }
+
+
+  private void testTrainFiles(String modelName, String algorithmId)
       throws IOException {
 
     MDPtrainer.train("src/test/resources/corpora/de-train-2009.conll",
@@ -58,33 +80,29 @@ public class TestMDParser {
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
 
     compareFolders(
-        GlobalConfig.SPLIT_ALPHA_FOLDER, Paths.get("src/test/resources/expected/file/split_alphas"));
+        GlobalConfig.SPLIT_ALPHA_FOLDER,
+        Paths.get("src/test/resources/expected/file-" + algorithmId + "/split_alphas"));
     compareFolders(
-        GlobalConfig.FEATURE_VECTORS_FOLDER, Paths.get("src/test/resources/expected/file/1_initial_feature_vectors"));
+        GlobalConfig.FEATURE_VECTORS_FOLDER,
+        Paths.get("src/test/resources/expected/file-" + algorithmId + "/1_initial_feature_vectors"));
     compareFolders(
-        GlobalConfig.SPLIT_INITIAL_FOLDER, Paths.get("src/test/resources/expected/file/2_initial_splits"));
+        GlobalConfig.SPLIT_INITIAL_FOLDER,
+        Paths.get("src/test/resources/expected/file-" + algorithmId + "/2_initial_splits"));
     compareFolders(
-        GlobalConfig.SPLIT_ADJUST_FOLDER, Paths.get("src/test/resources/expected/file/3_adjusted_splits"));
+        GlobalConfig.SPLIT_ADJUST_FOLDER,
+        Paths.get("src/test/resources/expected/file-" + algorithmId + "/3_adjusted_splits"));
     compareFolders(
-        GlobalConfig.SPLIT_COMPACT_FOLDER, Paths.get("src/test/resources/expected/file/4_compacted_splits"));
+        GlobalConfig.SPLIT_COMPACT_FOLDER,
+        Paths.get("src/test/resources/expected/file-" + algorithmId + "/4_compacted_splits"));
     compareFolders(
-        GlobalConfig.SPLIT_MODELS_FOLDER, Paths.get("src/test/resources/expected/file/split_models"));
+        GlobalConfig.SPLIT_MODELS_FOLDER,
+        Paths.get("src/test/resources/expected/file-" + algorithmId + "/split_models"));
     assertThat(GlobalConfig.ALPHA_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/file/alpha.txt"), StandardCharsets.UTF_8);
+        .hasSameContentAs(Paths.get("src/test/resources/expected/file-" + algorithmId + "/alpha.txt"),
+            StandardCharsets.UTF_8);
     assertThat(GlobalConfig.SPLIT_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/file/split.txt"), StandardCharsets.UTF_8);
-  }
-
-
-  private void testEvalFiles(String modelName)
-      throws IOException {
-
-    Eval evaluator = MDPrunner.conllFileParsingAndEval(
-        "src/test/resources/corpora/de-test-2009.conll",
-        "src/test/resources/corpora/de-result-2009.conll",
-        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
-    assertThat(evaluator.getParentsAccuracy()).isEqualTo(0.841186515716906);
-    assertThat(evaluator.getLabelsAccuracy()).isEqualTo(0.8006767440389602);
+        .hasSameContentAs(Paths.get("src/test/resources/expected/file-" + algorithmId + "/split.txt"),
+            StandardCharsets.UTF_8);
   }
 
 
@@ -92,16 +110,35 @@ public class TestMDParser {
   public void testTrainEvalMemoryCovington()
       throws IOException {
 
-    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, "covington");
+    String algorithmId = "covington";
+    String modelName = "de-2009-" + algorithmId + ".zip";
+    double expectedParentAccuracy = 0.8452343305293782;
+    double expectedLabelAccuracy = 0.8051672885965467;
 
-    String modelName = "de-2009.zip";
+    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
 
-    testTrainMemory(modelName);
-    testEvalMemory(modelName);
+    testTrainMemory(modelName, algorithmId);
+    testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
 
-  private void testTrainMemory(String modelName)
+  @Test
+  public void testTrainEvalMemoryStack()
+      throws IOException {
+
+    String algorithmId = "stack";
+    String modelName = "de-2009-" + algorithmId + ".zip";
+    double expectedParentAccuracy = 0.8104800455379166;
+    double expectedLabelAccuracy = 0.7700967680728606;
+
+    GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
+
+    testTrainMemory(modelName, algorithmId);
+    testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
+  }
+
+
+  private void testTrainMemory(String modelName, String algorithmId)
       throws IOException {
 
     MDPtrainer.trainMem("src/test/resources/corpora/de-train-2009.conll",
@@ -110,25 +147,29 @@ public class TestMDParser {
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
 
     compareFolders(
-        GlobalConfig.SPLIT_ALPHA_FOLDER, Paths.get("src/test/resources/expected/memory/split_alphas"));
+        GlobalConfig.SPLIT_ALPHA_FOLDER,
+        Paths.get("src/test/resources/expected/memory-" + algorithmId + "/split_alphas"));
     compareFolders(
-        GlobalConfig.SPLIT_MODELS_FOLDER, Paths.get("src/test/resources/expected/memory/split_models"));
+        GlobalConfig.SPLIT_MODELS_FOLDER,
+        Paths.get("src/test/resources/expected/memory-" + algorithmId + "/split_models"));
     assertThat(GlobalConfig.ALPHA_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/memory/alpha.txt"), StandardCharsets.UTF_8);
+        .hasSameContentAs(Paths.get("src/test/resources/expected/memory-" + algorithmId + "/alpha.txt"),
+            StandardCharsets.UTF_8);
     assertThat(GlobalConfig.SPLIT_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/memory/split.txt"), StandardCharsets.UTF_8);
+        .hasSameContentAs(Paths.get("src/test/resources/expected/memory-" + algorithmId + "/split.txt"),
+            StandardCharsets.UTF_8);
   }
 
 
-  private void testEvalMemory(String modelName)
+  private void testEval(String modelName, double expectedParentAccuracy, double expectedLabelAccuracy)
       throws IOException {
 
     Eval evaluator = MDPrunner.conllFileParsingAndEval(
         "src/test/resources/corpora/de-test-2009.conll",
         "src/test/resources/corpora/de-result-2009.conll",
         GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
-    assertThat(evaluator.getParentsAccuracy()).isEqualTo(0.8452343305293782);
-    assertThat(evaluator.getLabelsAccuracy()).isEqualTo(0.8051672885965467);
+    assertThat(evaluator.getParentsAccuracy()).isEqualTo(expectedParentAccuracy);
+    assertThat(evaluator.getLabelsAccuracy()).isEqualTo(expectedLabelAccuracy);
   }
 
 
