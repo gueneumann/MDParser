@@ -93,7 +93,7 @@ public class Trainer {
       //     the feature model in the training mode.
       //     the result is then a list of parser states in form of feature vectors whose values are based
       //     one the specific training example
-      List<FeatureVector> featureVectorList = algorithm.processCombined(sent, featureModel, noLabels);
+      List<FeatureVector> featureVectorList = algorithm.train(sent, featureModel, noLabels);
 
       //System.out.println(parserList.toString());
 

@@ -2,6 +2,7 @@ package de.dfki.lt.mdparser.algorithm;
 
 import de.dfki.lt.mdparser.data.Sentence;
 
+@SuppressWarnings("checkstyle:MemberName")
 public class CovingtonParserState extends ParserState {
 
   private int j;
@@ -13,6 +14,7 @@ public class CovingtonParserState extends ParserState {
 
 
   public CovingtonParserState(int j, int i, Sentence curSent, DependencyStructure curDepStruct) {
+
     this.j = j;
     this.i = i;
     this.curSent = curSent;
@@ -47,7 +49,7 @@ public class CovingtonParserState extends ParserState {
 
 
   public boolean isPermissible() {
-  
+
     return isL1Permissible() || isL2Permissible();
   }
 

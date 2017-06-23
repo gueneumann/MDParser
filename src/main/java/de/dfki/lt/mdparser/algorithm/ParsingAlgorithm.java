@@ -36,12 +36,12 @@ public abstract class ParsingAlgorithm {
 
 
   //TRAIN-GDS-COMBINED
-  public abstract List<FeatureVector> processCombined(
+  public abstract List<FeatureVector> train(
       Sentence sent, FeatureModel featureModel, boolean noLabels);
 
 
   //TEST-GDS-COMBINED
-  public abstract void processCombined(
+  public abstract void parse(
       Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap);
 
 

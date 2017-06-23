@@ -15,10 +15,6 @@ import de.dfki.lt.mdparser.features.FeatureVector;
 
 public class StackAlgorithm extends ParsingAlgorithm {
 
-  private DependencyStructure goldDepStruct;
-  private int maxi;
-
-
   public StackAlgorithm() {
 
     super();
@@ -27,21 +23,23 @@ public class StackAlgorithm extends ParsingAlgorithm {
 
   @Override
   // GN: called by Trainer
-  public List<FeatureVector> processCombined(
+  public List<FeatureVector> train(
       Sentence sentence, FeatureModel featureModel, boolean noLabels) {
 
     List<FeatureVector> featureVectorList = new ArrayList<FeatureVector>();
     String[][] sentArray = sentence.getSentArray();
+    int maxToken = 0;
     Stack<Integer> buffer = initBuffer(sentArray.length);
     Stack<Integer> stack = new Stack<Integer>();
     stack.add(0);
     DependencyStructure curDepStruct = new DependencyStructure(sentArray.length);
-    initGoldDepStruct(sentArray);
+    DependencyStructure goldDepStruct = initGoldDepStruct(sentArray);
     StackParserState curState = new StackParserState(stack, buffer, sentence, curDepStruct);
     while (!curState.isTerminal()) {
       FeatureVector featureVector = featureModel.applyCombined(curState, true, noLabels);
       // System.out.print(curState.getStackToken(0)+" "+curState.getBufferToken(0)+" "+maxi+" "+stack+" "+buffer+" ");
-      String label = findOutCorrectLabel2Combined(curState.getStack(), curState.getBufferToken(0), sentArray);
+      String label =
+          findOutCorrectLabel2Combined(curState.getStack(), curState.getBufferToken(0), sentArray, goldDepStruct);
       // System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
       featureVector.setLabel(label);
       String labelTrans = "";
@@ -73,24 +71,25 @@ public class StackAlgorithm extends ParsingAlgorithm {
       }
       featureModel.getParserAlphabet().addLabel(label);
       featureVectorList.add(featureVector);
-      this.maxi = Math.max(curState.getBufferToken(0), this.maxi);
+      maxToken = Math.max(curState.getBufferToken(0), maxToken);
     }
     return featureVectorList;
   }
 
 
-  private void initGoldDepStruct(String[][] sentArray) {
+  private static DependencyStructure initGoldDepStruct(String[][] sentArray) {
 
-    this.maxi = 0;
-    this.goldDepStruct = new DependencyStructure(sentArray.length);
+    DependencyStructure goldDepStruct = new DependencyStructure(sentArray.length);
     for (int i = 0; i < sentArray.length; i++) {
-      this.goldDepStruct.addDependency(
+      goldDepStruct.addDependency(
           new Dependency(Integer.valueOf(sentArray[i][0]), Integer.valueOf(sentArray[i][6]), sentArray[i][7]));
     }
+    return goldDepStruct;
   }
 
 
-  private String findOutCorrectLabel2Combined(Stack<Integer> stack, int i, String[][] sentArray) {
+  private static String findOutCorrectLabel2Combined(
+      Stack<Integer> stack, int i, String[][] sentArray, DependencyStructure goldDepStruct) {
 
     int j = stack.get(stack.size() - 1);
     String label = "";
@@ -104,7 +103,7 @@ public class StackAlgorithm extends ParsingAlgorithm {
       return label;
     } else if (j != 0 && (sentArray[j - 1][6] != null)) {
       Integer parent = Integer.valueOf(sentArray[i - 1][6]);
-      Set<Integer> dependents = this.goldDepStruct.getDependents().get(i);
+      Set<Integer> dependents = goldDepStruct.getDependents().get(i);
       if (dependents != null) {
         Iterator<Integer> depIter = dependents.iterator();
         while (depIter.hasNext()) {
@@ -126,9 +125,7 @@ public class StackAlgorithm extends ParsingAlgorithm {
 
 
   @Override
-
-  // Called by Parser
-  public void processCombined(
+  public void parse(
       Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap) {
 
     String[][] sentArray = sent.getSentArray();
@@ -196,7 +193,7 @@ public class StackAlgorithm extends ParsingAlgorithm {
   }
 
 
-  private void postprocess(String[][] sentArray, Sentence sent) {
+  private static void postprocess(String[][] sentArray, Sentence sent) {
 
     for (int j = 0; j < sentArray.length; j++) {
       if (sentArray[j][6] == null || sentArray[j][6].equals("_")) {
