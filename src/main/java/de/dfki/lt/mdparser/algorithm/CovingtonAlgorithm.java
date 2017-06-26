@@ -24,47 +24,8 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
   }
 
 
-  public String findOutCorrectLabelCombined(int j, int i, String[][] sentArray) {
-
-    // 1 - left arc
-    // 2 - right arc
-    // 3 - shift
-    String label = "";
-    if (Integer.valueOf(sentArray[j - 1][6]) == i) {
-      label = "j";
-      label += "#" + sentArray[j - 1][7];
-      return label;
-    } else if (i == 0) {
-      label = "shift";
-      return label;
-    } else if (Integer.valueOf(sentArray[i - 1][6]) == j) {
-      label = "i";
-      label += "#" + sentArray[i - 1][7];
-      return label;
-    } else {
-      label = "shift";
-    }
-    if (label.equals("shift")) {
-      boolean terminate = true;
-      if (Integer.valueOf(sentArray[j - 1][6]) < i) {
-        terminate = false;
-      }
-      for (int k = i; k > 1; k--) {
-        if (Integer.valueOf(sentArray[k - 1][6]) == j) {
-          terminate = false;
-        }
-      }
-      if (terminate) {
-        label = "terminate";
-      }
-    }
-    return label;
-  }
-
-
-  // XXX GN: This one is used in training
   @Override
-  public List<FeatureVector> processCombined(Sentence sent, FeatureModel featureModel, boolean noLabels) {
+  public List<FeatureVector> train(Sentence sent, FeatureModel featureModel, boolean noLabels) {
 
     List<FeatureVector> featureVectorList = new ArrayList<FeatureVector>();
 
@@ -123,10 +84,47 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
   }
 
 
+  public static String findOutCorrectLabelCombined(int j, int i, String[][] sentArray) {
+
+    // 1 - left arc
+    // 2 - right arc
+    // 3 - shift
+    String label = "";
+    if (Integer.valueOf(sentArray[j - 1][6]) == i) {
+      label = "j";
+      label += "#" + sentArray[j - 1][7];
+      return label;
+    } else if (i == 0) {
+      label = "shift";
+      return label;
+    } else if (Integer.valueOf(sentArray[i - 1][6]) == j) {
+      label = "i";
+      label += "#" + sentArray[i - 1][7];
+      return label;
+    } else {
+      label = "shift";
+    }
+    if (label.equals("shift")) {
+      boolean terminate = true;
+      if (Integer.valueOf(sentArray[j - 1][6]) < i) {
+        terminate = false;
+      }
+      for (int k = i; k > 1; k--) {
+        if (Integer.valueOf(sentArray[k - 1][6]) == j) {
+          terminate = false;
+        }
+      }
+      if (terminate) {
+        label = "terminate";
+      }
+    }
+    return label;
+  }
+
+
   // GN: Used in nereid.parser.MDPApi
-  // AND also called in MDPrunner via ParserWorkerThread.run
   @Override
-  public void processCombined(
+  public void parse(
       Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap) {
 
     String[][] sentArray = sent.getSentArray();

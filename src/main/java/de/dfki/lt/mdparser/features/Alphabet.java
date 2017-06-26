@@ -71,7 +71,7 @@ public class Alphabet {
   }
 
 
-  private String[] getIndex2LabelArray() {
+  private synchronized String[] getIndex2LabelArray() {
 
     if (this.labelArrayDirty) {
       // update array
@@ -88,7 +88,7 @@ public class Alphabet {
   }
 
 
-  private String[] getIndex2FeatureArray() {
+  private synchronized String[] getIndex2FeatureArray() {
 
     if (this.featureArrayDirty) {
       // update array
@@ -141,7 +141,7 @@ public class Alphabet {
   }
 
 
-  public void addLabel(String label) {
+  public synchronized void addLabel(String label) {
 
     Integer index = this.label2IndexMap.get(label);
     if (index == null) {
@@ -151,7 +151,7 @@ public class Alphabet {
   }
 
 
-  public void addFeature(String feature) {
+  public synchronized void addFeature(String feature) {
 
     Integer index = this.feature2IndexMap.get(feature);
     if (index == null) {

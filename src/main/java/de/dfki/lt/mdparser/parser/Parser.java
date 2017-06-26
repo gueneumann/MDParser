@@ -113,12 +113,12 @@ public final class Parser {
       try {
         forkJoinPool.submit(
             () -> sentencesList.stream().parallel()
-            .forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap))).get();
+            .forEach(x -> algorithm.parse(x, featureModel, noLabels, feature2ModelMap))).get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
     } else {
-      sentencesList.stream().forEach(x -> algorithm.processCombined(x, featureModel, noLabels, feature2ModelMap));
+      sentencesList.stream().forEach(x -> algorithm.parse(x, featureModel, noLabels, feature2ModelMap));
     }
 
     // System.out.println("All worker threads have completed.");

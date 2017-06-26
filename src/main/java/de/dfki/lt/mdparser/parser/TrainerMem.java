@@ -86,7 +86,7 @@ public class TrainerMem {
       //     the feature model in the training mode.
       //     the result is then a list of parser states in form of feature vectors whose values are based
       //     one the specific training example
-      List<FeatureVector> featureVectorList = algorithm.processCombined(sent, model, noLabels);
+      List<FeatureVector> featureVectorList = algorithm.train(sent, model, noLabels);
       totalConfigurations += featureVectorList.size();
 
       // GN: for each feature vector (which represents ONE parser configuration) do
