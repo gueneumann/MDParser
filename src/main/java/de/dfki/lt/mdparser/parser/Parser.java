@@ -56,7 +56,7 @@ public final class Parser {
 
 
   // returns a mapping of features to models
-  private static Map<String, Model> readModels(Archivator arch) throws IOException {
+  public static Map<String, Model> readModels(Archivator arch) throws IOException {
 
     Map<String, Model> feature2ModelMap = new HashMap<>();
     Map<String, Model> modelId2ModelMap = new HashMap<>();
