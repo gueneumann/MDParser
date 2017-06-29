@@ -34,16 +34,16 @@ import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
 
-public final class TrainerMem {
+public final class TrainerMemory {
 
-  private TrainerMem() {
+  private TrainerMemory() {
 
     // private constructor to enforce noninstantiability
   }
 
 
   // XXX GN: this is used for training
-  public static void trainWithSplittingFromMemory(String inputFileName, String modelFileName)
+  public static void trainWithSplittingFromMemory(String conllFileName, String modelFileName)
       throws IOException {
 
     System.out.println("Start training with createAndTrainWithSplittingFromMemory!");
@@ -57,9 +57,9 @@ public final class TrainerMem {
     long trainingStartTime = System.currentTimeMillis();
 
     // GN: internalize CONLL data in 2-Dim sentences
-    System.out.println("Internalize training data from: " + inputFileName);
+    System.out.println("Internalize training data from: " + conllFileName);
 
-    List<Sentence> sentences = ConllUtils.readConllFile(inputFileName, true);
+    List<Sentence> sentences = ConllUtils.readConllFile(conllFileName, true);
     Alphabet alpha = new Alphabet();
     FeatureModel model = null;
     ParsingAlgorithm algorithm = null;

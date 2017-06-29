@@ -46,7 +46,7 @@ public final class MDParser {
   public static void train(String modelFileName, String corpusFileName) {
 
     try {
-      Trainer.trainWithSplittingFromDisk(corpusFileName, modelFileName);
+      Trainer.train(corpusFileName, modelFileName);
     } catch (IOException e) {
       logger.error(e.getLocalizedMessage(), e);
     }

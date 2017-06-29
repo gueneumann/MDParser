@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import de.dfki.lt.mdparser.caller.MDPrunner;
 import de.dfki.lt.mdparser.eval.Eval;
-import de.dfki.lt.mdparser.parser.Trainer;
+import de.dfki.lt.mdparser.parser.TrainerFiles;
 
 public final class MDPtester {
 
@@ -20,7 +20,7 @@ public final class MDPtester {
 
     // training
     System.out.println("Do training with: " + trainConllFileName);
-    Trainer.trainWithSplittingFromDisk(trainConllFileName, modelFileName);
+    TrainerFiles.trainWithSplittingFromDisk(trainConllFileName, modelFileName);
     System.out.println("\n");
 
     // evaluation
@@ -46,6 +46,14 @@ public final class MDPtester {
 
       trainAndEvaluate("resources/input/de-train-2009.conll", "de-2009.zip",
           "resources/input/de-test-2009.conll", "resources/input/de-result-2009.conll");
+
+      // DE
+      trainAndEvaluate("de-train-2009.conll", "de-2009.zip",
+          "de-test-2009.conll", "de-2009-result.conll");
+
+      // EN
+      trainAndEvaluate("en-train-2009.conll", "en-2009.zip",
+          "en-test-2009.conll", "en-2009-result.conll");
 
     } catch (IOException e) {
       e.printStackTrace();
