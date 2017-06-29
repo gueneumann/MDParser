@@ -2,11 +2,15 @@ package de.dfki.lt.mdparser.caller;
 
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
-import de.dfki.lt.mdparser.archive.Archivator;
-import de.dfki.lt.mdparser.data.Data;
+import de.dfki.lt.mdparser.data.LinearizedSentence;
+import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.eval.Eval;
-import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.parser.Parser;
 
 public final class MDPrunner {
@@ -17,56 +21,46 @@ public final class MDPrunner {
   }
 
 
-  public static Eval conllFileParsingAndEval(String conllFile, String resultFile, String modelFile)
+  public static Eval parseAndEvalConllFile(String conllFileName, String resultFileName, String modelFileName)
       throws IOException {
 
-    Data data = new Data(conllFile, false);
-    System.out.println("No. of sentences: " + data.getSentences().length);
-
-    Archivator arch = new Archivator(modelFile);
-    arch.extract();
-    Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-
-    Parser.parseCombined(data, arch, alphabetParser, false);
-
-    arch.close();
-
-    data.writeToFile(resultFile);
-    return new Eval(conllFile, resultFile, 6, 6, 7, 7);
+    List<Sentence> sentencesList = Parser.parse(conllFileName, modelFileName);
+    writeSentences(sentencesList, resultFileName);
+    return new Eval(conllFileName, resultFileName, 6, 6, 7, 7);
   }
 
 
-  public static void conllFileParsingAndLinearize(String conllFile, String resultFile, String modelFile)
+  public static void parseConllFileAndLinearize(String conllFileName, String resultFileName, String modelFileName)
       throws IOException {
 
-    Data data = new Data(conllFile, false);
-    System.out.println("No. of sentences: " + data.getSentences().length);
-
-    Archivator arch = new Archivator(modelFile);
-    arch.extract();
-    Alphabet alphabetParser = new Alphabet(arch.getParserAlphabetInputStream());
-    Parser.parseCombined(data, arch, alphabetParser, false);
-
-    arch.close();
-
-    data.testLinearizedToFile(resultFile);
+    List<Sentence> sentencesList = Parser.parse(conllFileName, modelFileName);
+    writeLinearizedSentences(sentencesList, resultFileName);
   }
 
 
-  public static void main(String[] args)
+  public static void writeSentences(List<Sentence> sentencesList, String resultFileName)
       throws IOException {
 
-    String conllFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test.conll";
-    String resultFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-ud-test-result.conll";
-    String modelFile = "/Users/gune00/data/UniversalDependencies/conll/German/de-MDPmodel.zip";
+    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+        Paths.get(resultFileName), StandardCharsets.UTF_8))) {
+      for (Sentence oneSent : sentencesList) {
+        out.println(oneSent);
+      }
+    }
+  }
 
-    conllFile = "resources/input/ptb3-std-test.conll";
-    resultFile = "resources/input/ptb3-std-test.conll-result.conll";
-    modelFile = "ptb3-std.zip";
 
-    Eval evaluator = conllFileParsingAndEval(conllFile, resultFile, modelFile);
-    System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
-    System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
-    //conllFileParsingAndLinearize(conllFile, resultFile, modelFile);
+  public static void writeLinearizedSentences(List<Sentence> sentencesList, String resultFileName)
+      throws IOException {
+
+    try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
+        Paths.get(resultFileName), StandardCharsets.UTF_8))) {
+      for (Sentence oneSentence : sentencesList) {
+        LinearizedSentence linearizedSentence = new LinearizedSentence(oneSentence);
+        linearizedSentence.linearizedDependencyStructure();
+        List<String> linSenString = linearizedSentence.getLinearizedSentence();
+        out.println(linSenString);
+      }
+    }
   }
 }

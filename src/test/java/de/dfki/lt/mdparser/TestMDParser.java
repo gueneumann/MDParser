@@ -14,10 +14,11 @@ import org.junit.Test;
 
 import de.bwaldvogel.liblinear.Linear;
 import de.dfki.lt.mdparser.caller.MDPrunner;
-import de.dfki.lt.mdparser.caller.MDPtrainer;
 import de.dfki.lt.mdparser.config.ConfigKeys;
 import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.eval.Eval;
+import de.dfki.lt.mdparser.parser.Trainer;
+import de.dfki.lt.mdparser.parser.TrainerMem;
 
 
 public class TestMDParser {
@@ -74,7 +75,7 @@ public class TestMDParser {
   private void testTrainFiles(String modelName, String algorithmId)
       throws IOException {
 
-    MDPtrainer.train("src/test/resources/corpora/de-train-2009.conll",
+    Trainer.trainWithSplittingFromDisk("src/test/resources/corpora/de-train-2009.conll",
         GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
 
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
@@ -141,7 +142,7 @@ public class TestMDParser {
   private void testTrainMemory(String modelName, String algorithmId)
       throws IOException {
 
-    MDPtrainer.trainMem("src/test/resources/corpora/de-train-2009.conll",
+    TrainerMem.trainWithSplittingFromMemory("src/test/resources/corpora/de-train-2009.conll",
         GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
 
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
@@ -164,7 +165,7 @@ public class TestMDParser {
   private void testEval(String modelName, double expectedParentAccuracy, double expectedLabelAccuracy)
       throws IOException {
 
-    Eval evaluator = MDPrunner.conllFileParsingAndEval(
+    Eval evaluator = MDPrunner.parseAndEvalConllFile(
         "src/test/resources/corpora/de-test-2009.conll",
         "src/test/resources/corpora/de-result-2009.conll",
         GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());

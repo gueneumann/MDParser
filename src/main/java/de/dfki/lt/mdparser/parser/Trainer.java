@@ -6,8 +6,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,9 +32,9 @@ import de.bwaldvogel.liblinear.Problem;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
+import de.dfki.lt.mdparser.archive.Archivator;
 import de.dfki.lt.mdparser.config.ConfigKeys;
 import de.dfki.lt.mdparser.config.GlobalConfig;
-import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
@@ -38,28 +42,35 @@ import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
 
-public class Trainer {
+public final class Trainer {
 
-  private double bias = -1;
+  private Trainer() {
+
+    // private constructor to enforce noninstantiability
+  }
 
 
   // XXX GN: this is used for training
-  public void createAndTrainWithSplittingFromDisk(String inputFile)
+  public static void trainWithSplittingFromDisk(String conllFileName, String modelFileName)
       throws IOException {
 
-    boolean noLabels = false;
     System.out.println("Start training with createAndTrainWithSplittingFromDisk!");
+    deleteModelBuildeFolder();
+
+    boolean noLabels = false;
+    double bias = -1;
+
+    long trainingStartTime = System.currentTimeMillis();
 
     // GN: internalize CONLL data in 2-Dim sentences; max 0-12 conll columns are considered
-    System.out.println("Internalize training data from: " + inputFile);
-    Data data = new Data(inputFile, true);
+    System.out.println("Internalize training data from: " + conllFileName);
+    List<Sentence> sentences = ConllUtils.readConllFile(conllFileName, true);
 
     // GN: alpha is used for the mapping of integer to feature name
     // it is incrementally built during training for all features that are added
     // to the model
     Alphabet alpha = new Alphabet();
     // GN: the feature templates functions
-    Sentence[] sentences = data.getSentences();
     FeatureModel featureModel = null;
     ParsingAlgorithm algorithm = null;
     String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
@@ -80,11 +91,10 @@ public class Trainer {
 
     // GN: for each training sentence example do:
     // NOTE: this is a sequential step
-    System.out.println("Create feature vectors for data: " + sentences.length);
+    System.out.println("Create feature vectors for data: " + sentences.size());
     System.out.println("Create files in " + GlobalConfig.FEATURE_VECTORS_FOLDER);
     Files.createDirectories(GlobalConfig.FEATURE_VECTORS_FOLDER);
-    for (int n = 0; n < sentences.length; n++) {
-      Sentence sent = sentences[n];
+    for (Sentence sent : sentences) {
       // featureModel.initializeStaticFeaturesCombined(sent, true);
 
       // GN: call the parser on each training example to "re-play" the parser configurations
@@ -181,7 +191,7 @@ public class Trainer {
     // adjust them and store them in split and merge into files of acceptable size
     System.out.println(
         "Adjust splitting files in " + GlobalConfig.SPLIT_INITIAL_FOLDER
-        + " and store them in " + GlobalConfig.SPLIT_ADJUST_FOLDER);
+            + " and store them in " + GlobalConfig.SPLIT_ADJUST_FOLDER);
     Files.createDirectories(GlobalConfig.SPLIT_ADJUST_FOLDER);
     Map<String, String> newSplitMap = new LinkedHashMap<>();
     int curSize = 0;
@@ -287,14 +297,14 @@ public class Trainer {
 
     System.out.println(
         "Compute the weights and the final model files in " + GlobalConfig.SPLIT_MODELS_FOLDER
-        + " and alphabet files in " + GlobalConfig.SPLIT_ALPHA_FOLDER);
+            + " and alphabet files in " + GlobalConfig.SPLIT_ALPHA_FOLDER);
 
     // compact files
     List<Path> filesToCompact = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
       stream.forEach(x -> filesToCompact.add(x));
     }
-    TrainWorker trainWorker = new TrainWorker(alpha, this.bias);
+    TrainWorker trainWorker = new TrainWorker(alpha, bias);
     if (trainingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
       ForkJoinPool compactingForkJoinPool = new ForkJoinPool(trainingThreads);
@@ -311,6 +321,68 @@ public class Trainer {
     System.out.println("Make single alphabet file " + GlobalConfig.ALPHA_FILE + " from splitA files");
     recreateOneAlphabetAndAdjustModels(
         GlobalConfig.ALPHA_FILE, GlobalConfig.SPLIT_ALPHA_FOLDER, GlobalConfig.SPLIT_MODELS_FOLDER);
+
+    long trainingEndTime = System.currentTimeMillis();
+    System.out.println("Complete Training time: " + ((trainingEndTime - trainingStartTime)) + " milliseconds.");
+
+    Archivator arch = new Archivator(modelFileName);
+    arch.pack();
+  }
+
+
+  public static void deleteModelBuildeFolder()
+      throws IOException {
+
+    if (GlobalConfig.getModelBuildFolder().toString().trim().length() == 0) {
+      deleteFolder(GlobalConfig.SPLIT_ALPHA_FOLDER);
+      deleteFolder(GlobalConfig.FEATURE_VECTORS_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_INITIAL_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_ADJUST_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_COMPACT_FOLDER);
+      deleteFolder(GlobalConfig.SPLIT_MODELS_FOLDER);
+      deleteFolder(GlobalConfig.FEATURE_VECTORS_FOLDER);
+      try {
+        Files.delete(GlobalConfig.ALPHA_FILE);
+      } catch (NoSuchFileException e) {
+        // nothing to do, file already deleted
+      }
+      try {
+        Files.delete(GlobalConfig.SPLIT_FILE);
+      } catch (NoSuchFileException e) {
+        // nothing to do, file already deleted
+      }
+    } else {
+      deleteFolder(GlobalConfig.getModelBuildFolder());
+    }
+  }
+
+
+  private static void deleteFolder(Path path)
+      throws IOException {
+
+    try {
+      Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+            throws IOException {
+
+          Files.delete(file);
+          return FileVisitResult.CONTINUE;
+        }
+
+
+        @Override
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+            throws IOException {
+
+          Files.delete(dir);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    } catch (NoSuchFileException e) {
+      // nothing to do, file already deleted
+    }
   }
 
 
@@ -582,7 +654,7 @@ public class Trainer {
 
   static void removeUnusedFeaturesFromModel(
       Path modelPath, Set<Integer> unusedFeatures, int numberOfFeatures)
-          throws IOException {
+      throws IOException {
 
     BufferedReader in = Files.newBufferedReader(modelPath, StandardCharsets.UTF_8);
     String solverType = in.readLine();
