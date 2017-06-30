@@ -49,9 +49,9 @@ public final class ConllUtils {
 
             for (int j = 0; j < curWord.length; j++) {
               if (!train && (j == 6 || j == 7 || j == 8 || j == 9)) {
-                sentArray[i][j] = "_";
+                sentArray[i][j] = null;
               } else if (train && (j == 8 || j == 9)) {
-                sentArray[i][j] = "_";
+                sentArray[i][j] = null;
               } else {
                 sentArray[i][j] = curWord[j];
               }
