@@ -41,8 +41,8 @@ public final class Parser {
     System.out.println("No. of sentences: " + sentencesList.size());
 
     Archivator arch = new Archivator(modelFileName);
-    arch.extract();
-    Alphabet alphabet = new Alphabet(arch.getParserAlphabetInputStream());
+    Alphabet alphabet = new Alphabet(arch.getInputStream(
+        GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.ALPHA_FILE).normalize().toString()));
 
     boolean noLabels = false;
 
@@ -86,8 +86,6 @@ public final class Parser {
       sentencesList.stream().forEach(x -> algorithm.parse(x, featureModel, noLabels, feature2ModelMap));
     }
 
-    arch.close();
-
     // System.out.println("All worker threads have completed.");
     long processEnd = System.currentTimeMillis();
     System.out.println("No. of threads: " + parsingThreads);
@@ -107,14 +105,19 @@ public final class Parser {
 
     Map<String, Model> feature2ModelMap = new HashMap<>();
     Map<String, Model> modelId2ModelMap = new HashMap<>();
-    Map<String, String> feature2ModelFileNameMap = readSplitFile(arch.getSplitFileInputStream());
+    Map<String, String> feature2ModelFileNameMap =
+        readSplitFile(arch.getInputStream(
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_FILE).normalize().toString()));
     for (Map.Entry<String, String> oneFeature2ModelFileName : feature2ModelFileNameMap.entrySet()) {
       String modelId = Paths.get(oneFeature2ModelFileName.getValue()).getFileName().toString();
       Model model = modelId2ModelMap.get(modelId);
       if (null == model) {
-        Path modelPath = GlobalConfig.SPLIT_MODELS_FOLDER.resolve(modelId);
-        InputStream is = arch.getInputStream(modelPath.toString());
-        model = Model.load(new InputStreamReader(is));
+        Path modelPath =
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_MODELS_FOLDER).normalize()
+                .resolve(modelId);
+        try (InputStream is = arch.getInputStream(modelPath.toString())) {
+          model = Model.load(new InputStreamReader(is));
+        }
       }
       feature2ModelMap.put(oneFeature2ModelFileName.getKey(), model);
       modelId2ModelMap.put(modelId, model);

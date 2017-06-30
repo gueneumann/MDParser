@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -36,7 +37,8 @@ public class TestMDParser {
 
 
   @Test
-  public void testTrainEvalFilesCovington() throws IOException {
+  public void testTrainEvalFilesCovington()
+      throws IOException, InterruptedException {
 
     String trainingMode = "files";
     String algorithmId = "covington";
@@ -51,12 +53,15 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
 
     testTrainFiles(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
 
   @Test
-  public void testTrainEvalFilesStack() throws IOException {
+  public void testTrainEvalFilesStack()
+      throws IOException, InterruptedException {
 
     String trainingMode = "files";
     String algorithmId = "stack";
@@ -71,6 +76,8 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
 
     testTrainFiles(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -78,8 +85,7 @@ public class TestMDParser {
   private void testTrainFiles(String modelName, String algorithmId)
       throws IOException {
 
-    Trainer.train("src/test/resources/corpora/de-train-2009.conll",
-        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
+    Trainer.train("src/test/resources/corpora/de-train-2009.conll", modelName);
 
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
 
@@ -112,7 +118,7 @@ public class TestMDParser {
 
   @Test
   public void testTrainEvalMemoryCovington()
-      throws IOException {
+      throws IOException, InterruptedException {
 
     String trainingMode = "memory";
     String algorithmId = "covington";
@@ -125,13 +131,15 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
 
     testTrainMemory(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
 
   @Test
   public void testTrainEvalMemoryStack()
-      throws IOException {
+      throws IOException, InterruptedException {
 
     String trainingMode = "memory";
     String algorithmId = "stack";
@@ -144,6 +152,8 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
 
     testTrainMemory(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -151,8 +161,7 @@ public class TestMDParser {
   private void testTrainMemory(String modelName, String algorithmId)
       throws IOException {
 
-    Trainer.train("src/test/resources/corpora/de-train-2009.conll",
-        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
+    Trainer.train("src/test/resources/corpora/de-train-2009.conll", modelName);
 
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
 
@@ -177,7 +186,7 @@ public class TestMDParser {
     Eval evaluator = MDPrunner.parseAndEvalConllFile(
         "src/test/resources/corpora/de-test-2009.conll",
         "src/test/resources/corpora/de-result-2009.conll",
-        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
+        modelName);
     assertThat(evaluator.getParentsAccuracy()).isEqualTo(expectedParentAccuracy);
     assertThat(evaluator.getLabelsAccuracy()).isEqualTo(expectedLabelAccuracy);
   }

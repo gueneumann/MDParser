@@ -204,9 +204,10 @@ public final class TrainerMemory {
         //System.out.println(curFeature);
         String nValForCurFeature = newSplitMap.get(curFeature);
         n = Integer.valueOf(nValForCurFeature);
+        // normalize split file path
         String normalizedPath =
-            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(nValForCurFeature + ".txt")
-                .toString().replaceAll("\\" + File.separator, "/");
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_ADJUST_FOLDER).normalize()
+                .resolve(nValForCurFeature + ".txt").toString().replaceAll("\\" + File.separator, "/");
         out.println(String.format("%s %s %s", curFeature, normalizedPath, nValForCurFeature + ".txt"));
         if (!b[n]) {
           curFeatureVectorList = mergedMap.get(nValForCurFeature);

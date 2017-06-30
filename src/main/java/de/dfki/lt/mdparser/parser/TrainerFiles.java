@@ -277,9 +277,10 @@ public final class TrainerFiles {
         String newFile = oneSplitValFilePair.getValue();
         Integer index = Integer.valueOf(splitVal.split("\\.")[0]);
         String featureString = alpha.getFeature(index);
-        // normalize separators
+        // normalize split file path
         String normalizedPath =
-            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(newFile).toString().replaceAll("\\" + File.separator, "/");
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_ADJUST_FOLDER).normalize()
+                .resolve(newFile).toString().replaceAll("\\" + File.separator, "/");
         out.println(String.format("%s %s %s", featureString, normalizedPath, splitVal));
       }
     }

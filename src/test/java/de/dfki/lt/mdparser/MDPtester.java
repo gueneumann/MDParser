@@ -1,6 +1,7 @@
 package de.dfki.lt.mdparser;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import de.dfki.lt.mdparser.caller.MDPrunner;
 import de.dfki.lt.mdparser.eval.Eval;
@@ -16,12 +17,15 @@ public final class MDPtester {
 
   private static void trainAndEvaluate(
       String trainConllFileName, String modelFileName, String testConllFileName, String resultFileName)
-      throws IOException {
+      throws IOException, InterruptedException {
 
     // training
     System.out.println("Do training with: " + trainConllFileName);
     TrainerFiles.trainWithSplittingFromDisk(trainConllFileName, modelFileName);
     System.out.println("\n");
+
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
 
     // evaluation
     System.out.println("Do evaluation with: " + testConllFileName);
@@ -55,7 +59,7 @@ public final class MDPtester {
       trainAndEvaluate("en-train-2009.conll", "en-2009.zip",
           "en-test-2009.conll", "en-2009-result.conll");
 
-    } catch (IOException e) {
+    } catch (IOException | InterruptedException e) {
       e.printStackTrace();
     }
   }
