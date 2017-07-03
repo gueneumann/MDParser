@@ -88,7 +88,8 @@ public final class MDParser {
   public static void parse(String modelFileName, String corpusFileName, String resultFileName) {
 
     try {
-      List<Sentence> sentencesList = Parser.parse(corpusFileName, modelFileName);
+      Parser parser = new Parser(modelFileName);
+      List<Sentence> sentencesList = parser.parse(corpusFileName);
       MDPrunner.writeSentences(sentencesList, resultFileName);
     } catch (IOException e) {
       logger.error(e.getLocalizedMessage(), e);

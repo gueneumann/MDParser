@@ -138,7 +138,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
         if (state.isPermissible()) {
           super.incNumberOfConfigurations();
           FeatureVector featureVector = covFeatureModel.applyCombined(state, false, noLabels);
-          //System.out.println(fvParser);
+          //System.out.println(featureVector);
 
           Model curModel = feature2ModelMap.get(featureVector.getFeature("pj").getFeatureString());
           if (curModel == null) {

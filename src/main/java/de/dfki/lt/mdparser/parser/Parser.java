@@ -26,48 +26,72 @@ import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
 import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
 
-public final class Parser {
+public class Parser {
 
-  private Parser() {
+  private final FeatureModel featureModel;
+  private final ParsingAlgorithm algorithm;
+  private Map<String, Model> feature2ModelMap;
+  private boolean noLabels;
 
-    // private constructor to enforce noninstantiability
-  }
 
-
-  public static List<Sentence> parse(String conllFileName, String modelFileName)
+  public Parser(String modelFileName)
       throws IOException {
 
-    List<Sentence> sentencesList = ConllUtils.readConllFile(conllFileName, false);
-    System.out.println("No. of sentences: " + sentencesList.size());
+    this.noLabels = false;
 
     Archivator arch = new Archivator(modelFileName);
     Alphabet alphabet = new Alphabet(arch.getInputStream(
         GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.ALPHA_FILE).normalize().toString()));
 
-    boolean noLabels = false;
-
     long modelReadStart = System.currentTimeMillis();
-    Map<String, Model> feature2ModelMap = readModels(arch);
+    this.feature2ModelMap = readModels(arch);
     //readSplitAlphabets(arch);
     long modelReadEnd = System.currentTimeMillis();
     System.out.println("Time to read model (msec): " + (modelReadEnd - modelReadStart));
     //gds readSplitModelsL(arch);
-    final FeatureModel featureModel;
-    final ParsingAlgorithm algorithm;
     String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
     System.out.println(String.format("using algorithm \"%s\"", algorithmId));
     if (algorithmId.equals("covington")) {
-      featureModel = new CovingtonFeatureModel(alphabet);
-      algorithm = new CovingtonAlgorithm();
+      this.featureModel = new CovingtonFeatureModel(alphabet);
+      this.algorithm = new CovingtonAlgorithm();
     } else if (algorithmId.equals("stack")) {
-      featureModel = new StackFeatureModel(alphabet);
-      algorithm = new StackAlgorithm();
+      this.featureModel = new StackFeatureModel(alphabet);
+      this.algorithm = new StackAlgorithm();
     } else {
-      System.err.println("unknown algorithm " + algorithmId);
-      return null;
+      throw new IOException("unknown algorithm " + algorithmId);
     }
+  }
+
+
+  public List<Sentence> parse(String conllFileName)
+      throws IOException {
+
+    List<Sentence> sentencesList = ConllUtils.readConllFile(conllFileName, false);
+    System.out.println("No. of sentences: " + sentencesList.size());
 
     long processStart = System.currentTimeMillis();
+    int parsingThreads = GlobalConfig.getInt(ConfigKeys.PARSING_THREADS);
+    if (parsingThreads < 0) {
+      parsingThreads = Runtime.getRuntime().availableProcessors();
+    }
+    parse(sentencesList);
+
+    // System.out.println("All worker threads have completed.");
+    long processEnd = System.currentTimeMillis();
+    System.out.println("No. of threads: " + parsingThreads);
+    System.out.println("Time to parse (msec): " + (processEnd - processStart));
+    System.out.println("Speed (sent/s): " + (sentencesList.size() * 1000.0) / (processEnd - processStart));
+    System.out.println("Number of configurations: " + this.algorithm.getNumberOfConfigurations());
+    System.out.println(
+        "Average number of configurations per sentence: "
+            + this.algorithm.getNumberOfConfigurations() / sentencesList.size());
+
+    return sentencesList;
+  }
+
+
+  public List<Sentence> parse(List<Sentence> sentencesList) {
+
     int parsingThreads = GlobalConfig.getInt(ConfigKeys.PARSING_THREADS);
     if (parsingThreads < 0) {
       parsingThreads = Runtime.getRuntime().availableProcessors();
@@ -78,23 +102,15 @@ public final class Parser {
       try {
         forkJoinPool.submit(
             () -> sentencesList.stream().parallel()
-            .forEach(x -> algorithm.parse(x, featureModel, noLabels, feature2ModelMap))).get();
+                .forEach(x -> this.algorithm.parse(x, this.featureModel, this.noLabels, this.feature2ModelMap)))
+                .get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
     } else {
-      sentencesList.stream().forEach(x -> algorithm.parse(x, featureModel, noLabels, feature2ModelMap));
+      sentencesList.stream()
+          .forEach(x -> this.algorithm.parse(x, this.featureModel, this.noLabels, this.feature2ModelMap));
     }
-
-    // System.out.println("All worker threads have completed.");
-    long processEnd = System.currentTimeMillis();
-    System.out.println("No. of threads: " + parsingThreads);
-    System.out.println("Time to parse (msec): " + (processEnd - processStart));
-    System.out.println("Speed (sent/s): " + (sentencesList.size() * 1000.0) / (processEnd - processStart));
-    System.out.println("Number of configurations: " + algorithm.getNumberOfConfigurations());
-    System.out.println(
-        "Average number of configurations per sentence: "
-            + algorithm.getNumberOfConfigurations() / sentencesList.size());
 
     return sentencesList;
   }

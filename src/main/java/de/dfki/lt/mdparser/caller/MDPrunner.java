@@ -24,7 +24,8 @@ public final class MDPrunner {
   public static Eval parseAndEvalConllFile(String conllFileName, String resultFileName, String modelFileName)
       throws IOException {
 
-    List<Sentence> sentencesList = Parser.parse(conllFileName, modelFileName);
+    Parser parser = new Parser(modelFileName);
+    List<Sentence> sentencesList = parser.parse(conllFileName);
     writeSentences(sentencesList, resultFileName);
     return new Eval(conllFileName, resultFileName, 6, 6, 7, 7);
   }
@@ -33,7 +34,8 @@ public final class MDPrunner {
   public static void parseConllFileAndLinearize(String conllFileName, String resultFileName, String modelFileName)
       throws IOException {
 
-    List<Sentence> sentencesList = Parser.parse(conllFileName, modelFileName);
+    Parser parser = new Parser(modelFileName);
+    List<Sentence> sentencesList = parser.parse(conllFileName);
     writeLinearizedSentences(sentencesList, resultFileName);
   }
 
