@@ -31,7 +31,7 @@ public class Sentence {
 
 
   public Integer getRootPosition() {
-  
+
     return this.rootPosition;
   }
 
@@ -43,7 +43,7 @@ public class Sentence {
 
 
   public Feature[][][] getStaticFeatures() {
-  
+
     return this.staticFeatures;
   }
 
@@ -59,14 +59,15 @@ public class Sentence {
 
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < this.sentArray.length; i++) {
-      for (int j = 0; j < this.sentArray[0].length - 1; j++) {
+      for (int j = 0; j < this.sentArray[0].length; j++) {
         if (this.sentArray[i][j] == null) {
           this.sentArray[i][j] = "_";
         }
         sb.append(this.sentArray[i][j]);
-        sb.append("\t");
+        if (j < this.sentArray[0].length - 1) {
+          sb.append("\t");
+        }
       }
-      sb.append(this.sentArray[i][this.sentArray[0].length - 1]);
       sb.append("\n");
     }
     return sb.toString();

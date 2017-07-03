@@ -8,16 +8,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import de.bwaldvogel.liblinear.Linear;
 import de.dfki.lt.mdparser.caller.MDPrunner;
-import de.dfki.lt.mdparser.caller.MDPtrainer;
 import de.dfki.lt.mdparser.config.ConfigKeys;
 import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.eval.Eval;
+import de.dfki.lt.mdparser.parser.Trainer;
 
 
 public class TestMDParser {
@@ -36,37 +37,47 @@ public class TestMDParser {
 
 
   @Test
-  public void testTrainEvalFilesCovington() throws IOException {
+  public void testTrainEvalFilesCovington()
+      throws IOException, InterruptedException {
 
+    String trainingMode = "files";
     String algorithmId = "covington";
     String modelName = "de-2009-" + algorithmId + ".zip";
 
     double expectedParentAccuracy = 0.841186515716906;
     double expectedLabelAccuracy = 0.8006767440389602;
 
+    GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_MODE, trainingMode);
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
     // parallel training is not deterministic, so restrict number of threads to 1
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
 
     testTrainFiles(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
 
   @Test
-  public void testTrainEvalFilesStack() throws IOException {
+  public void testTrainEvalFilesStack()
+      throws IOException, InterruptedException {
 
+    String trainingMode = "files";
     String algorithmId = "stack";
     String modelName = "de-2009-" + algorithmId + ".zip";
 
     double expectedParentAccuracy = 0.8100056922395801;
     double expectedLabelAccuracy = 0.7698437796470812;
 
+    GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_MODE, trainingMode);
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
     // parallel training is not deterministic, so restrict number of threads to 1
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
 
     testTrainFiles(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -74,8 +85,7 @@ public class TestMDParser {
   private void testTrainFiles(String modelName, String algorithmId)
       throws IOException {
 
-    MDPtrainer.train("src/test/resources/corpora/de-train-2009.conll",
-        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
+    Trainer.train("src/test/resources/corpora/de-train-2009.conll", modelName);
 
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
 
@@ -108,32 +118,42 @@ public class TestMDParser {
 
   @Test
   public void testTrainEvalMemoryCovington()
-      throws IOException {
+      throws IOException, InterruptedException {
 
+    String trainingMode = "memory";
     String algorithmId = "covington";
     String modelName = "de-2009-" + algorithmId + ".zip";
+
     double expectedParentAccuracy = 0.8452343305293782;
     double expectedLabelAccuracy = 0.8051672885965467;
 
+    GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_MODE, trainingMode);
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
 
     testTrainMemory(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
 
   @Test
   public void testTrainEvalMemoryStack()
-      throws IOException {
+      throws IOException, InterruptedException {
 
+    String trainingMode = "memory";
     String algorithmId = "stack";
     String modelName = "de-2009-" + algorithmId + ".zip";
+
     double expectedParentAccuracy = 0.8104800455379166;
     double expectedLabelAccuracy = 0.7700967680728606;
 
+    GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_MODE, trainingMode);
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
 
     testTrainMemory(modelName, algorithmId);
+    // for some reason the model archive is not immediately available in the file system, so we wait a moment
+    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -141,8 +161,7 @@ public class TestMDParser {
   private void testTrainMemory(String modelName, String algorithmId)
       throws IOException {
 
-    MDPtrainer.trainMem("src/test/resources/corpora/de-train-2009.conll",
-        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
+    Trainer.train("src/test/resources/corpora/de-train-2009.conll", modelName);
 
     assertThat(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName)).exists();
 
@@ -164,10 +183,10 @@ public class TestMDParser {
   private void testEval(String modelName, double expectedParentAccuracy, double expectedLabelAccuracy)
       throws IOException {
 
-    Eval evaluator = MDPrunner.conllFileParsingAndEval(
+    Eval evaluator = MDPrunner.parseAndEvalConllFile(
         "src/test/resources/corpora/de-test-2009.conll",
         "src/test/resources/corpora/de-result-2009.conll",
-        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
+        modelName);
     assertThat(evaluator.getParentsAccuracy()).isEqualTo(expectedParentAccuracy);
     assertThat(evaluator.getLabelsAccuracy()).isEqualTo(expectedLabelAccuracy);
   }

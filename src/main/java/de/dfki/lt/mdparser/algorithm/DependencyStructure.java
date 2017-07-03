@@ -58,8 +58,14 @@ public class DependencyStructure {
   }
 
 
+  public int getSize() {
+
+    return this.size;
+  }
+
+
   public void constructDependenciesArray() {
-  
+
     Iterator<Dependency> iter = this.dependencies.iterator();
     Dependency[] deps = new Dependency[this.size];
     while (iter.hasNext()) {
@@ -121,7 +127,7 @@ public class DependencyStructure {
 
 
   public Set<Integer> getAllDependentsTransitive(Integer token) {
-  
+
     Stack<Integer> st = new Stack<Integer>();
     st.add(token);
     Set<Integer> allDeps = new HashSet<Integer>();

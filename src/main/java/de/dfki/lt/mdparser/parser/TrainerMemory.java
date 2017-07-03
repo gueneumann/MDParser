@@ -23,9 +23,9 @@ import de.bwaldvogel.liblinear.SolverType;
 import de.dfki.lt.mdparser.algorithm.CovingtonAlgorithm;
 import de.dfki.lt.mdparser.algorithm.ParsingAlgorithm;
 import de.dfki.lt.mdparser.algorithm.StackAlgorithm;
+import de.dfki.lt.mdparser.archive.Archivator;
 import de.dfki.lt.mdparser.config.ConfigKeys;
 import de.dfki.lt.mdparser.config.GlobalConfig;
-import de.dfki.lt.mdparser.data.Data;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.features.Alphabet;
 import de.dfki.lt.mdparser.features.CovingtonFeatureModel;
@@ -34,27 +34,33 @@ import de.dfki.lt.mdparser.features.FeatureModel;
 import de.dfki.lt.mdparser.features.FeatureVector;
 import de.dfki.lt.mdparser.features.StackFeatureModel;
 
-public class TrainerMem {
+public final class TrainerMemory {
 
-  private double bias = -1;
+  private TrainerMemory() {
+
+    // private constructor to enforce noninstantiability
+  }
 
 
   // XXX GN: this is used for training
-  public void createAndTrainWithSplittingFromMemory(String inputFileName)
+  public static void trainWithSplittingFromMemory(String conllFileName, String modelFileName)
       throws IOException {
 
+    System.out.println("Start training with createAndTrainWithSplittingFromMemory!");
+    Trainer.deleteModelBuildeFolder();
+
     boolean noLabels = false;
+    double bias = -1;
+
     Map<String, List<FeatureVector>> splitMap = new HashMap<String, List<FeatureVector>>();
     long startTime = System.currentTimeMillis();
-
-    System.out.println("Start training with createAndTrainWithSplittingFromMemory!");
+    long trainingStartTime = System.currentTimeMillis();
 
     // GN: internalize CONLL data in 2-Dim sentences
-    System.out.println("Internalize training data from: " + inputFileName);
+    System.out.println("Internalize training data from: " + conllFileName);
 
-    Data data = new Data(inputFileName, true);
+    List<Sentence> sentences = ConllUtils.readConllFile(conllFileName, true);
     Alphabet alpha = new Alphabet();
-    Sentence[] sentences = data.getSentences();
     FeatureModel model = null;
     ParsingAlgorithm algorithm = null;
     String algorithmId = GlobalConfig.getString(ConfigKeys.ALGORITHM);
@@ -70,10 +76,9 @@ public class TrainerMem {
       return;
     }
     int totalConfigurations = 0;
-    System.out.println("Create feature vectors for data: " + sentences.length);
+    System.out.println("Create feature vectors for data: " + sentences.size());
     // For each training example x_i = n-th sentence do:
-    for (int n = 0; n < sentences.length; n++) {
-      Sentence sent = sentences[n];
+    for (Sentence sent : sentences) {
       // GN: initialize static features (i.e., concrete values for feature+value instance)
       // check static features for current word j and left words i
       // NOTE: the static and dynamic feature-values are added to the alphabet class as a side-effect
@@ -199,14 +204,15 @@ public class TrainerMem {
         //System.out.println(curFeature);
         String nValForCurFeature = newSplitMap.get(curFeature);
         n = Integer.valueOf(nValForCurFeature);
+        // normalize split file path
         String normalizedPath =
-            GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(nValForCurFeature + ".txt")
-            .toString().replaceAll("\\" + File.separator, "/");
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_ADJUST_FOLDER).normalize()
+                .resolve(nValForCurFeature + ".txt").toString().replaceAll("\\" + File.separator, "/");
         out.println(String.format("%s %s %s", curFeature, normalizedPath, nValForCurFeature + ".txt"));
         if (!b[n]) {
           curFeatureVectorList = mergedMap.get(nValForCurFeature);
           //System.out.println(nValForCurFeature + " " + mergedMap.get(nValForCurFeature).size());
-          Problem prob = readProblem(alpha, false, curFeatureVectorList, this.bias);
+          Problem prob = readProblem(alpha, false, curFeatureVectorList, bias);
           //myReadProblem(compactMap.get(nValForCurFeature), alpha, false, curList);
           //System.out.println(curList.get(0));
           //System.out.println(curList.get(1));
@@ -244,6 +250,12 @@ public class TrainerMem {
         GlobalConfig.ALPHA_FILE, GlobalConfig.SPLIT_ALPHA_FOLDER, GlobalConfig.SPLIT_MODELS_FOLDER);
     long end2 = System.currentTimeMillis();
     System.out.println("... done : " + (end2 - startTime) / 1000 + " seconds.");
+
+    long trainingEndTime = System.currentTimeMillis();
+    System.out.println("Complete Training time: " + ((trainingEndTime - trainingStartTime)) + " milliseconds.");
+
+    Archivator arch = new Archivator(modelFileName);
+    arch.pack();
   }
 
 

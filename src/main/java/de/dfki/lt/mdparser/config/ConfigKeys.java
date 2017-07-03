@@ -12,6 +12,7 @@ public final class ConfigKeys {
   public static final String TRAINING_THREADS = "training.threads";
   public static final String PARSING_THREADS = "parsing.threads";
   public static final String ALGORITHM = "algorithm";
+  public static final String TRAINING_MODE = "training.mode";
 
 
   private ConfigKeys() {
