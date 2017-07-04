@@ -138,6 +138,7 @@ public final class MDParser {
   private static Options createTrainOptions() {
 
     Options trainOptions = new Options();
+
     Option modeOption = new Option("train", false, "run in train mode");
     modeOption.setRequired(true);
     trainOptions.addOption(modeOption);
@@ -159,11 +160,12 @@ public final class MDParser {
   private static Options createEvalOptions() {
 
     Options evalOptions = new Options();
+
     Option modeOption = new Option("eval", false, "run in evaluation mode");
     modeOption.setRequired(true);
     evalOptions.addOption(modeOption);
 
-    Option modelOption = new Option("model", true, "model, to be loaded from file system or classpath");
+    Option modelOption = new Option("model", true, "model, to be loaded from classpath or file system");
     modelOption.setRequired(true);
     modelOption.setArgName("file");
     evalOptions.addOption(modelOption);
@@ -185,11 +187,12 @@ public final class MDParser {
   private static Options createParseOptions() {
 
     Options parseOptions = new Options();
+
     Option modeOption = new Option("parse", false, "run in parse mode");
     modeOption.setRequired(true);
     parseOptions.addOption(modeOption);
 
-    Option modelOption = new Option("model", true, "model, to be loaded from file system or classpath");
+    Option modelOption = new Option("model", true, "model, to be loaded from classpath or file system");
     modelOption.setRequired(true);
     modelOption.setArgName("file");
     parseOptions.addOption(modelOption);
