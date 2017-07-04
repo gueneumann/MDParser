@@ -60,24 +60,132 @@
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-assembly-plugin</artifactId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.0.2</version>
         <configuration>
-          <descriptorRefs>
-            <descriptorRef>jar-with-dependencies</descriptorRef>
-          </descriptorRefs>
-          <archive>
-            <manifest>
-              <mainClass>de.dfki.lt.mdparser.parser.Parser</mainClass>
-            </manifest>
-          </archive>
+          <includes>
+            <include>de/dfki/lt/mdparser/**/*</include>
+          </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>appassembler-maven-plugin</artifactId>
+        <version>1.10</version>
+        <configuration>
+          <configurationDirectory>config</configurationDirectory>
+          <includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
+          <generateRepository>false</generateRepository>
+          <repositoryName>lib</repositoryName>
+          <repositoryLayout>flat</repositoryLayout>
+          <useWildcardClassPath>true</useWildcardClassPath>
+          <platforms>
+            <platform>windows</platform>
+            <platform>unix</platform>
+          </platforms>
+          <binFileExtensions>
+            <unix>.sh</unix>
+          </binFileExtensions>
+          <extraJvmArguments>-Xms4096m -Xmx4096m</extraJvmArguments>
+          <programs>
+            <program>
+              <mainClass>de.dfki.lt.mdparser.caller.MDParser</mainClass>
+              <id>mdparser</id>
+            </program>
+          </programs>
         </configuration>
         <executions>
           <execution>
-            <id>assemble-all</id>
+            <id>appassembler</id>
+            <phase>package</phase>
+            <goals>
+              <goal>assemble</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
+        <executions>
+          <execution>
+            <id>fix-windows-scripts</id>
+            <phase>package</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+            <configuration>
+              <!-- fix appassembler Windows scripts so that they run on top 
+                level and not in the 'bin' folder -->
+              <basedir>${project.build.directory}/appassembler/bin</basedir>
+              <includes>
+                <include>*.bat</include>
+              </includes>
+              <regex>false</regex>
+              <replacements>
+                <replacement>
+                  <token>set BASEDIR=%~dp0\..</token>
+                  <value>set BASEDIR=%~dp0\.</value>
+                </replacement>
+                <replacement>
+                  <token>cd %0\..\..</token>
+                  <value>cd %0\..</value>
+                </replacement>
+              </replacements>
+            </configuration>
+          </execution>
+          <execution>
+            <id>fix-unix-scripts</id>
+            <phase>package</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+            <configuration>
+              <!-- fix appassembler Unix scripts so that they run on top 
+                level and not in the 'bin' folder -->
+              <basedir>${project.build.directory}/appassembler/bin</basedir>
+              <includes>
+                <include>*.sh</include>
+              </includes>
+              <regex>false</regex>
+              <replacements>
+                <replacement>
+                  <token>BASEDIR=`cd "$PRGDIR/.."</token>
+                  <value>BASEDIR=`cd "$PRGDIR/."</value>
+                </replacement>
+              </replacements>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.5.3</version>
+        <executions>
+          <execution>
+            <id>bin-dist-archive</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
             </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/assembly/bin.xml</descriptor>
+              </descriptors>
+            </configuration>
+          </execution>
+          <execution>
+            <id>src-dist-archive</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/assembly/src.xml</descriptor>
+              </descriptors>
+            </configuration>
           </execution>
         </executions>
       </plugin>
