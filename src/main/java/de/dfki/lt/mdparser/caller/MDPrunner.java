@@ -3,6 +3,7 @@ package de.dfki.lt.mdparser.caller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -43,8 +44,15 @@ public final class MDPrunner {
   public static void writeSentences(List<Sentence> sentencesList, String resultFileName)
       throws IOException {
 
+    writeSentences(sentencesList, resultFileName, StandardCharsets.UTF_8);
+  }
+
+
+  public static void writeSentences(List<Sentence> sentencesList, String resultFileName, Charset encoding)
+      throws IOException {
+
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-        Paths.get(resultFileName), StandardCharsets.UTF_8))) {
+        Paths.get(resultFileName), encoding))) {
       for (Sentence oneSent : sentencesList) {
         out.println(oneSent);
       }
@@ -55,8 +63,15 @@ public final class MDPrunner {
   public static void writeLinearizedSentences(List<Sentence> sentencesList, String resultFileName)
       throws IOException {
 
+    writeLinearizedSentences(sentencesList, resultFileName, StandardCharsets.UTF_8);
+  }
+
+
+  public static void writeLinearizedSentences(List<Sentence> sentencesList, String resultFileName, Charset encoding)
+      throws IOException {
+
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
-        Paths.get(resultFileName), StandardCharsets.UTF_8))) {
+        Paths.get(resultFileName), encoding))) {
       for (Sentence oneSentence : sentencesList) {
         LinearizedSentence linearizedSentence = new LinearizedSentence(oneSentence);
         linearizedSentence.linearizedDependencyStructure();
