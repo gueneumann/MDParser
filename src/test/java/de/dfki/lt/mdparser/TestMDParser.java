@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,8 +52,6 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
 
     testTrainFiles(modelName, algorithmId);
-    // for some reason the model archive is not immediately available in the file system, so we wait a moment
-    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -76,8 +73,6 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.TRAINING_THREADS, 1);
 
     testTrainFiles(modelName, algorithmId);
-    // for some reason the model archive is not immediately available in the file system, so we wait a moment
-    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -131,8 +126,6 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
 
     testTrainMemory(modelName, algorithmId);
-    // for some reason the model archive is not immediately available in the file system, so we wait a moment
-    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -152,8 +145,6 @@ public class TestMDParser {
     GlobalConfig.getInstance().setProperty(ConfigKeys.ALGORITHM, algorithmId);
 
     testTrainMemory(modelName, algorithmId);
-    // for some reason the model archive is not immediately available in the file system, so we wait a moment
-    TimeUnit.SECONDS.sleep(5);
     testEval(modelName, expectedParentAccuracy, expectedLabelAccuracy);
   }
 
@@ -186,7 +177,8 @@ public class TestMDParser {
     Eval evaluator = MDPrunner.parseAndEvalConllFile(
         "src/test/resources/corpora/de-test-2009.conll",
         "src/test/resources/corpora/de-result-2009.conll",
-        modelName);
+        // load model from file system and not classpath
+        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelName).toString());
     assertThat(evaluator.getParentsAccuracy()).isEqualTo(expectedParentAccuracy);
     assertThat(evaluator.getLabelsAccuracy()).isEqualTo(expectedLabelAccuracy);
   }

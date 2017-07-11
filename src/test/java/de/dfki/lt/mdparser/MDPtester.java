@@ -1,9 +1,11 @@
 package de.dfki.lt.mdparser;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Paths;
 
 import de.dfki.lt.mdparser.caller.MDPrunner;
+import de.dfki.lt.mdparser.config.ConfigKeys;
+import de.dfki.lt.mdparser.config.GlobalConfig;
 import de.dfki.lt.mdparser.eval.Eval;
 import de.dfki.lt.mdparser.parser.TrainerFiles;
 
@@ -17,19 +19,18 @@ public final class MDPtester {
 
   private static void trainAndEvaluate(
       String trainConllFileName, String modelFileName, String testConllFileName, String resultFileName)
-      throws IOException, InterruptedException {
+      throws IOException {
 
     // training
     System.out.println("Do training with: " + trainConllFileName);
     TrainerFiles.trainWithSplittingFromDisk(trainConllFileName, modelFileName);
     System.out.println("\n");
 
-    // for some reason the model archive is not immediately available in the file system, so we wait a moment
-    TimeUnit.SECONDS.sleep(5);
-
     // evaluation
     System.out.println("Do evaluation with: " + testConllFileName);
-    Eval evaluator = MDPrunner.parseAndEvalConllFile(testConllFileName, resultFileName, modelFileName);
+    Eval evaluator = MDPrunner.parseAndEvalConllFile(testConllFileName, resultFileName,
+        // load model from file system and not classpath
+        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelFileName).toString());
     System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
     System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
     System.out.println("\n\n");
@@ -59,7 +60,7 @@ public final class MDPtester {
       trainAndEvaluate("en-train-2009.conll", "en-2009.zip",
           "en-test-2009.conll", "en-2009-result.conll");
 
-    } catch (IOException | InterruptedException e) {
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }
