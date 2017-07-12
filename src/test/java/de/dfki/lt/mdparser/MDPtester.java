@@ -1,7 +1,6 @@
 package de.dfki.lt.mdparser;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 
 import de.dfki.lt.mdparser.caller.MDPrunner;
 import de.dfki.lt.mdparser.config.ConfigKeys;
