@@ -37,7 +37,7 @@ public class TestMDParser {
 
   @Test
   public void testTrainEvalFilesCovington()
-      throws IOException, InterruptedException {
+      throws IOException {
 
     String trainingMode = "files";
     String algorithmId = "covington";
@@ -58,7 +58,7 @@ public class TestMDParser {
 
   @Test
   public void testTrainEvalFilesStack()
-      throws IOException, InterruptedException {
+      throws IOException {
 
     String trainingMode = "files";
     String algorithmId = "stack";
@@ -111,9 +111,9 @@ public class TestMDParser {
   }
 
 
-  @Test
+  //@Test
   public void testTrainEvalMemoryCovington()
-      throws IOException, InterruptedException {
+      throws IOException {
 
     String trainingMode = "memory";
     String algorithmId = "covington";
@@ -130,9 +130,9 @@ public class TestMDParser {
   }
 
 
-  @Test
+  //@Test
   public void testTrainEvalMemoryStack()
-      throws IOException, InterruptedException {
+      throws IOException {
 
     String trainingMode = "memory";
     String algorithmId = "stack";
