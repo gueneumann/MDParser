@@ -11,6 +11,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -120,20 +122,23 @@ public final class Trainer {
   private static Alphabet uniteAlphabets(Path splitAlphaDir) throws IOException {
 
     Alphabet alphasUnited = null;
+    List<Path> alphaFiles = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(splitAlphaDir)) {
-      for (Path oneAlphaFile : stream) {
-        Alphabet curAlpha = new Alphabet(Files.newInputStream(oneAlphaFile));
-        if (alphasUnited == null) {
-          // init union with first alphabet to unite
-          alphasUnited = curAlpha;
-          continue;
-        }
-        int numberOfFeatures = curAlpha.getNumberOfFeatures();
-        // feature indices start at 1, so we iterate until num + 1
-        for (int k = 1; k <= numberOfFeatures; k++) {
-          alphasUnited.addFeature(curAlpha.getFeature(k));
-          //System.out.println(features[k]);
-        }
+      stream.forEach(alphaFiles::add);
+    }
+    alphaFiles.sort(Comparator.comparing(Path::toString));
+    for (Path oneAlphaFile : alphaFiles) {
+      Alphabet curAlpha = new Alphabet(Files.newInputStream(oneAlphaFile));
+      if (alphasUnited == null) {
+        // init union with first alphabet to unite
+        alphasUnited = curAlpha;
+        continue;
+      }
+      int numberOfFeatures = curAlpha.getNumberOfFeatures();
+      // feature indices start at 1, so we iterate until num + 1
+      for (int k = 1; k <= numberOfFeatures; k++) {
+        alphasUnited.addFeature(curAlpha.getFeature(k));
+        //System.out.println(features[k]);
       }
     }
     return alphasUnited;
@@ -142,50 +147,53 @@ public final class Trainer {
 
   private static void restoreModels(Path splitModelsDir, Alphabet alpha, Path splitAlphaDir) throws IOException {
 
+    List<Path> splitModelFiles = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(splitModelsDir)) {
-      for (Path oneModelFile : stream) {
-        System.out.println("Model file: " + oneModelFile);
-        Model model = Linear.loadModel(oneModelFile.toFile());
-        double[] wArray = model.getFeatureWeights();
-        Path alphaPath = splitAlphaDir.resolve(oneModelFile.getFileName());
-        Alphabet a = new Alphabet(Files.newInputStream(alphaPath));
-        int numberOfClasses = model.getNrClass();
+      stream.forEach(splitModelFiles::add);
+    }
+    splitModelFiles.sort(Comparator.comparing(Path::toString));
+    for (Path oneModelFile : splitModelFiles) {
+      System.out.println("Model file: " + oneModelFile);
+      Model model = Linear.loadModel(oneModelFile.toFile());
+      double[] wArray = model.getFeatureWeights();
+      Path alphaPath = splitAlphaDir.resolve(oneModelFile.getFileName());
+      Alphabet a = new Alphabet(Files.newInputStream(alphaPath));
+      int numberOfClasses = model.getNrClass();
 
-        try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
-          out.println("solver_type MCSVM_CS");
-          out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
+      try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
+        out.println("solver_type MCSVM_CS");
+        out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
 
-          for (int k = 0; k < model.getLabels().length; k++) {
-            out.print(model.getLabels()[k] + " ");
+        for (int k = 0; k < model.getLabels().length; k++) {
+          out.print(model.getLabels()[k] + " ");
+        }
+        out.println();
+        int numberOfFeatures = alpha.getNumberOfFeatures();
+        boolean notFound = true;
+        int lastIndex = -1;
+        for (int k = numberOfFeatures; k > 1 && notFound; k--) {
+          if (a.getFeatureIndex(alpha.getFeature(k)) != null) {
+            lastIndex = k;
+            notFound = false;
+          }
+        }
+        out.println("nr_feature " + (lastIndex - 1));
+        out.println("bias " + model.getBias());
+        out.println("w");
+        for (int k = 1; k < lastIndex; k++) {
+          String feature = alpha.getFeature(k);
+          Integer oldIndex = a.getFeatureIndex(feature);
+          if (oldIndex == null) {
+            for (int m = 0; m < numberOfClasses; m++) {
+              out.print("0 ");
+            }
+          } else {
+            for (int l = 0; l < numberOfClasses; l++) {
+              double curWeight = wArray[(oldIndex - 1) * numberOfClasses + l];
+              out.print(curWeight + " ");
+            }
           }
           out.println();
-          int numberOfFeatures = alpha.getNumberOfFeatures();
-          boolean notFound = true;
-          int lastIndex = -1;
-          for (int k = numberOfFeatures; k > 1 && notFound; k--) {
-            if (a.getFeatureIndex(alpha.getFeature(k)) != null) {
-              lastIndex = k;
-              notFound = false;
-            }
-          }
-          out.println("nr_feature " + (lastIndex - 1));
-          out.println("bias " + model.getBias());
-          out.println("w");
-          for (int k = 1; k < lastIndex; k++) {
-            String feature = alpha.getFeature(k);
-            Integer oldIndex = a.getFeatureIndex(feature);
-            if (oldIndex == null) {
-              for (int m = 0; m < numberOfClasses; m++) {
-                out.print("0 ");
-              }
-            } else {
-              for (int l = 0; l < numberOfClasses; l++) {
-                double curWeight = wArray[(oldIndex - 1) * numberOfClasses + l];
-                out.print(curWeight + " ");
-              }
-            }
-            out.println();
-          }
         }
       }
     }
