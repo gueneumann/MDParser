@@ -9,6 +9,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -154,6 +155,7 @@ public final class TrainerFiles {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER)) {
       stream.forEach(x -> filesToSplit.add(x));
     }
+    filesToSplit.sort(Comparator.comparing(Path::toString));
     SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
     int trainingThreads = GlobalConfig.getInt(ConfigKeys.TRAINING_THREADS);
     if (trainingThreads < 0) {
@@ -189,32 +191,35 @@ public final class TrainerFiles {
     String curFile = null;
     String lastFile = null;
     String curSplitVal = null;
+    List<Path> trainingFiles = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_INITIAL_FOLDER)) {
-      for (Path oneTrainingFile : stream) {
-        curSplitVal = oneTrainingFile.getFileName().toString();
+      stream.forEach(trainingFiles::add);
+    }
+    trainingFiles.sort(Comparator.comparing(Path::toString));
+    for (Path oneTrainingFile : trainingFiles) {
+      curSplitVal = oneTrainingFile.getFileName().toString();
 
-        if (curWriter == null) {
-          curFile = curSplitVal;
-          curWriter = new PrintWriter(
-              Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8));
-        }
-
-        try (BufferedReader in = Files.newBufferedReader(oneTrainingFile, StandardCharsets.UTF_8)) {
-          String line;
-          while ((line = in.readLine()) != null) {
-            curWriter.println(line);
-            curSize++;
-          }
-        }
-
-        if (curSize > splitThreshold) {
-          curWriter.close();
-          curWriter = null;
-          curSize = 0;
-          lastFile = curFile;
-        }
-        newSplitMap.put(curSplitVal, curFile);
+      if (curWriter == null) {
+        curFile = curSplitVal;
+        curWriter = new PrintWriter(
+            Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8));
       }
+
+      try (BufferedReader in = Files.newBufferedReader(oneTrainingFile, StandardCharsets.UTF_8)) {
+        String line;
+        while ((line = in.readLine()) != null) {
+          curWriter.println(line);
+          curSize++;
+        }
+      }
+
+      if (curSize > splitThreshold) {
+        curWriter.close();
+        curWriter = null;
+        curSize = 0;
+        lastFile = curFile;
+      }
+      newSplitMap.put(curSplitVal, curFile);
     }
     //if the last file is too small add to the second to last
 
@@ -294,6 +299,7 @@ public final class TrainerFiles {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
       stream.forEach(x -> filesToCompact.add(x));
     }
+    filesToCompact.sort(Comparator.comparing(Path::toString));
     TrainWorker trainWorker = new TrainWorker(alpha, bias);
     if (trainingThreads > 1) {
       // we use our own thread pool to be able to better control parallelization
