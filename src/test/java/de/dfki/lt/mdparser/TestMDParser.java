@@ -111,7 +111,7 @@ public class TestMDParser {
   }
 
 
-  @Test
+  //@Test
   public void testTrainEvalMemoryCovington()
       throws IOException {
 
@@ -130,7 +130,7 @@ public class TestMDParser {
   }
 
 
-  @Test
+  //@Test
   public void testTrainEvalMemoryStack()
       throws IOException {
 
