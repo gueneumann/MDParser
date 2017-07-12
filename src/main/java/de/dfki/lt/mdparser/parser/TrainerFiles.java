@@ -153,7 +153,7 @@ public final class TrainerFiles {
     Map<String, PrintWriter> splitMap = new HashMap<>();
     List<Path> filesToSplit = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER)) {
-      stream.forEach(x -> filesToSplit.add(x));
+      stream.forEach(filesToSplit::add);
     }
     filesToSplit.sort(Comparator.comparing(Path::toString));
     SplitWorker splitWorker = new SplitWorker(posMap, splitMap);
@@ -167,12 +167,12 @@ public final class TrainerFiles {
       System.out.println("Parallel processing on " + trainingThreads + " processors !");
       try {
         forkJoinPool.submit(
-            () -> filesToSplit.stream().parallel().forEach(x -> splitWorker.processFile(x))).get();
+            () -> filesToSplit.stream().parallel().forEach(splitWorker::processFile)).get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
     } else {
-      filesToSplit.stream().forEach(x -> splitWorker.processFile(x));
+      filesToSplit.stream().forEach(splitWorker::processFile);
     }
     for (PrintWriter oneWriter : splitMap.values()) {
       oneWriter.close();
@@ -297,7 +297,7 @@ public final class TrainerFiles {
     // compact files
     List<Path> filesToCompact = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
-      stream.forEach(x -> filesToCompact.add(x));
+      stream.forEach(filesToCompact::add);
     }
     filesToCompact.sort(Comparator.comparing(Path::toString));
     TrainWorker trainWorker = new TrainWorker(alpha, bias);
@@ -306,12 +306,12 @@ public final class TrainerFiles {
       ForkJoinPool compactingForkJoinPool = new ForkJoinPool(trainingThreads);
       try {
         compactingForkJoinPool.submit(
-            () -> filesToCompact.stream().parallel().forEach(x -> trainWorker.processFile(x))).get();
+            () -> filesToCompact.stream().parallel().forEach(trainWorker::processFile)).get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
     } else {
-      filesToCompact.stream().forEach(x -> trainWorker.processFile(x));
+      filesToCompact.stream().forEach(trainWorker::processFile);
     }
 
     System.out.println("Make single alphabet file " + GlobalConfig.ALPHA_FILE + " from splitA files");

@@ -55,10 +55,10 @@ public class Archivator {
     filesToPack.add(GlobalConfig.ALPHA_FILE);
     filesToPack.add(GlobalConfig.SPLIT_FILE);
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_MODELS_FOLDER)) {
-      stream.forEach(x -> filesToPack.add(x));
+      stream.forEach(filesToPack::add);
     }
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ALPHA_FOLDER)) {
-      stream.forEach(x -> filesToPack.add(x));
+      stream.forEach(filesToPack::add);
     }
 
     OutputStream dest =
