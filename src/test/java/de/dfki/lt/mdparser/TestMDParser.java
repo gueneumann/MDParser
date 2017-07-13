@@ -111,6 +111,7 @@ public class TestMDParser {
   }
 
 
+  // Beware, this test is memory intense, run with > 16GB
   //@Test
   public void testTrainEvalMemoryCovington()
       throws IOException {
@@ -130,6 +131,7 @@ public class TestMDParser {
   }
 
 
+  //Beware, this test is memory intense, run with > 16GB
   //@Test
   public void testTrainEvalMemoryStack()
       throws IOException {
