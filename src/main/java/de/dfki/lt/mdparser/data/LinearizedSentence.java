@@ -222,4 +222,33 @@ public class LinearizedSentence {
     result.append(this.getLinearizedSentence().get(this.getLinearizedSentence().size() - 1));
     return result.toString();
   }
+
+  // TODO:
+
+  // given a flatSentence and linearized dependency tree, create a CONLL output
+  // Make sure to follow MDParser version so that eval method can be used
+
+  /*
+   * Aim: create a proper CONLL tree from a given pair of aligned sentence and dependency tree
+   * MDParser conll format uses column 6 and 7 for head and label,
+   * and 8 and 9 for predicted (have to check) in order to run evaluation script
+   *    1, 2, and 3 for ID, word and POS, example:
+   *      ID  word  POS _ _ head  label _ _
+   *      1 The _ DT  _ _ 2 NMOD  _ _
+   * a linearized dependency tree is created in left-to-right top-down way
+   *
+   * I should first create a specific order based on the tree.
+   * a problem is that from the sequence of daughters, I do not know where to insert in the head element
+   * that means: where to cut the daughter sequence.
+   * Anyway, I could use an initial indexing, by placing the head at the end/front.
+   * Then use the position of a word in the aligned sentence for adjusting the initial sequence
+   * I could also search for the head index, by searching the word form of the head in left to right order
+   * (and also remember, which index has been used - in case a word occurs several times).
+   * If I do this for all words, I get at least some sort of relative ordering.
+   * But maybe, I have to take care about possible matches of a head element in the string.
+   * And it might only work for projective trees.
+   *
+   * NOTE: basically this means that I have to define an aligner, but can assume that has an implicit order
+   * since it was created automatically from a sequence.
+   */
 }
