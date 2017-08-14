@@ -9,9 +9,31 @@ import de.dfki.lt.mdparser.algorithm.DependencyStructure;
 public class LinearizedSentence {
 
   private Sentence sentence = null;
+  private List<String> flatSentence = new ArrayList<String>();
   private List<String> linearizedSentence = new ArrayList<String>();
   private DependencyStructure depStruct = null;
 
+
+  // getters and setters
+  public List<String> getFlatSentence() {
+
+    return this.flatSentence;
+  }
+
+
+  public List<String> getLinearizedSentence() {
+
+    return this.linearizedSentence;
+  }
+
+
+  public DependencyStructure getDepStruct() {
+
+    return this.depStruct;
+  }
+
+
+  //Instantiation
 
   public LinearizedSentence(DependencyStructure depStruct) {
 
@@ -23,6 +45,54 @@ public class LinearizedSentence {
 
     this.sentence = sentence;
     this.depStruct = this.fillDependencyStructure(this.sentence);
+  }
+
+
+  // Methods
+
+  // Internal node representation for the parts of an aligned (sentence,dependency tree)
+
+  //Node string representation for sentence part - dependency word only
+
+  private String makeSentenceTokenNode(Dependency dependency) {
+
+    return dependency.getDependentWord();
+  }
+
+  //Node string representation for sentence element - dependency word and POS as word|POS
+  private String makeSentenceTokenPosNode(Dependency dependency) {
+
+    return dependency.getDependentWord()
+        + "|"
+        + dependency.getDependentPos();
+  }
+
+
+  // Node string representation for linearized form of dependency tree part
+
+  // Output modifierWord only, label is part of the paranthesis
+
+  private String makeLinearizedParseNodeString(Dependency dependency) {
+
+    return dependency.getDependentWord()
+    //        + ":"
+    //        + dependency.getHeadWord()
+
+    ;
+  }
+
+  // Method for creating the node label in the string representation
+
+  /**
+   * Create sentence part of an aligned pair (sentence, dependency tree) Current representation is:
+   * "w_i|pos_i" -> as it is usefull with OpenNMT
+   */
+  public void createFlatWordPOSsequence() {
+
+    for (int i = 1; i < this.depStruct.getDependenciesArray().length; i++) {
+      String tokenNode = this.makeSentenceTokenPosNode(this.depStruct.getDependenciesArray()[i]);
+      this.flatSentence.add(tokenNode);
+    }
   }
 
 
@@ -45,9 +115,9 @@ public class LinearizedSentence {
    * @return
    */
   private DependencyStructure fillDependencyStructure(Sentence sent) {
-  
+
     List<Dependency> parsedDependencies = new ArrayList<Dependency>();
-  
+
     String[][] sentArray = sent.getSentArray();
     // For each token of sentence
     for (int i = 0; i < sentArray.length; i++) {
@@ -57,7 +127,7 @@ public class LinearizedSentence {
           Integer.valueOf(lineArray[0]), // modID
           Integer.valueOf(lineArray[6]), // label
           lineArray[7]); // headID
-  
+
       dep.setDependentString(lineArray[1] + ":" + lineArray[3]); // modID label :== form:pos
       if (Integer.valueOf(lineArray[6]) != 0) {
         // Retrieve head token from sentence array and create
@@ -79,115 +149,13 @@ public class LinearizedSentence {
   }
 
 
-  public List<String> getLinearizedSentence() {
-
-    return this.linearizedSentence;
-  }
-
-
-  public DependencyStructure getDepStruct() {
-
-    return this.depStruct;
-  }
-
+  /**
+   * Traverse a dependency tree top-down, depth first left to right. For each dependency relation (mod
+   * label head) create a sequence <"(_label" mod sublist ")_label"> where sublist is empty or the
+   * linearized modifier dependency nodes of the modifier.
+   */
 
   /**
-   * Linearize a dependency tree/dag into a list of tokens. Do left-to-right depth first traversal
-   * from root. Start from root node -> assumed to be unique
-   *
-   * @param ds
-   * @return
-   */
-  
-  public void linearizedDependencyStructure() {
-  
-    Dependency root = this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
-    descendFromNode(root, "(_RT", ")_RT");
-  }
-
-
-  /**
-   * Traverse a dependency tree top-down, depth first left to right. For each dependency relation
-   * (mod label head) create a sequence <"(_label" mod sublist ")_label"> where sublist is empty or
-   * the linearized modifier dependency nodes of the modifier.
-   */
-  
-  
-  private void descendFromNode(Dependency dependency, String openNode, String closeNode) {
-  
-    this.getLinearizedSentence().add(openNode);
-    String word = this.makeNodeString(dependency);
-    this.getLinearizedSentence().add(word);
-    // Modifiers are processed from left to right
-    List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
-    for (int i = 0; i < modifiers.size(); i++) {
-      descendFromNode(modifiers.get(i),
-          "(_" + modifiers.get(i).getLabel(),
-          ")_" + modifiers.get(i).getLabel());
-    }
-    this.getLinearizedSentence().add(closeNode);
-  }
-
-
-  // NOTE:
-  // I am currently defining two very similar versions
-  // - one which is very close to a standard dependency tree representation
-  // - one which I am using in my GAMR system - these are marked by suffix *AMR
-  
-  
-  // Method for creating the node label in the string representation
-  
-  private String makeNodeString(Dependency dependency) {
-  
-    return dependency.getDependent()
-        + ":" + dependency.getDependentWord()
-        + ":" + dependency.getDependentPos();
-  }
-
-
-  public void linearizedDependencyStructureAMR() {
-  
-    Dependency root = this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
-    descendFromNodeAMR(root, "", "(", ")");
-  }
-
-
-  // Mainly the same but created a AMR-syntactic tree representation
-  private void descendFromNodeAMR(Dependency dependency, String label, String openNode, String closeNode) {
-  
-    if (!label.isEmpty()) {
-      this.getLinearizedSentence().add(":" + label);
-    }
-    this.getLinearizedSentence().add(openNode);
-    String word = this.makeNodeStringAMR(dependency);
-    this.getLinearizedSentence().add(word);
-    // Modifiers are processed from left to right
-    List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
-    for (int i = 0; i < modifiers.size(); i++) {
-      descendFromNodeAMR(modifiers.get(i),
-          modifiers.get(i).getLabel(),
-          "(",
-          ")");
-    }
-    this.getLinearizedSentence().add(closeNode);
-  }
-
-
-  // NOTE:
-  // I am currently defining two very similar versions
-  // - one which is very close to a standard dependency tree representation
-  // - one which I am using in my GAMR system - these are marked by suffix *AMR
-  
-  
-  // Method for creating the node label in the string representation
-  
-  private String makeNodeStringAMR(Dependency dependency) {
-  
-    return dependency.getDependentWord();
-  }
-
-
-  /*
    * get-Modifiers(headId) -> list of depRels of all direct modifiers (level one)
    */
   private List<Dependency> getDepRelsWithHeadId(int headId) {
@@ -201,13 +169,49 @@ public class LinearizedSentence {
     return modifiers;
   }
 
-  // NOTE:
-  // I am currently defining two very similar versions
-  // - one which is very close to a standard dependency tree representation
-  // - one which I am using in my GAMR system - these are marked by suffix *AMR
+
+  private void descendFromNode(Dependency dependency, String openNode, String closeNode) {
+
+    this.getLinearizedSentence().add(openNode);
+    String word = this.makeLinearizedParseNodeString(dependency);
+    this.getLinearizedSentence().add(word);
+    // Modifiers are processed from left to right
+    List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
+    for (int i = 0; i < modifiers.size(); i++) {
+      descendFromNode(modifiers.get(i),
+          "(_" + modifiers.get(i).getLabel(),
+          ")_" + modifiers.get(i).getLabel());
+    }
+    this.getLinearizedSentence().add(closeNode);
+  }
 
 
-  // Method for creating the node label in the string representation
+  /**
+   * Linearize a dependency tree/dag into a list of tokens. Do left-to-right depth first traversal
+   * from root. Start from root node -> assumed to be unique
+   *
+   * @param ds
+   * @return
+   */
+
+  public void linearizedDependencyStructure() {
+
+    Dependency root = this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
+    descendFromNode(root, "(_RT", ")_RT");
+  }
+
+  // Methods for creating the node label in the string representation
+
+  public String toFlatSentenceString() {
+
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < this.getFlatSentence().size() - 1; i++) {
+      result.append(this.getFlatSentence().get(i) + " ");
+    }
+    result.append(this.getFlatSentence().get(this.getFlatSentence().size() - 1));
+    return result.toString();
+  }
+
 
   public String toLinearizedDependencyString() {
 
