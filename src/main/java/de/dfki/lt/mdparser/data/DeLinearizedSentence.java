@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//TODO asap:
-
 // given a flatSentence and linearized dependency tree, create a CONLL output
 // Make sure to follow MDParser version so that eval method can be used
 
@@ -62,10 +60,10 @@ import java.util.Map;
 *  - add headID = top(headIdStack) & label = top(labelStack)
 *  - push(wordID, headIdStack)
 *
-*
+
 */
 public class DeLinearizedSentence {
-  private int infoSize = 11; // Number of CONLL columns -1
+  private int infoSize = 10; // Number of CONLL columns -1
   private Sentence conllSentence = null;
   private Map<String, Deque<Integer>> wordIndexPos = new HashMap<String,Deque<Integer>>();
   private Deque<Integer> headIdStack = new ArrayDeque<Integer>();
@@ -82,6 +80,8 @@ public class DeLinearizedSentence {
    * @param word
    * @param index
    */
+
+
   private void adddWordIndextoHash(String word, int index) {
     if (this.wordIndexPos.containsKey(word)) {
       this.wordIndexPos.get(word).addLast(index);
@@ -156,8 +156,6 @@ public class DeLinearizedSentence {
   }
 
 
-  //TODO
-  //HIERIX:
   // loop over linearizedSentence and add index and label information to the conllSentence
   /*
   * Initialize labelStack = push()
@@ -174,6 +172,15 @@ public class DeLinearizedSentence {
   *
   *
   */
+
+
+  /*
+   * TODO
+   * BUG
+   * - seems be the case when a token occurs at different positions,  I do not proper compute headId
+   * - the problem is that sometime it is correct, but sometime not
+   * - maybe strict left-to-right not possible ?
+   */
   private void fillConllSentence(List<String> linearizedSentence) {
 
     this.headIdStack = new ArrayDeque<Integer>();
@@ -218,6 +225,7 @@ public class DeLinearizedSentence {
     List<String> sequence = this.makeSequenceFromString(sequenceString);
     List<String> linearizedSentence = this.makeSequenceFromString(linearizedSentenceString);
     this.createInitialConllSentence(sequence);
+    this.printHashMap();
     this.fillConllSentence(linearizedSentence);
     return this.conllSentence;
   }
