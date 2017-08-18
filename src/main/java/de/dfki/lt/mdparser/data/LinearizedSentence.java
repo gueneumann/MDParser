@@ -61,7 +61,6 @@ public class LinearizedSentence {
 
   //Node string representation for sentence element - dependency word and POS as word|POS
   private String makeSentenceTokenPosNode(Dependency dependency) {
-
     return dependency.getDependentWord()
         + "|"
         + dependency.getDependentPos();
@@ -123,20 +122,21 @@ public class LinearizedSentence {
     for (int i = 0; i < sentArray.length; i++) {
       // Get conll information for token
       String[] lineArray = sentArray[i];
-      Dependency dep = new Dependency(
-          Integer.valueOf(lineArray[0]), // modID
-          Integer.valueOf(lineArray[6]), // label
-          lineArray[7]); // headID
 
-      dep.setDependentString(lineArray[1] + ":" + lineArray[3]); // modID label :== form:pos
+     Dependency dep = new Dependency(
+          Integer.valueOf(lineArray[0]), // modID
+          Integer.valueOf(lineArray[6]), // headID
+          lineArray[7]); // label
+
+      dep.setDependentString(lineArray[1], lineArray[3]); // modID label :== form, pos
       if (Integer.valueOf(lineArray[6]) != 0) {
         // Retrieve head token from sentence array and create
         // headID label
         int head = Integer.valueOf(lineArray[6]) - 1;
-        dep.setHeadString(sentArray[head][1] + ":" + sentArray[head][3]); // headID label :== headIDform:headIDpos
+        dep.setHeadString(sentArray[head][1], sentArray[head][3]); // headID label :== headIDform, headIDpos
       } else {
         // or a dummy string for the root element
-        dep.setHeadString("null:null");
+        dep.setHeadString("null", "null");
       }
       parsedDependencies.add(dep);
     }
@@ -174,6 +174,7 @@ public class LinearizedSentence {
 
     this.getLinearizedSentence().add(openNode);
     String word = this.makeLinearizedParseNodeString(dependency);
+
     this.getLinearizedSentence().add(word);
     // Modifiers are processed from left to right
     List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
@@ -197,7 +198,8 @@ public class LinearizedSentence {
   public void linearizedDependencyStructure() {
 
     Dependency root = this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
-    descendFromNode(root, "(_RT", ")_RT");
+    String rootLabel = root.getLabel();
+    descendFromNode(root, "(_"+rootLabel, ")_"+rootLabel);
   }
 
   // Methods for creating the node label in the string representation

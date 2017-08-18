@@ -44,9 +44,9 @@ import java.util.Map;
 * The|DT bill|NN intends|VBZ to|TO restrict|VB the|DT RTC|NNP to|TO Treasury|NNP borrowings|NNS only|RB ,|,
 * unless|IN the|DT agency|NN receives|VBZ specific|JJ congressional|JJ authorization|NN .|.
 *
-* Define a Sentence class which as a sentArray.
-* Initialize it with sequence
-* Also create a parallel hash, which maps a word to its index and pos (as a tuple).
+* Define a Sentence class which has a sentArray.
+* Initialize it with sequence of word|pos tokens.
+* Also create a parallel hash, which maps a word to its list if indicies.
 *
 
 *
@@ -58,14 +58,13 @@ import java.util.Map;
 * if newElem=( then
 *   push(LABEL, Labelstack) break
 * if newElem = WORD then
-*  - identify word index using hash
+*  - identify word index using hash; pop(foundIndex) from hash
 *  - add headID = top(headIdStack) & label = top(labelStack)
 *  - push(wordID, headIdStack)
 *
 *
 */
 public class DeLinearizedSentence {
-  private List<String> linearizedSentence;
   private int infoSize = 11; // Number of CONLL columns -1
   private Sentence conllSentence = null;
   private Map<String, Deque<Integer>> wordIndexPos = new HashMap<String,Deque<Integer>>();
@@ -94,6 +93,19 @@ public class DeLinearizedSentence {
     }
   }
 
+
+  private int getNextIndex(String word) {
+
+    if (!this.wordIndexPos.isEmpty()) {
+      Deque<Integer> indexStack = this.wordIndexPos.get(word);
+      int nextIndex = indexStack.pop();
+      return nextIndex;
+    } else {
+      // indicates error, because accessing indexStack should not lead to empty stack
+      return -1;
+    }
+  }
+
   public void printHashMap() {
     for(String key : this.wordIndexPos.keySet()) {
       System.out.println(key + ": " + this.wordIndexPos.get(key));
@@ -109,52 +121,134 @@ public class DeLinearizedSentence {
    * in a stack from left to right.
    */
 
-  private Sentence createInitialConllSentence(List<String> wordPosSequence) {
+  private void createInitialConllSentence(List<String> wordPosSequence) {
+
     String[][] sentArray = new String[wordPosSequence.size()][this.infoSize];
     for (int i = 0; i < wordPosSequence.size(); i++) {
-     String[] wordPostoken = wordPosSequence.get(i).split("\\|");
+      String[] wordPostoken = wordPosSequence.get(i).split("\\|");
 
-     String word = wordPostoken[0];
+      String word = wordPostoken[0];
       String pos = wordPostoken[1];
 
+      int conllTokenId = i+1;
 
-      sentArray[i][0] = String.valueOf(i);
+      sentArray[i][0] = String.valueOf(conllTokenId);
       sentArray[i][1] = word;
       sentArray[i][3] = pos;
 
-      this.adddWordIndextoHash(word, i);
+      this.adddWordIndextoHash(word, conllTokenId);
     }
 
-    return new Sentence(sentArray);
+    this.conllSentence = new Sentence(sentArray);
 
   }
+
+  /**
+   * Adds headId and label to conll row 6 and 7 index by wordIndex
+   * @param wordIndex
+   * @param headId
+   * @param label
+   */
+  private void addHeadIdLabeltoWordIndex(int wordIndex, Integer headId, String label) {
+    int conllTokenId = wordIndex-1;
+    this.conllSentence.getSentArray()[conllTokenId][6] = String.valueOf(headId);
+    this.conllSentence.getSentArray()[conllTokenId][7] = label;
+  }
+
 
   //TODO
   //HIERIX:
   // loop over linearizedSentence and add index and label information to the conllSentence
+  /*
+  * Initialize labelStack = push()
+  * Initialize headIdStack = push(0)
+  * nextElem=pop(sequence)
+  * if newElem=) then
+  *  if newElem=top(labelStack) then pop(labelStack) & pop(headIdStack) break
+  * if newElem=( then
+  *   push(LABEL, Labelstack) break
+  * if newElem = WORD then
+  *  - identify word index using hash; pop(foundIndex) from hash
+  *  - add headID = top(headIdStack) & label = top(labelStack)
+  *  - push(wordID, headIdStack)
+  *
+  *
+  */
+  private void fillConllSentence(List<String> linearizedSentence) {
+
+    this.headIdStack = new ArrayDeque<Integer>();
+    this.labelStack = new ArrayDeque<String>();
+
+    this.headIdStack.push(0);
+
+    for (String elem : linearizedSentence) {
+      //System.out.println("Elem: " + elem);
+      if (elem.startsWith("(_")) {
+        String label = elem.substring(2);
+        this.labelStack.push(label);
+        //System.out.println("Inside (_: " + this.labelStack.toString());
+      } else if (elem.startsWith(")_")) {
+        String label = elem.substring(2);
+        //System.out.println("Inside )_: " + label + " =?= " + this.labelStack.getFirst());
+        if (label.equals(this.labelStack.getFirst())) {
+          this.labelStack.pop();
+          this.headIdStack.pop();
+        } else {
+          //System.out.println("should be equal: " + label + ", " + this.labelStack.getFirst());
+        }
+      } else // elem is a word
+      {
+        int wordIndex = this.getNextIndex(elem);
+        this.addHeadIdLabeltoWordIndex(wordIndex, this.headIdStack.getFirst(), this.labelStack.getFirst());
+        this.headIdStack.push(wordIndex);
+
+      }
+    }
+
+  }
+
+  /**
+   * Receives a pair of aligned wordPos-token sequenc and linearized dependency tree
+   * and returns a conll dependency tree.
+   * @param sequenceString
+   * @param linearizedSentenceString
+   * @return
+   */
+  public Sentence deLinearizeSentencePair(String sequenceString, String linearizedSentenceString) {
+    List<String> sequence = this.makeSequenceFromString(sequenceString);
+    List<String> linearizedSentence = this.makeSequenceFromString(linearizedSentenceString);
+    this.createInitialConllSentence(sequence);
+    this.fillConllSentence(linearizedSentence);
+    return this.conllSentence;
+  }
+
+  private void testix() {
+    List<String> sequence = this.makeSequenceFromString(
+        "The|DT bill|NN intends|VBZ to|TO restrict|VB the|DT RTC|NNP to|TO Treasury|NNP borrowings|NNS only|RB ,|,"
+        + " unless|IN the|DT agency|NN receives|VBZ specific|JJ congressional|JJ authorization|NN .|."
+            );
+
+    List<String> linearizedSentence = this.makeSequenceFromString(
+        "(_ROOT intends (_SBJ bill (_NMOD The )_NMOD )_SBJ (_OPRD to (_IM restrict (_OBJ RTC (_NMOD the )_NMOD )_OBJ"
+        + " (_ADV to (_PMOD borrowings (_NMOD Treasury )_NMOD (_NMOD only )_NMOD )_PMOD )_ADV )_IM )_OPRD (_P , )_P"
+        + " (_ADV unless (_SUB receives (_SBJ agency (_NMOD the )_NMOD )_SBJ (_OBJ authorization (_NMOD specific )_NMOD"
+        + " (_NMOD congressional )_NMOD )_OBJ )_SUB )_ADV (_P . )_P )_ROOT"
+            );
+
+  this.createInitialConllSentence(sequence);
+
+   System.out.println(this.conllSentence.toString());
+   this.printHashMap();
+
+   this.fillConllSentence(linearizedSentence);
+
+   System.out.println(this.conllSentence.toString());
+   this.printHashMap();
+  }
 
   public static void main(String[] args) {
     DeLinearizedSentence testix = new DeLinearizedSentence();
-
-    List<String> sequence = testix.makeSequenceFromString(
-        "The|DT bill|NN intends|VBZ to|TO restrict|VB the|DT RTC|NNP to|TO Treasury|NNP borrowings|NNS only|RB ,|,"
-        + "unless|IN the|DT agency|NN receives|VBZ specific|JJ congressional|JJ authorization|NN .|."
-            );
-
-    testix.linearizedSentence = testix.makeSequenceFromString(
-        "(_RT intends (_SBJ bill (_NMOD The )_NMOD )_SBJ (_OPRD to (_IM restrict (_OBJ RTC (_NMOD the )_NMOD )_OBJ\n "
-        + "(_ADV to (_PMOD borrowings (_NMOD Treasury )_NMOD (_NMOD only )_NMOD )_PMOD )_ADV )_IM )_OPRD (_P , )_P\n "
-        + "(_ADV unless (_SUB receives (_SBJ agency (_NMOD the )_NMOD )_SBJ (_OBJ authorization (_NMOD specific )_NMOD\n "
-        + "NMOD congressional )_NMOD )_OBJ )_SUB )_ADV (_P . )_P )_RT"
-            );
-    System.out.println(testix.linearizedSentence.toString());
-
-    testix.conllSentence = testix.createInitialConllSentence(sequence);
-
-   System.out.println(testix.conllSentence.toString());
-   testix.printHashMap();
-
-
+    testix.testix();
   }
 
 }
