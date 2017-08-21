@@ -46,21 +46,6 @@ import java.util.Map;
 * Initialize it with sequence of word|pos tokens.
 * Also create a parallel hash, which maps a word to its list if indicies.
 *
-
-*
-* Initialize labelStack = push()
-* Initialize headIdStack = push(0)
-* nextElem=pop(sequence)
-* if newElem=) then
-*  if newElem=top(labelStack) then pop(labelStack) & pop(headIdStack) break
-* if newElem=( then
-*   push(LABEL, Labelstack) break
-* if newElem = WORD then
-*  - identify word index using hash; pop(foundIndex) from hash
-*  - add headID = top(headIdStack) & label = top(labelStack)
-*  - push(wordID, headIdStack)
-*
-
 */
 public class DeLinearizedSentence {
   private int infoSize = 10; // Number of CONLL columns -1
@@ -68,7 +53,13 @@ public class DeLinearizedSentence {
   private Map<String, Deque<Integer>> wordIndexPos = new HashMap<String,Deque<Integer>>();
   private Deque<Integer> headIdStack = new ArrayDeque<Integer>();
   private Deque<String> labelStack = new ArrayDeque<String>();
+  private boolean typeTokenId = false;
+  private String typeTokenIdstring = "#";
 
+
+  public DeLinearizedSentence(boolean typeTokenId) {
+    this.typeTokenId = typeTokenId;
+  }
 
   private List<String> makeSequenceFromString(String string){
     return new ArrayList<String>(Arrays.asList(string.split(" ")));
@@ -143,6 +134,21 @@ public class DeLinearizedSentence {
 
   }
 
+
+  private void undoTypeTokenId() {
+    int conllWordIndex = 1;
+    for (int i = 0; i < this.conllSentence.getSentArray().length; i++) {
+      String wordWithTypeTokenId = this.conllSentence.getSentArray()[i][conllWordIndex];
+      String wordWithoutTypeTokenId =
+          wordWithTypeTokenId.substring(0,
+              wordWithTypeTokenId.lastIndexOf(this.typeTokenIdstring));
+
+      this.conllSentence.getSentArray()[i][conllWordIndex] = wordWithoutTypeTokenId;
+
+    }
+
+  }
+
   /**
    * Adds headId and label to conll row 6 and 7 index by wordIndex
    * @param wordIndex
@@ -175,11 +181,22 @@ public class DeLinearizedSentence {
 
 
   /*
-   * TODO
-   * BUG
+   * BUG (SOLVED):
    * - seems be the case when a token occurs at different positions,  I do not proper compute headId
-   * - the problem is that sometime it is correct, but sometime not
-   * - maybe strict left-to-right not possible ?
+   * - the problem is that sometime it is correct, but sometimes not
+   * - the problem is as follows:
+   * - assuming I have a word "Mr." and its two surface positions i and i+k
+   * - then it might be that "Mr._i+k" is higher in the dependency tree
+   * - than "Mr-_i", and so "Mr._i+k" will be considered first.
+   * - However, my algorithm will choose position the first element in the hash table for key "Mr."
+   * - which in this case is "i".
+   *
+   * - hence, it seems that a  strict left-to-right not possible ?
+   * - is it possible to use indexes for occurrences of same token, like "Mr._1" and "Mr._2" ?
+   * - then I would have a one-to-one mapping of nodes and tokens
+   *  - only would need to do it in linearization step and when creating the conll sentence array
+   *  -> DONE via flag typeTokenId and it works!!
+   *
    */
   private void fillConllSentence(List<String> linearizedSentence) {
 
@@ -189,16 +206,16 @@ public class DeLinearizedSentence {
     this.headIdStack.push(0);
 
     for (String elem : linearizedSentence) {
-//      System.out.println("Elem: " + elem);
-//      System.out.println("headIdStack: " + this.headIdStack.toString());
-//      System.out.println("labelStack: " + this.labelStack.toString());
+//            System.out.println("Elem: " + elem);
+//            System.out.println("headIdStack: " + this.headIdStack.toString());
+//            System.out.println("labelStack: " + this.labelStack.toString());
       if (elem.startsWith("(_")) {
         String label = elem.substring(2);
         this.labelStack.push(label);
-        //System.out.println("Inside (_: " + this.labelStack.toString());
+//        System.out.println("Inside (_: " + this.labelStack.toString());
       } else if (elem.startsWith(")_")) {
         String label = elem.substring(2);
-        //System.out.println("Inside )_: " + label + " =?= " + this.labelStack.getFirst());
+        //.out.println("Inside )_: " + label + " =?= " + this.labelStack.getFirst());
         if (label.equals(this.labelStack.getFirst())) {
           this.labelStack.pop();
           this.headIdStack.pop();
@@ -208,8 +225,8 @@ public class DeLinearizedSentence {
       } else // elem is a word
       {
         int wordIndex = this.getNextIndex(elem);
+//        System.out.println("Index: " + wordIndex + " Word: " + elem + " First stack: " + this.headIdStack.getFirst());
         this.addHeadIdLabeltoWordIndex(wordIndex, this.headIdStack.getFirst(), this.labelStack.getFirst());
-        // TODO Is this correct or sufficient ?
         this.headIdStack.push(wordIndex);
 
       }
@@ -228,38 +245,14 @@ public class DeLinearizedSentence {
     List<String> sequence = this.makeSequenceFromString(sequenceString);
     List<String> linearizedSentence = this.makeSequenceFromString(linearizedSentenceString);
     this.createInitialConllSentence(sequence);
-    this.printHashMap();
+    if (!this.typeTokenId) {
+      this.printHashMap();
+    }
     this.fillConllSentence(linearizedSentence);
+    if (this.typeTokenId) {
+      this.undoTypeTokenId();
+    }
     return this.conllSentence;
-  }
-
-  private void testix() {
-    List<String> sequence = this.makeSequenceFromString(
-        "The|DT bill|NN intends|VBZ to|TO restrict|VB the|DT RTC|NNP to|TO Treasury|NNP borrowings|NNS only|RB ,|,"
-        + " unless|IN the|DT agency|NN receives|VBZ specific|JJ congressional|JJ authorization|NN .|."
-            );
-
-    List<String> linearizedSentence = this.makeSequenceFromString(
-        "(_ROOT intends (_SBJ bill (_NMOD The )_NMOD )_SBJ (_OPRD to (_IM restrict (_OBJ RTC (_NMOD the )_NMOD )_OBJ"
-        + " (_ADV to (_PMOD borrowings (_NMOD Treasury )_NMOD (_NMOD only )_NMOD )_PMOD )_ADV )_IM )_OPRD (_P , )_P"
-        + " (_ADV unless (_SUB receives (_SBJ agency (_NMOD the )_NMOD )_SBJ (_OBJ authorization (_NMOD specific )_NMOD"
-        + " (_NMOD congressional )_NMOD )_OBJ )_SUB )_ADV (_P . )_P )_ROOT"
-            );
-
-  this.createInitialConllSentence(sequence);
-
-   System.out.println(this.conllSentence.toString());
-   this.printHashMap();
-
-   this.fillConllSentence(linearizedSentence);
-
-   System.out.println(this.conllSentence.toString());
-   this.printHashMap();
-  }
-
-  public static void main(String[] args) {
-    DeLinearizedSentence testix = new DeLinearizedSentence();
-    testix.testix();
   }
 
 }

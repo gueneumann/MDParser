@@ -31,7 +31,8 @@ public final class MDPrunner {
     return new Eval(conllFileName, resultFileName, 6, 6, 7, 7);
   }
 
-
+  //TODO
+  // To I really need this ?
   public static void parseConllFileAndLinearize(String conllFileName, String resultFileName, String modelFileName)
       throws IOException {
 

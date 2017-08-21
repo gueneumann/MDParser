@@ -1,7 +1,9 @@
 package de.dfki.lt.mdparser.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.dfki.lt.mdparser.algorithm.Dependency;
 import de.dfki.lt.mdparser.algorithm.DependencyStructure;
@@ -12,6 +14,7 @@ public class LinearizedSentence {
   private List<String> flatSentence = new ArrayList<String>();
   private List<String> linearizedSentence = new ArrayList<String>();
   private DependencyStructure depStruct = null;
+  private String typeTokenIdstring = "#";
 
 
   // getters and setters
@@ -35,9 +38,15 @@ public class LinearizedSentence {
 
   //Instantiation
 
-  public LinearizedSentence(DependencyStructure depStruct) {
+
+  public LinearizedSentence(DependencyStructure depStruct, boolean typeTokenId) {
 
     this.depStruct = depStruct;
+    if (typeTokenId) {
+      this.createTokenTypeIndex();
+    }
+    this.createFlatWordPOSsequence();
+    this.linearizedDependencyStructure();
   }
 
 
@@ -78,6 +87,30 @@ public class LinearizedSentence {
     //        + dependency.getHeadWord()
 
     ;
+  }
+
+  /** Method for providing token-type id
+   * if word occurs at different position, it will also be represented as different nodes
+   * so "the man the woman" -> "the_1 man_1 the_2 woman_1"
+   */
+
+  private void setTypeIndex(String word, Map<String,Integer> indexTable) {
+    if (indexTable.containsKey(word)) {
+      indexTable.put(word, indexTable.get(word)+1);
+    } else {
+      indexTable.put(word, 1);
+    }
+  }
+  public void createTokenTypeIndex() {
+    Map<String,Integer> indexTable = new HashMap<String,Integer>();
+    for (int i = 1; i < this.depStruct.getDependenciesArray().length; i++) {
+      Dependency typeNode = this.depStruct.getDependenciesArray()[i];
+      String word = typeNode.getDependentWord();
+      this.setTypeIndex(word, indexTable);
+      typeNode.setDependentString(
+          word+this.typeTokenIdstring+indexTable.get(word),
+          typeNode.getDependentPos());
+    }
   }
 
   // Method for creating the node label in the string representation
