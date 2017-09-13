@@ -43,7 +43,7 @@ public final class ConllUtils {
         } else {
           String[][] sentArray = new String[curSent.size()][infoSize];
           for (int i = 0; i < curSent.size(); i++) {
-            String[] curWord = curSent.get(i).split("\\s");
+            String[] curWord = curSent.get(i).split("\t");
 
             //System.err.println("Label: " + curWord[7]);
 
@@ -53,7 +53,7 @@ public final class ConllUtils {
               } else if (train && (j == 8 || j == 9)) {
                 sentArray[i][j] = null;
               } else {
-                sentArray[i][j] = curWord[j];
+                sentArray[i][j] = curWord[j].trim();
               }
             }
           }
