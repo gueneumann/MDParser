@@ -9,8 +9,14 @@ public class Dependency {
 
   private String label;
 
-  private String dependentString;
-  private String headString;
+//  private String dependentString;
+//  private String headString;
+
+  private String dependentWord;
+  private String dependentPos;
+
+  private String headWord;
+  private String headPos;
 
 
   public Dependency(int dependent, int head) {
@@ -46,15 +52,17 @@ public class Dependency {
   }
 
 
-  public void setDependentString(String dependentString) {
-  
-    this.dependentString = dependentString;
+  public void setDependentString(String dependentWord, String dependentPos) {
+
+    this.dependentWord = dependentWord;
+    this.dependentPos = dependentPos;
   }
 
 
-  public void setHeadString(String headString) {
-  
-    this.headString = headString;
+  public void setHeadString (String headWord, String headPos) {
+
+    this.headWord = headWord;
+    this.headPos = headPos;
   }
 
 
@@ -70,29 +78,25 @@ public class Dependency {
 
   public String getDependentWord() {
 
-    int splitPoint = this.dependentString.lastIndexOf(":");
-    return this.dependentString.substring(0, splitPoint);
+    return this.dependentWord;
   }
 
 
   public String getDependentPos() {
 
-    int splitPoint = this.dependentString.lastIndexOf(":");
-    return this.dependentString.substring(splitPoint + 1, this.dependentString.length());
+    return this.dependentPos;
   }
 
 
   public String getHeadWord() {
 
-    int splitPoint = this.headString.lastIndexOf(":");
-    return this.headString.substring(0, splitPoint);
+    return this.headWord;
   }
 
 
   public String getHeadPos() {
 
-    int splitPoint = this.headString.lastIndexOf(":");
-    return this.headString.substring(splitPoint + 1, this.headString.length());
+    return this.headPos;
   }
 
 

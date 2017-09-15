@@ -1,7 +1,9 @@
 package de.dfki.lt.mdparser.data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.dfki.lt.mdparser.algorithm.Dependency;
 import de.dfki.lt.mdparser.algorithm.DependencyStructure;
@@ -12,6 +14,7 @@ public class LinearizedSentence {
   private List<String> flatSentence = new ArrayList<String>();
   private List<String> linearizedSentence = new ArrayList<String>();
   private DependencyStructure depStruct = null;
+  private String typeTokenIdstring = "#";
 
 
   // getters and setters
@@ -35,9 +38,15 @@ public class LinearizedSentence {
 
   //Instantiation
 
-  public LinearizedSentence(DependencyStructure depStruct) {
+
+  public LinearizedSentence(DependencyStructure depStruct, boolean typeTokenId) {
 
     this.depStruct = depStruct;
+    if (typeTokenId) {
+      this.createTokenTypeIndex();
+    }
+    this.createFlatWordPOSsequence();
+    this.linearizedDependencyStructure();
   }
 
 
@@ -61,7 +70,6 @@ public class LinearizedSentence {
 
   //Node string representation for sentence element - dependency word and POS as word|POS
   private String makeSentenceTokenPosNode(Dependency dependency) {
-
     return dependency.getDependentWord()
         + "|"
         + dependency.getDependentPos();
@@ -79,6 +87,30 @@ public class LinearizedSentence {
     //        + dependency.getHeadWord()
 
     ;
+  }
+
+  /** Method for providing token-type id
+   * if word occurs at different position, it will also be represented as different nodes
+   * so "the man the woman" -> "the_1 man_1 the_2 woman_1"
+   */
+
+  private void setTypeIndex(String word, Map<String,Integer> indexTable) {
+    if (indexTable.containsKey(word)) {
+      indexTable.put(word, indexTable.get(word)+1);
+    } else {
+      indexTable.put(word, 1);
+    }
+  }
+  public void createTokenTypeIndex() {
+    Map<String,Integer> indexTable = new HashMap<String,Integer>();
+    for (int i = 1; i < this.depStruct.getDependenciesArray().length; i++) {
+      Dependency typeNode = this.depStruct.getDependenciesArray()[i];
+      String word = typeNode.getDependentWord();
+      this.setTypeIndex(word, indexTable);
+      typeNode.setDependentString(
+          word+this.typeTokenIdstring+indexTable.get(word),
+          typeNode.getDependentPos());
+    }
   }
 
   // Method for creating the node label in the string representation
@@ -123,20 +155,21 @@ public class LinearizedSentence {
     for (int i = 0; i < sentArray.length; i++) {
       // Get conll information for token
       String[] lineArray = sentArray[i];
-      Dependency dep = new Dependency(
-          Integer.valueOf(lineArray[0]), // modID
-          Integer.valueOf(lineArray[6]), // label
-          lineArray[7]); // headID
 
-      dep.setDependentString(lineArray[1] + ":" + lineArray[3]); // modID label :== form:pos
+     Dependency dep = new Dependency(
+          Integer.valueOf(lineArray[0]), // modID
+          Integer.valueOf(lineArray[6]), // headID
+          lineArray[7]); // label
+
+      dep.setDependentString(lineArray[1], lineArray[3]); // modID label :== form, pos
       if (Integer.valueOf(lineArray[6]) != 0) {
         // Retrieve head token from sentence array and create
         // headID label
         int head = Integer.valueOf(lineArray[6]) - 1;
-        dep.setHeadString(sentArray[head][1] + ":" + sentArray[head][3]); // headID label :== headIDform:headIDpos
+        dep.setHeadString(sentArray[head][1], sentArray[head][3]); // headID label :== headIDform, headIDpos
       } else {
         // or a dummy string for the root element
-        dep.setHeadString("null:null");
+        dep.setHeadString("null", "null");
       }
       parsedDependencies.add(dep);
     }
@@ -174,6 +207,7 @@ public class LinearizedSentence {
 
     this.getLinearizedSentence().add(openNode);
     String word = this.makeLinearizedParseNodeString(dependency);
+
     this.getLinearizedSentence().add(word);
     // Modifiers are processed from left to right
     List<Dependency> modifiers = getDepRelsWithHeadId(dependency.getDependent());
@@ -197,7 +231,8 @@ public class LinearizedSentence {
   public void linearizedDependencyStructure() {
 
     Dependency root = this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
-    descendFromNode(root, "(_RT", ")_RT");
+    String rootLabel = root.getLabel();
+    descendFromNode(root, "(_"+rootLabel, ")_"+rootLabel);
   }
 
   // Methods for creating the node label in the string representation
@@ -222,33 +257,4 @@ public class LinearizedSentence {
     result.append(this.getLinearizedSentence().get(this.getLinearizedSentence().size() - 1));
     return result.toString();
   }
-
-  // TODO asap:
-
-  // given a flatSentence and linearized dependency tree, create a CONLL output
-  // Make sure to follow MDParser version so that eval method can be used
-
-  /*
-   * Aim: create a proper CONLL tree from a given pair of aligned sentence and dependency tree
-   * MDParser conll format uses column 6 and 7 for head and label,
-   * and 8 and 9 for predicted (have to check) in order to run evaluation script
-   *    1, 2, and 3 for ID, word and POS, example:
-   *      ID  word  POS _ _ head  label _ _
-   *      1 The _ DT  _ _ 2 NMOD  _ _
-   * a linearized dependency tree is created in left-to-right top-down way
-   *
-   * I should first create a specific order based on the tree.
-   * a problem is that from the sequence of daughters, I do not know where to insert in the head element
-   * that means: where to cut the daughter sequence.
-   * Anyway, I could use an initial indexing, by placing the head at the end/front.
-   * Then use the position of a word in the aligned sentence for adjusting the initial sequence
-   * I could also search for the head index, by searching the word form of the head in left to right order
-   * (and also remember, which index has been used - in case a word occurs several times).
-   * If I do this for all words, I get at least some sort of relative ordering.
-   * But maybe, I have to take care about possible matches of a head element in the string.
-   * And it might only work for projective trees.
-   *
-   * NOTE: basically this means that I have to define an aligner, but can assume that has an implicit order
-   * since it was created automatically from a sequence.
-   */
 }
