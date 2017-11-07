@@ -116,6 +116,13 @@ public class Parser {
   }
 
 
+  public Sentence parse(Sentence sentence) {
+
+    this.algorithm.parse(sentence, this.featureModel, this.noLabels, this.feature2ModelMap);
+    return sentence;
+  }
+
+
   // returns a mapping of features to models
   public static Map<String, Model> readModels(Archivator arch) throws IOException {
 
