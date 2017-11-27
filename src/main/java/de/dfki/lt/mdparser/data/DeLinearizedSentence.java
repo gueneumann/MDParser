@@ -206,7 +206,7 @@ public class DeLinearizedSentence {
     this.headIdStack.push(0);
 
     for (String elem : linearizedSentence) {
-//            System.out.println("Elem: " + elem);
+            System.out.println("Elem: " + elem);
 //            System.out.println("headIdStack: " + this.headIdStack.toString());
 //            System.out.println("labelStack: " + this.labelStack.toString());
       if (elem.startsWith("(_")) {
