@@ -67,16 +67,19 @@ public final class FeatureExtractor {
       depRel = "none";
     } else {
       // 9 -> 10th column used for "storing" oracle/predicted label
-      // -> at least, seems so; because also these columns are overwritten with "_" when training is read in Data()
+      // -> at least, seems so; because also these columns are overwritten with "_" when 
+      // training is read in Data()
       if (train) {
         //System.out.println(sent.toString());
-        if (sent.getSentArray()[tokenIndex - 1][9] == null || sent.getSentArray()[tokenIndex - 1][9].equals("_")) {
+        if (sent.getSentArray()[tokenIndex - 1][9] == null
+            || sent.getSentArray()[tokenIndex - 1][9].equals("_")) {
           depRel = "none";
         } else {
           depRel = sent.getSentArray()[tokenIndex - 1][9];
         }
       } else {
-        if (sent.getSentArray()[tokenIndex - 1][9] == null || sent.getSentArray()[tokenIndex - 1][9].equals("_")) {
+        if (sent.getSentArray()[tokenIndex - 1][9] == null
+            || sent.getSentArray()[tokenIndex - 1][9].equals("_")) {
           depRel = "none";
         } else {
           depRel = sent.getSentArray()[tokenIndex - 1][9];
@@ -124,7 +127,8 @@ public final class FeatureExtractor {
   }
 
 
-  public static Feature mergeFeatures(int i, String[] mergeFeatureNames, Feature f1, Feature f2, Feature f3) {
+  public static Feature mergeFeatures(
+      int i, String[] mergeFeatureNames, Feature f1, Feature f2, Feature f3) {
 
     String name = mergeFeatureNames[i];
     String value = f1.getValue() + "_" + f2.getValue() + "_" + f3.getValue();

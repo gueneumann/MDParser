@@ -54,7 +54,8 @@ public class SplitWorker {
           PrintWriter curBw = this.splitMap.get(splitVal);
           if (curBw == null) {
             curBw = new PrintWriter(Files.newBufferedWriter(
-                GlobalConfig.SPLIT_INITIAL_FOLDER.resolve(splitIndex + ".txt"), StandardCharsets.UTF_8));
+                GlobalConfig.SPLIT_INITIAL_FOLDER.resolve(splitIndex + ".txt"),
+                StandardCharsets.UTF_8));
             this.splitMap.put(splitVal, curBw);
           }
           curBw.println(line);

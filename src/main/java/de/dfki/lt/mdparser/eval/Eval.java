@@ -28,9 +28,10 @@ public class Eval {
   private int[] posCorrectCounts;
 
 
-  public Eval(String goldStandardFile, String parsedFile, int headIndexGold, int headIndexParsed, int labelIndexGold,
-      int labelIndexParsed)
+  public Eval(String goldStandardFile, String parsedFile, int headIndexGold, int headIndexParsed,
+      int labelIndexGold, int labelIndexParsed)
       throws IOException {
+
     FileInputStream in = new FileInputStream(goldStandardFile);
     InputStreamReader ir = new InputStreamReader(in, "UTF8");
     BufferedReader frGold = new BufferedReader(ir);
@@ -42,8 +43,8 @@ public class Eval {
     while ((lineGold = frGold.readLine()) != null) {
       // XXX
       // GN: added by GN on 30.06.2015:
-      // if first element is not a single number, but contains an interval - as it is the case for Universal grammars
-      // ignore such a line
+      // if first element is not a single number, but contains an interval - as it is the case for
+      // Universal grammars ignore such a line
       if (!((lineGold.length() > 0)
           && (lineGold.split("\t")[0].contains("-")))) {
         lineParsed = frParsed.readLine();
@@ -116,8 +117,10 @@ public class Eval {
   }
 
 
-  private void computeLabelConfusionMatrix(String goldStandardFile, String parsedFile, int headIndexGold,
-      int headIndexParsed, int labelIndexGold, int labelIndexParsed, String outputFile) throws IOException {
+  private void computeLabelConfusionMatrix(
+      String goldStandardFile, String parsedFile, int headIndexGold,
+      int headIndexParsed, int labelIndexGold, int labelIndexParsed, String outputFile)
+      throws IOException {
 
     FileInputStream in = new FileInputStream(goldStandardFile);
     InputStreamReader ir = new InputStreamReader(in, "UTF8");
@@ -203,7 +206,8 @@ public class Eval {
 
   private double getAttachedPercentage() {
 
-    return (Double.valueOf(this.total) - Double.valueOf(this.unattached)) / Double.valueOf(this.total);
+    return (Double.valueOf(this.total) - Double.valueOf(this.unattached))
+        / Double.valueOf(this.total);
   }
 
 
@@ -234,9 +238,10 @@ public class Eval {
   }
 
 
-  private void computeAverageProbabilityForCorrectAndWrongDependencies(String parsedFile, int headIndex,
-      int goldStandardHeadIndex,
-      int labelIndex, int goldStandardLabelIndex) throws IOException {
+  private void computeAverageProbabilityForCorrectAndWrongDependencies(
+      String parsedFile, int headIndex, int goldStandardHeadIndex, int labelIndex,
+      int goldStandardLabelIndex)
+      throws IOException {
 
     FileInputStream in = new FileInputStream(parsedFile);
     InputStreamReader ir = new InputStreamReader(in, "UTF8");
@@ -276,7 +281,9 @@ public class Eval {
 
     Eval ev = new Eval("PIL/devel/devel-htb-ver0.5.my.utf8.conll", "temp/parsed.txt", 6, 6, 7, 7);
     ev.createLabelIndexMap("PIL/train/train-htb-ver0.5.gold.utf8.conll", 7);
-    ev.computeLabelConfusionMatrix("PIL/devel/devel-htb-ver0.5.my.utf8.conll", "temp/parsed.txt", 6, 6, 7, 7,
+    ev.computeLabelConfusionMatrix(
+        "PIL/devel/devel-htb-ver0.5.my.utf8.conll", "temp/parsed.txt",
+        6, 6, 7, 7,
         "temp/pos.txt");
     System.out.println(ev.getParentsAccuracy());
 

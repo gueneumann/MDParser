@@ -66,7 +66,8 @@ public final class MDParser {
   public static void eval(String modelFileName, String corpusFileName, String resultFileName) {
 
     try {
-      Eval evaluator = MDPrunner.parseAndEvalConllFile(corpusFileName, resultFileName, modelFileName);
+      Eval evaluator =
+          MDPrunner.parseAndEvalConllFile(corpusFileName, resultFileName, modelFileName);
       logger.info("Parent accuracy: " + evaluator.getParentsAccuracy());
       logger.info("Label accuracy:  " + evaluator.getLabelsAccuracy());
     } catch (IOException e) {
@@ -165,7 +166,8 @@ public final class MDParser {
     modeOption.setRequired(true);
     evalOptions.addOption(modeOption);
 
-    Option modelOption = new Option("model", true, "model, to be loaded from classpath or file system");
+    Option modelOption =
+        new Option("model", true, "model, to be loaded from classpath or file system");
     modelOption.setRequired(true);
     modelOption.setArgName("file");
     evalOptions.addOption(modelOption);
@@ -192,7 +194,8 @@ public final class MDParser {
     modeOption.setRequired(true);
     parseOptions.addOption(modeOption);
 
-    Option modelOption = new Option("model", true, "model, to be loaded from classpath or file system");
+    Option modelOption =
+        new Option("model", true, "model, to be loaded from classpath or file system");
     modelOption.setRequired(true);
     modelOption.setArgName("file");
     parseOptions.addOption(modelOption);

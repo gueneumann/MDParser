@@ -54,7 +54,8 @@ public class Archivator {
     List<Path> filesToPack = new ArrayList<>();
     filesToPack.add(GlobalConfig.ALPHA_FILE);
     filesToPack.add(GlobalConfig.SPLIT_FILE);
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_MODELS_FOLDER)) {
+    try (
+        DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_MODELS_FOLDER)) {
       stream.forEach(filesToPack::add);
     }
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ALPHA_FOLDER)) {
@@ -62,11 +63,13 @@ public class Archivator {
     }
 
     OutputStream dest =
-        Files.newOutputStream(GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(this.archiveName));
+        Files.newOutputStream(
+            GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(this.archiveName));
     ZipOutputStream zipOut = new ZipOutputStream(new BufferedOutputStream(dest));
 
     for (Path onePath : filesToPack) {
-      String zipEntry = GlobalConfig.getModelBuildFolder().relativize(onePath).normalize().toString();
+      String zipEntry =
+          GlobalConfig.getModelBuildFolder().relativize(onePath).normalize().toString();
       zipEntry = zipEntry.replaceAll("\\" + System.getProperty("file.separator"), "/");
       zipOut.putNextEntry(new ZipEntry(zipEntry));
       BufferedInputStream origin = new BufferedInputStream(Files.newInputStream(onePath));

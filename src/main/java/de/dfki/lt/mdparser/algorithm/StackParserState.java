@@ -14,7 +14,8 @@ public class StackParserState extends ParserState {
 
 
   public StackParserState(
-      Stack<Integer> stack, Stack<Integer> buffer, Sentence sent, DependencyStructure curDepStruct) {
+      Stack<Integer> stack, Stack<Integer> buffer, Sentence sent,
+      DependencyStructure curDepStruct) {
 
     this.buffer = buffer;
     this.stack = stack;

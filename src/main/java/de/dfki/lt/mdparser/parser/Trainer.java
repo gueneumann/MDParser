@@ -145,7 +145,9 @@ public final class Trainer {
   }
 
 
-  private static void restoreModels(Path splitModelsDir, Alphabet alpha, Path splitAlphaDir) throws IOException {
+  private static void restoreModels(
+      Path splitModelsDir, Alphabet alpha, Path splitAlphaDir)
+      throws IOException {
 
     List<Path> splitModelFiles = new ArrayList<>();
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(splitModelsDir)) {
@@ -160,7 +162,8 @@ public final class Trainer {
       Alphabet a = new Alphabet(Files.newInputStream(alphaPath));
       int numberOfClasses = model.getNrClass();
 
-      try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
+      try (PrintWriter out = new PrintWriter(
+          Files.newBufferedWriter(oneModelFile, StandardCharsets.UTF_8))) {
         out.println("solver_type MCSVM_CS");
         out.print(String.format("nr_class %d%nlabel ", model.getNrClass()));
 

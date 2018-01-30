@@ -91,8 +91,8 @@ public final class TrainerFiles {
       //     and to compute the operations in form of a list of feature vectors for each state.
       //     this means that all feature functions are applied on the parsed sentence by applying
       //     the feature model in the training mode.
-      //     the result is then a list of parser states in form of feature vectors whose values are based
-      //     one the specific training example
+      //     the result is then a list of parser states in form of feature vectors whose values
+      //     are based one the specific training example
       List<FeatureVector> featureVectorList = algorithm.train(sent, featureModel, noLabels);
 
       //System.out.println(parserList.toString());
@@ -107,8 +107,8 @@ public final class TrainerFiles {
         String operation = featureVector.getLabel();
         // GN: Lookup up label-index and use it to create/extend buffer
         Integer index = alpha.getLabelIndex(operation);
-        // GN: create label-index many different split0 files, so that each files contains just the feature vectors
-        // of each edge feature vector and its label instance
+        // GN: create label-index many different split0 files, so that each files contains just
+        // the feature vectors of each edge feature vector and its label instance
         // The label-index buffers are kept in a hash array
         PrintWriter curWriter = outputMap.get(index);
         if (curWriter == null) {
@@ -152,7 +152,8 @@ public final class TrainerFiles {
     // split files
     Map<String, PrintWriter> splitMap = new HashMap<>();
     List<Path> filesToSplit = new ArrayList<>();
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER)) {
+    try (DirectoryStream<Path> stream =
+        Files.newDirectoryStream(GlobalConfig.FEATURE_VECTORS_FOLDER)) {
       stream.forEach(filesToSplit::add);
     }
     filesToSplit.sort(Comparator.comparing(Path::toString));
@@ -192,7 +193,8 @@ public final class TrainerFiles {
     String lastFile = null;
     String curSplitVal = null;
     List<Path> trainingFiles = new ArrayList<>();
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_INITIAL_FOLDER)) {
+    try (DirectoryStream<Path> stream =
+        Files.newDirectoryStream(GlobalConfig.SPLIT_INITIAL_FOLDER)) {
       stream.forEach(trainingFiles::add);
     }
     trainingFiles.sort(Comparator.comparing(Path::toString));
@@ -202,7 +204,8 @@ public final class TrainerFiles {
       if (curWriter == null) {
         curFile = curSplitVal;
         curWriter = new PrintWriter(
-            Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile), StandardCharsets.UTF_8));
+            Files.newBufferedWriter(GlobalConfig.SPLIT_ADJUST_FOLDER.resolve(curFile),
+                StandardCharsets.UTF_8));
       }
 
       try (BufferedReader in = Files.newBufferedReader(oneTrainingFile, StandardCharsets.UTF_8)) {
@@ -284,7 +287,8 @@ public final class TrainerFiles {
         String featureString = alpha.getFeature(index);
         // normalize split file path
         String normalizedPath =
-            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_ADJUST_FOLDER).normalize()
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_ADJUST_FOLDER)
+                .normalize()
                 .resolve(newFile).toString().replaceAll("\\" + File.separator, "/");
         out.println(String.format("%s %s %s", featureString, normalizedPath, splitVal));
       }
@@ -296,7 +300,8 @@ public final class TrainerFiles {
 
     // compact files
     List<Path> filesToCompact = new ArrayList<>();
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
+    try (DirectoryStream<Path> stream =
+        Files.newDirectoryStream(GlobalConfig.SPLIT_ADJUST_FOLDER)) {
       stream.forEach(filesToCompact::add);
     }
     filesToCompact.sort(Comparator.comparing(Path::toString));
@@ -314,12 +319,14 @@ public final class TrainerFiles {
       filesToCompact.stream().forEach(trainWorker::processFile);
     }
 
-    System.out.println("Make single alphabet file " + GlobalConfig.ALPHA_FILE + " from splitA files");
+    System.out.println(
+        "Make single alphabet file " + GlobalConfig.ALPHA_FILE + " from splitA files");
     Trainer.recreateOneAlphabetAndAdjustModels(
         GlobalConfig.ALPHA_FILE, GlobalConfig.SPLIT_ALPHA_FOLDER, GlobalConfig.SPLIT_MODELS_FOLDER);
 
     long trainingEndTime = System.currentTimeMillis();
-    System.out.println("Complete Training time: " + ((trainingEndTime - trainingStartTime)) + " milliseconds.");
+    System.out.println(
+        "Complete Training time: " + ((trainingEndTime - trainingStartTime)) + " milliseconds.");
 
     Archivator arch = new Archivator(modelFileName);
     arch.pack();

@@ -16,26 +16,6 @@ public class LinearizedSentence {
   private DependencyStructure depStruct = null;
   private String typeTokenIdstring = "#";
 
-
-  // getters and setters
-  public List<String> getFlatSentence() {
-
-    return this.flatSentence;
-  }
-
-
-  public List<String> getLinearizedSentence() {
-
-    return this.linearizedSentence;
-  }
-
-
-  public DependencyStructure getDepStruct() {
-
-    return this.depStruct;
-  }
-
-
   //Instantiation
 
 
@@ -57,9 +37,28 @@ public class LinearizedSentence {
   }
 
 
+  // getters and setters
+  public List<String> getFlatSentence() {
+
+    return this.flatSentence;
+  }
+
+
+  public List<String> getLinearizedSentence() {
+
+    return this.linearizedSentence;
+  }
+
+
+  public DependencyStructure getDepStruct() {
+
+    return this.depStruct;
+  }
+
   // Methods
 
   // Internal node representation for the parts of an aligned (sentence,dependency tree)
+
 
   //Node string representation for sentence part - dependency word only
 
@@ -68,8 +67,10 @@ public class LinearizedSentence {
     return dependency.getDependentWord();
   }
 
+
   //Node string representation for sentence element - dependency word and POS as word|POS
   private String makeSentenceTokenPosNode(Dependency dependency) {
+
     return dependency.getDependentWord()
         + "|"
         + dependency.getDependentPos();
@@ -78,40 +79,45 @@ public class LinearizedSentence {
 
   // Node string representation for linearized form of dependency tree part
 
+
   // Output modifierWord only, label is part of the paranthesis
 
   private String makeLinearizedParseNodeString(Dependency dependency) {
 
-    return dependency.getDependentWord()
+    return dependency.getDependentWord();
     //        + ":"
     //        + dependency.getHeadWord()
-
-    ;
   }
 
-  /** Method for providing token-type id
-   * if word occurs at different position, it will also be represented as different nodes
-   * so "the man the woman" -> "the_1 man_1 the_2 woman_1"
+
+  /**
+   * Method for providing token-type id if word occurs at different position, it will also be
+   * represented as different nodes so "the man the woman" -> "the_1 man_1 the_2 woman_1"
    */
 
-  private void setTypeIndex(String word, Map<String,Integer> indexTable) {
+  private void setTypeIndex(String word, Map<String, Integer> indexTable) {
+
     if (indexTable.containsKey(word)) {
-      indexTable.put(word, indexTable.get(word)+1);
+      indexTable.put(word, indexTable.get(word) + 1);
     } else {
       indexTable.put(word, 1);
     }
   }
+
+
   public void createTokenTypeIndex() {
-    Map<String,Integer> indexTable = new HashMap<String,Integer>();
+
+    Map<String, Integer> indexTable = new HashMap<String, Integer>();
     for (int i = 1; i < this.depStruct.getDependenciesArray().length; i++) {
       Dependency typeNode = this.depStruct.getDependenciesArray()[i];
       String word = typeNode.getDependentWord();
       this.setTypeIndex(word, indexTable);
       typeNode.setDependentString(
-          word+this.typeTokenIdstring+indexTable.get(word),
+          word + this.typeTokenIdstring + indexTable.get(word),
           typeNode.getDependentPos());
     }
   }
+
 
   // Method for creating the node label in the string representation
 
@@ -156,7 +162,7 @@ public class LinearizedSentence {
       // Get conll information for token
       String[] lineArray = sentArray[i];
 
-     Dependency dep = new Dependency(
+      Dependency dep = new Dependency(
           Integer.valueOf(lineArray[0]), // modID
           Integer.valueOf(lineArray[6]), // headID
           lineArray[7]); // label
@@ -166,7 +172,8 @@ public class LinearizedSentence {
         // Retrieve head token from sentence array and create
         // headID label
         int head = Integer.valueOf(lineArray[6]) - 1;
-        dep.setHeadString(sentArray[head][1], sentArray[head][3]); // headID label :== headIDform, headIDpos
+        // headID label :== headIDform, headIDpos
+        dep.setHeadString(sentArray[head][1], sentArray[head][3]);
       } else {
         // or a dummy string for the root element
         dep.setHeadString("null", "null");
@@ -183,9 +190,9 @@ public class LinearizedSentence {
 
 
   /**
-   * Traverse a dependency tree top-down, depth first left to right. For each dependency relation (mod
-   * label head) create a sequence <"(_label" mod sublist ")_label"> where sublist is empty or the
-   * linearized modifier dependency nodes of the modifier.
+   * Traverse a dependency tree top-down, depth first left to right. For each dependency relation
+   * (mod label head) create a sequence <"(_label" mod sublist ")_label"> where sublist is empty or
+   * the linearized modifier dependency nodes of the modifier.
    */
 
   /**
@@ -230,10 +237,12 @@ public class LinearizedSentence {
 
   public void linearizedDependencyStructure() {
 
-    Dependency root = this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
+    Dependency root =
+        this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
     String rootLabel = root.getLabel();
-    descendFromNode(root, "(_"+rootLabel, ")_"+rootLabel);
+    descendFromNode(root, "(_" + rootLabel, ")_" + rootLabel);
   }
+
 
   // Methods for creating the node label in the string representation
 

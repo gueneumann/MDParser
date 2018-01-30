@@ -49,17 +49,20 @@ public class CovingtonFeatureModel extends FeatureModel {
       addStaticFeature(jList, fcpj, parserAlpha);
       // Begin:
       // GN: why uncomment ? -> templateFeat does not exist
-      //Feature fpj_fcpj = FeatureExtractor.mergeFeatures(9, this.featureNamesForMerging, fpj, fcpj);
+      //Feature fpj_fcpj = FeatureExtractor.mergeFeatures(
+      //  9, this.featureNamesForMerging, fpj, fcpj);
       //addStaticFeature(jList, fpj_fcpj, parserAlpha);
       //Feature fcase = FeatureExtractor.templateFeat(j, "casej", curSent);
       //addStaticFeature(jList, fcase, parserAlpha);
-      //Feature fullMerge = FeatureExtractor.mergeFeatures(10, this.featureNamesForMerging, fpj_fcpj, fcase);
+      //Feature fullMerge = FeatureExtractor.mergeFeatures(
+      //  10, this.featureNamesForMerging, fpj_fcpj, fcase);
       //addStaticFeature(jList, fullMerge, parserAlpha);
       // End
 
       Feature wfjp1 = FeatureExtractor.createFeatureForWF(j + 1, "wfjp1", curSent);
       addStaticFeature(jList, wfjp1, parserAlpha);
-      Feature fpjp1_fpjp2_fpjp3 = FeatureExtractor.mergeFeatures(0, this.featureNamesForMerging, fpjp1, fpjp2, fpjp3);
+      Feature fpjp1_fpjp2_fpjp3 =
+          FeatureExtractor.mergeFeatures(0, this.featureNamesForMerging, fpjp1, fpjp2, fpjp3);
       addStaticFeature(jList, fpjp1_fpjp2_fpjp3, parserAlpha);
 
       Feature fpjp4 = FeatureExtractor.createFeatureForPos(j + 4, "pjp4", curSent);
@@ -77,9 +80,11 @@ public class CovingtonFeatureModel extends FeatureModel {
       addStaticFeature(iList, fwfi, parserAlpha);
       Feature fcpi = FeatureExtractor.createFeatureForCPos(i, "cpi", curSent);
       addStaticFeature(iList, fcpi, parserAlpha);
-      Feature fpi_fpip1 = FeatureExtractor.mergeFeatures(1, this.featureNamesForMerging, fpi, fpip1);
+      Feature fpi_fpip1 =
+          FeatureExtractor.mergeFeatures(1, this.featureNamesForMerging, fpi, fpip1);
       addStaticFeature(iList, fpi_fpip1, parserAlpha);
-      Feature fwfi_fcpi = FeatureExtractor.mergeFeatures(2, this.featureNamesForMerging, fwfi, fcpi);
+      Feature fwfi_fcpi =
+          FeatureExtractor.mergeFeatures(2, this.featureNamesForMerging, fwfi, fcpi);
       addStaticFeature(iList, fwfi_fcpi, parserAlpha);
       Feature fpip2 = FeatureExtractor.createFeatureForPos(i + 2, "pip2", curSent);
       addStaticFeature(iList, fpip2, parserAlpha);
@@ -108,7 +113,7 @@ public class CovingtonFeatureModel extends FeatureModel {
   -> but harmless according to AV -> but I do not use it
   11. pip1  OK (used as static)
   pip2  EXTRA in Implementation
-
+  
   12. wfhi  OK (used as dynamic)
   13. phi   OK (used as dynamic)
   14. depi  OK (used as dynamic)
@@ -116,12 +121,13 @@ public class CovingtonFeatureModel extends FeatureModel {
   16. deprdi  OK (used as dynamic)
   17. depldj  OK (used as dynamic)
   18. dist  OK (used as dynamic)
-
+  
   19. merge2(pi,pip1)       OK (used as static no. 0)
   20. merge2(wfi,pi)        UNCLEAR (used as static no. 1)
-  -> is/was actually used with cposi, which is basically the same as pi, but unclear why is this defined
+  -> is/was actually used with cposi, which is basically the same as pi, 
+  but unclear why is this defined
   21. merge3(pjp1,pjp2,pjp3)    OK (used as static no. 2)
-
+  
   22. merge2(depldj,pj)     OK (used as dynamic no. 3; access to static features)
   23. merge3(pi,deprdi,depldi)  OK (used as dynamic no. 4; access to static features)
   24. merge2(depi,wfhi)     OK (used as dynamic no. 5)
@@ -158,7 +164,8 @@ public class CovingtonFeatureModel extends FeatureModel {
       Feature wfjp1 = FeatureExtractor.createFeatureForWF(j + 1, "wfjp1", curSent);
       addStaticFeature(jList, wfjp1, parserAlpha);
 
-      Feature fpjp1_fpjp2_fpjp3 = FeatureExtractor.mergeFeatures(0, this.featureNamesForMerging, fpjp1, fpjp2, fpjp3);
+      Feature fpjp1_fpjp2_fpjp3 =
+          FeatureExtractor.mergeFeatures(0, this.featureNamesForMerging, fpjp1, fpjp2, fpjp3);
       addStaticFeature(jList, fpjp1_fpjp2_fpjp3, parserAlpha);
 
       Feature fpjp4 = FeatureExtractor.createFeatureForPos(j + 4, "pjp4", curSent);
@@ -182,10 +189,12 @@ public class CovingtonFeatureModel extends FeatureModel {
       Feature fcpi = FeatureExtractor.createFeatureForCPos(i, "cpi", curSent);
       addStaticFeature(iList, fcpi, parserAlpha);
 
-      Feature fpi_fpip1 = FeatureExtractor.mergeFeatures(1, this.featureNamesForMerging, fpi, fpip1);
+      Feature fpi_fpip1 =
+          FeatureExtractor.mergeFeatures(1, this.featureNamesForMerging, fpi, fpip1);
       addStaticFeature(iList, fpi_fpip1, parserAlpha);
       // changed fcpi to fpi as defined in thesis
-      Feature fwfi_fcpi = FeatureExtractor.mergeFeatures(2, this.featureNamesForMerging, fwfi, fcpi);
+      Feature fwfi_fcpi =
+          FeatureExtractor.mergeFeatures(2, this.featureNamesForMerging, fwfi, fcpi);
       addStaticFeature(iList, fwfi_fcpi, parserAlpha);
 
       Feature fpip2 = FeatureExtractor.createFeatureForPos(i + 2, "pip2", curSent);
@@ -198,7 +207,8 @@ public class CovingtonFeatureModel extends FeatureModel {
   }
 
 
-  private static void addStaticFeature(List<Feature> featureList, Feature feature, Alphabet parserAlpha) {
+  private static void addStaticFeature(
+      List<Feature> featureList, Feature feature, Alphabet parserAlpha) {
 
     Integer featureIndex = parserAlpha.getFeatureIndex(feature.getFeatureString());
     feature.setParserIndex(featureIndex);
@@ -222,7 +232,8 @@ public class CovingtonFeatureModel extends FeatureModel {
     // GN: show contents of static features J
     // System.out.println("curStaticFeaturesJ: ");
 
-    // GN: I read this as such as the static features are inserted dynamically for each new training example.
+    // GN: I read this as such as the static features are inserted dynamically for 
+    // each new training example.
     // The advantage is that we do not have to build the feature-value strings again.
     // So, this is how static features are used in memorization manner.
     // Since, static features are stored in a vector, and later accessed by the dynamic templates
@@ -271,7 +282,8 @@ public class CovingtonFeatureModel extends FeatureModel {
         4, this.featureNamesForMerging, curStaticFeaturesI[0], fdeprdi, fdepldi);
     featureVector.addFeature(fpi_fdeprdi_fdepldi, parserAlpha, train);
 
-    Feature fdepi_wfhi = FeatureExtractor.mergeFeatures(5, this.featureNamesForMerging, fdepi, wfhi);
+    Feature fdepi_wfhi =
+        FeatureExtractor.mergeFeatures(5, this.featureNamesForMerging, fdepi, wfhi);
     featureVector.addFeature(fdepi_wfhi, parserAlpha, train);
 
     // curStaticFeaturesJ/I[1]: should be pjp1 and pip1 -> OK
@@ -282,7 +294,8 @@ public class CovingtonFeatureModel extends FeatureModel {
     // curStaticFeaturesJ[4] wfj is , curStaticFeaturesI[2] is wfi, curStaticFeaturesJ[2] is pjp2
     // laut thesis muesste das sein: wfj,wfi,pjp3
     Feature fst2 = FeatureExtractor.mergeFeatures(
-        7, this.featureNamesForMerging, curStaticFeaturesJ[4], curStaticFeaturesI[2], curStaticFeaturesJ[3]);
+        7, this.featureNamesForMerging, curStaticFeaturesJ[4], curStaticFeaturesI[2],
+        curStaticFeaturesJ[3]);
     featureVector.addFeature(fst2, parserAlpha, train);
 
     // curStaticFeaturesJ[5] is cpos, curStaticFeaturesJ[6] is wfjp1

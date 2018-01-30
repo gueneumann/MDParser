@@ -41,7 +41,8 @@ public class Parser {
 
     Archivator arch = new Archivator(modelFileName);
     Alphabet alphabet = new Alphabet(arch.getInputStream(
-        GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.ALPHA_FILE).normalize().toString()));
+        GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.ALPHA_FILE).normalize()
+            .toString()));
 
     long modelReadStart = System.currentTimeMillis();
     this.feature2ModelMap = readModels(arch);
@@ -80,7 +81,8 @@ public class Parser {
     long processEnd = System.currentTimeMillis();
     System.out.println("No. of threads: " + parsingThreads);
     System.out.println("Time to parse (msec): " + (processEnd - processStart));
-    System.out.println("Speed (sent/s): " + (sentencesList.size() * 1000.0) / (processEnd - processStart));
+    System.out.println(
+        "Speed (sent/s): " + (sentencesList.size() * 1000.0) / (processEnd - processStart));
     System.out.println("Number of configurations: " + this.algorithm.getNumberOfConfigurations());
     System.out.println(
         "Average number of configurations per sentence: "
@@ -102,14 +104,16 @@ public class Parser {
       try {
         forkJoinPool.submit(
             () -> sentencesList.stream().parallel()
-                .forEach(x -> this.algorithm.parse(x, this.featureModel, this.noLabels, this.feature2ModelMap)))
-                .get();
+                .forEach(x -> this.algorithm.parse(
+                    x, this.featureModel, this.noLabels, this.feature2ModelMap)))
+            .get();
       } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
     } else {
       sentencesList.stream()
-          .forEach(x -> this.algorithm.parse(x, this.featureModel, this.noLabels, this.feature2ModelMap));
+          .forEach(x -> this.algorithm.parse(
+              x, this.featureModel, this.noLabels, this.feature2ModelMap));
     }
 
     return sentencesList;
@@ -130,13 +134,15 @@ public class Parser {
     Map<String, Model> modelId2ModelMap = new HashMap<>();
     Map<String, String> feature2ModelFileNameMap =
         readSplitFile(arch.getInputStream(
-            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_FILE).normalize().toString()));
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_FILE).normalize()
+                .toString()));
     for (Map.Entry<String, String> oneFeature2ModelFileName : feature2ModelFileNameMap.entrySet()) {
       String modelId = Paths.get(oneFeature2ModelFileName.getValue()).getFileName().toString();
       Model model = modelId2ModelMap.get(modelId);
       if (null == model) {
         Path modelPath =
-            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_MODELS_FOLDER).normalize()
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_MODELS_FOLDER)
+                .normalize()
                 .resolve(modelId);
         try (InputStream is = arch.getInputStream(modelPath.toString())) {
           model = Model.load(new InputStreamReader(is));
