@@ -14,6 +14,32 @@ public class LinearizedDependencyTree {
   private boolean withLabelAsPosfeature = true;
 
 
+  /**
+   * When this class is instantiated, it takes as input a dependency structure computed by MDParser
+   * and too flags, and returns a linearized dependency tree. The linearized dependency tree will be
+   * used as input to our Deep AMR parser which is implemented using OpenNMT. If the flag
+   * withPosFeature is false, then only the node and edge labels are used, i.e., the words and
+   * grammatical labels of a dependency tree. If the withPosFeature is true, it will add to each
+   * node (word) the POS tag, separated by the special char "￨" (which is NOT the pipe char). If the
+   * flag withLabelAsPosfeature is true, it will add to each edge label (grammatical label) as POS
+   * tag otherwise the dummy label "LABEL" is used. We do this for two purposes: 1.) to be
+   * syntactical consistent with word POS labels, and 2) in order to test whether the content of the
+   * label is useful.
+   *
+   * @param depStruct
+   * @param withPosFeature
+   * @param withLabelAsPosfeature
+   */
+  public LinearizedDependencyTree(
+      DependencyStructure depStruct, boolean withPosFeature, boolean withLabelAsPosfeature) {
+
+    this.depStruct = depStruct;
+    this.withPosFeature = withPosFeature;
+    this.withLabelAsPosfeature = withLabelAsPosfeature;
+    this.linearizedDependencyStructure();
+  }
+
+
   public List<String> getLinearizedSentence() {
 
     return this.linearizedSentence;
@@ -25,40 +51,15 @@ public class LinearizedDependencyTree {
     return this.depStruct;
   }
 
-  /**
-   * When this class is instantiated, it takes as input a dependency structure computed by MDParser
-   * and too flags, and returns a linearized dependency tree.
-   * The linearized dependency tree will be used as input to our Deep AMR parser which is implemented using OpenNMT.
-   * If the flag withPosFeature is false, then only the node and edge labels are used, i.e., the words and grammatical labels
-   * of a dependency tree.
-   * If the withPosFeature is true, it will add to each node (word) the POS tag, separated by the special char "￨"
-   * (which is NOT the pipe char).
-   * If the flag withLabelAsPosfeature is true, it will add to each edge label (grammatical label)
-   * as POS tag otherwise the dummy label "LABEL" is used. We do this for two purposes: 1.) to be syntactical consistent with
-   * word POS labels, and  2) in order to test whether the content of the label is useful.
-   * @param depStruct
-   * @param withPosFeature
-   * @param withLabelAsPosfeature
-   */
-
-  public LinearizedDependencyTree(DependencyStructure depStruct, boolean withPosFeature, boolean withLabelAsPosfeature) {
-
-    this.depStruct = depStruct;
-    this.withPosFeature = withPosFeature;
-    this.withLabelAsPosfeature = withLabelAsPosfeature;
-    this.linearizedDependencyStructure();
-  }
-
 
   // Node string representation for linearized form of dependency tree part
 
   private String makeLinearizedNodeString(Dependency dependency) {
 
     if (this.withPosFeature) {
-    return dependency.getDependentWord()
-        + "￨"
-        + dependency.getDependentPos()
-    ;
+      return dependency.getDependentWord()
+          + "￨"
+          + dependency.getDependentPos();
     } else {
       return dependency.getDependentWord();
     }
@@ -102,8 +103,7 @@ public class LinearizedDependencyTree {
     for (int i = 0; i < modifiers.size(); i++) {
       descendFromNode(modifiers.get(i),
           makeLinearizedEdgeString("(_", modifiers.get(i).getLabel()),
-          makeLinearizedEdgeString(")_", modifiers.get(i).getLabel())
-          );
+          makeLinearizedEdgeString(")_", modifiers.get(i).getLabel()));
     }
     this.getLinearizedSentence().add(closeNode);
   }
@@ -111,12 +111,12 @@ public class LinearizedDependencyTree {
 
   public void linearizedDependencyStructure() {
 
-    Dependency root = this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
+    Dependency root =
+        this.getDepStruct().getDependenciesArray()[this.getDepStruct().getRootPosition()];
     String rootLabel = root.getLabel();
     descendFromNode(root,
         makeLinearizedEdgeString("(_", rootLabel),
-        makeLinearizedEdgeString(")_", rootLabel)
-        );
+        makeLinearizedEdgeString(")_", rootLabel));
   }
 
   // Methods for creating the node label in the string representation
