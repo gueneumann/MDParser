@@ -81,7 +81,8 @@ public final class TrainerMemory {
     for (Sentence sent : sentences) {
       // GN: initialize static features (i.e., concrete values for feature+value instance)
       // check static features for current word j and left words i
-      // NOTE: the static and dynamic feature-values are added to the alphabet class as a side-effect
+      // NOTE: the static and dynamic feature-values are added to the alphabet class as
+      // a side-effect
       model.initializeStaticFeaturesCombined(sent, true);
 
       // GN: call parsing control strategy
@@ -89,8 +90,8 @@ public final class TrainerMemory {
       //     and to compute the operations in form of a list of feature vectors for each state.
       //     this means that all feature functions are applied on the parsed sentence by applying
       //     the feature model in the training mode.
-      //     the result is then a list of parser states in form of feature vectors whose values are based
-      //     one the specific training example
+      //     the result is then a list of parser states in form of feature vectors whose values
+      //     are based one the specific training example
       List<FeatureVector> featureVectorList = algorithm.train(sent, model, noLabels);
       totalConfigurations += featureVectorList.size();
 
@@ -103,16 +104,18 @@ public final class TrainerMemory {
 
         FeatureVector featureVector = featureVectorList.get(i);
         //System.out.println("Sentence " + n + " ... configuration fv-parse " + fv.toString());
-        // Sentence 1778 ... fv-parse j#O pj=NNS pjp1=IN pjp2=DT pjp3=NN wfj=results cpj=NNS wfjp1=for m0=IN_DT_NN
-        // pjp4=TO pi=null pip1=" wfi=null cpi=null m1=null_" m2=null_null pip2=IN dist=6 wfhi=null phi=null depi=none
-        // depldj=null depldi=none deprdi=O m3=null_NNS m4=null_O_none m5=none_null m6=null_"_IN m7=results_null_DT
-        // m8=6_NNS_for
+        // Sentence 1778 ...
+        // fv-parse j#O pj=NNS pjp1=IN pjp2=DT pjp3=NN wfj=results cpj=NNS wfjp1=for m0=IN_DT_NN
+        // pjp4=TO pi=null pip1=" wfi=null cpi=null m1=null_" m2=null_null pip2=IN dist=6 wfhi=null
+        // phi=null depi=none depldj=null depldi=none deprdi=O m3=null_NNS m4=null_O_none
+        // m5=none_null m6=null_"_IN m7=results_null_DT m8=6_NNS_for
 
         // reference to the first feature-value which is the POS of current token j
         Feature splitFeature = featureVector.getFeatureList().get(0);
 
         // Basically the POS-feature value for the jth element, e.g., pj=ART
-        // It is used for creating splitVal different hashes, which serve as parallel split training files
+        // It is used for creating splitVal different hashes, which serve as parallel
+        // split training files
         String splitVal = splitFeature.getFeatureString();
 
         // NOTE: difference to function createAndTrainWithSplittingFromDisk():
@@ -183,7 +186,8 @@ public final class TrainerMemory {
     */
     guaranteeOrder(mergedMap, alpha);
     long endTime = System.currentTimeMillis();
-    System.out.println("Training data creating time: " + (endTime - startTime) / 1000 + " seconds.");
+    System.out.println(
+        "Training data creating time: " + (endTime - startTime) / 1000 + " seconds.");
 
     //smaller indexes for each model
     Map<String, int[][]> compactMap = compactiseTrainingDataFiles(alpha, mergedMap);
@@ -206,9 +210,12 @@ public final class TrainerMemory {
         n = Integer.valueOf(nValForCurFeature);
         // normalize split file path
         String normalizedPath =
-            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_ADJUST_FOLDER).normalize()
-                .resolve(nValForCurFeature + ".txt").toString().replaceAll("\\" + File.separator, "/");
-        out.println(String.format("%s %s %s", curFeature, normalizedPath, nValForCurFeature + ".txt"));
+            GlobalConfig.getModelBuildFolder().relativize(GlobalConfig.SPLIT_ADJUST_FOLDER)
+                .normalize()
+                .resolve(nValForCurFeature + ".txt").toString()
+                .replaceAll("\\" + File.separator, "/");
+        out.println(String.format(
+            "%s %s %s", curFeature, normalizedPath, nValForCurFeature + ".txt"));
         if (!b[n]) {
           curFeatureVectorList = mergedMap.get(nValForCurFeature);
           //System.out.println(nValForCurFeature + " " + mergedMap.get(nValForCurFeature).size());
@@ -225,7 +232,10 @@ public final class TrainerMemory {
           //  "mmodel " + nValForCurFeature + ".txt: "
           //  + Double.valueOf(MemoryUtil.deepMemoryUsageOf(model))/1024/1024 + " MB");
           //use weights but with old indexes
-          //saveModel(model,compactMap.get(nValForCurFeature), new File(splitModelsDir+"/"+nValForCurFeature+".txt"));
+          /*
+          saveModel(model, compactMap.get(nValForCurFeature),
+              new File(splitModelsDir + "/" + nValForCurFeature + ".txt"));
+          */
           Path curAlphaPath = GlobalConfig.SPLIT_ALPHA_FOLDER.resolve(nValForCurFeature + ".txt");
           Path curModelPath = GlobalConfig.SPLIT_MODELS_FOLDER.resolve(nValForCurFeature + ".txt");
           alpha.writeToFile(curAlphaPath, compactMap.get(nValForCurFeature));
@@ -239,7 +249,8 @@ public final class TrainerMemory {
           compactAlpha.removeUnusedFeatures(unusedFeatures);
           compactAlpha.writeToFile(curAlphaPath);
 
-          Trainer.removeUnusedFeaturesFromModel(curModelPath, unusedFeatures, compactAlpha.getNumberOfFeatures());
+          Trainer.removeUnusedFeaturesFromModel(
+              curModelPath, unusedFeatures, compactAlpha.getNumberOfFeatures());
           b[n] = true;
         }
       }
@@ -252,7 +263,8 @@ public final class TrainerMemory {
     System.out.println("... done : " + (end2 - startTime) / 1000 + " seconds.");
 
     long trainingEndTime = System.currentTimeMillis();
-    System.out.println("Complete Training time: " + ((trainingEndTime - trainingStartTime)) + " milliseconds.");
+    System.out.println(
+        "Complete Training time: " + ((trainingEndTime - trainingStartTime)) + " milliseconds.");
 
     Archivator arch = new Archivator(modelFileName);
     arch.pack();
@@ -281,7 +293,8 @@ public final class TrainerMemory {
       //TODO int curLabelMaxIndex = 1;
       Set<Integer> alreadyProcessed = new HashSet<Integer>();
       //TODO Set<Integer> alreadyProcessedLabels = new HashSet<Integer>();
-      List<FeatureVector> compactisedTrainingData = new ArrayList<FeatureVector>(curTrainingData.size());
+      List<FeatureVector> compactisedTrainingData =
+          new ArrayList<FeatureVector>(curTrainingData.size());
       for (FeatureVector oneFeatureVector : curTrainingData) {
         FeatureVector newFeatureVector = new FeatureVector();
         String label = oneFeatureVector.getLabel();
@@ -329,7 +342,8 @@ public final class TrainerMemory {
     List<FeatureNode[]> xList = new ArrayList<FeatureNode[]>();
     for (int i = 0; i < featureVectorList.size(); i++) {
       FeatureVector featureVector = featureVectorList.get(i);
-      FeatureNode[] featureNodeArray = featureVector.getLiblinearRepresentation(true, labels, alpha);
+      FeatureNode[] featureNodeArray =
+          featureVector.getLiblinearRepresentation(true, labels, alpha);
       int y = alpha.getLabelIndex(featureVector.getLabel());
       //TODO Integer x = 0;
       yList.add(y);

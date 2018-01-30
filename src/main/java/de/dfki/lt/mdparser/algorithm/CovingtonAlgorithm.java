@@ -53,7 +53,8 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
           FeatureVector featureVector = covFeatureModel.applyCombined(state, true, noLabels);
           // GN: determine the name of the operation/class using the information from
           // relevant tokens of the sentence
-          // and create the class/label name from it (an instance of left-arc, right-arc, shift, terminate)
+          // and create the class/label name from it (an instance of left-arc, right-arc,
+          // shift, terminate)
           String label = findOutCorrectLabelCombined(j, i, sentArray);
           //label = indianLabel(label,sentArray, j,i);
           //System.out.println(i+" "+j+" "+label+" ... "+fvParser);
@@ -125,7 +126,8 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
   // GN: Used in nereid.parser.MDPApi
   @Override
   public void parse(
-      Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap) {
+      Sentence sent, FeatureModel featureModel, boolean noLabels,
+      Map<String, Model> feature2ModelMap) {
 
     String[][] sentArray = sent.getSentArray();
     sent.setRootPosition(-1);
@@ -148,7 +150,8 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
           //System.out.println(mName+" "+curAlphabet);
           //System.out.println(+" "+curModel+" "+fm2+" "+fm2.getAlphabetParser());
           int labelInt = (int)Linear.predict(
-              curModel, featureVector.getLiblinearRepresentation(false, false, covFeatureModel.getParserAlphabet()));
+              curModel, featureVector.getLiblinearRepresentation(
+                  false, false, covFeatureModel.getParserAlphabet()));
 
           String label = covFeatureModel.getParserAlphabet().getLabel(labelInt);
           //System.out.println(j+" "+i+" "+label+" "+fvParser);
@@ -184,7 +187,8 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
   }
 
 
-  private static void postprocess(String[][] sentArray, Sentence sent, DependencyStructure depStruct) {
+  private static void postprocess(
+      String[][] sentArray, Sentence sent, DependencyStructure depStruct) {
 
     Set<Integer> headless = new HashSet<Integer>();
     for (int j = 0; j < sentArray.length; j++) {

@@ -22,7 +22,8 @@ public final class MDPrunner {
   }
 
 
-  public static Eval parseAndEvalConllFile(String conllFileName, String resultFileName, String modelFileName)
+  public static Eval parseAndEvalConllFile(
+      String conllFileName, String resultFileName, String modelFileName)
       throws IOException {
 
     Parser parser = new Parser(modelFileName);
@@ -31,9 +32,11 @@ public final class MDPrunner {
     return new Eval(conllFileName, resultFileName, 6, 6, 7, 7);
   }
 
+
   //TODO
   // To I really need this ?
-  public static void parseConllFileAndLinearize(String conllFileName, String resultFileName, String modelFileName)
+  public static void parseConllFileAndLinearize(
+      String conllFileName, String resultFileName, String modelFileName)
       throws IOException {
 
     Parser parser = new Parser(modelFileName);
@@ -49,7 +52,8 @@ public final class MDPrunner {
   }
 
 
-  public static void writeSentences(List<Sentence> sentencesList, String resultFileName, Charset encoding)
+  public static void writeSentences(
+      List<Sentence> sentencesList, String resultFileName, Charset encoding)
       throws IOException {
 
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(
@@ -68,7 +72,8 @@ public final class MDPrunner {
   }
 
 
-  public static void writeLinearizedSentences(List<Sentence> sentencesList, String resultFileName, Charset encoding)
+  public static void writeLinearizedSentences(
+      List<Sentence> sentencesList, String resultFileName, Charset encoding)
       throws IOException {
 
     try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(

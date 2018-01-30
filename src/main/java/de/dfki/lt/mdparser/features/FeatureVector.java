@@ -89,8 +89,12 @@ public class FeatureVector {
       }
       if (featureIndex == null) {
         featureIndex = alpha.getFeatureIndex(oneFeature.getFeatureString());
-        //System.out.println(featureIndex);
-        //System.out.println("old: " + alpha.getFeatureIndex(oneFeature.getFeatureString()) + " new: " + featureIndex);
+        /*
+        System.out.println(featureIndex);
+        System.out.println(
+            "old: " + alpha.getFeatureIndex(oneFeature.getFeatureString()) + " new: "
+                + featureIndex);
+        */
       }
       if (featureIndex != null) {
         indexList.add(featureIndex);

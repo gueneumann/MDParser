@@ -51,7 +51,8 @@ public class TrainWorker {
 
       System.out.println("... Steps: compactifize/sort training file " + file);
       System.out.println("... and store in " + GlobalConfig.SPLIT_COMPACT_FOLDER
-          + "; read problem and call trainer, and finally save models and alphabet, and edit them. ");
+          + "; read problem and call trainer, and finally save models and alphabet, "
+          + "and edit them. ");
       int[][] compactArray = compactiseTrainingDataFile(file, this.alpha.getNumberOfFeatures());
       //System.out.println("new to old size: "+compactArray[0].length);
 
@@ -59,7 +60,8 @@ public class TrainWorker {
       this.alpha.writeToFile(Paths.get(alphaFileName), compactArray);
 
       // GN: call the trainer
-      Problem prob = readProblem(GlobalConfig.SPLIT_COMPACT_FOLDER.resolve(file.getFileName()), this.bias);
+      Problem prob = readProblem(
+          GlobalConfig.SPLIT_COMPACT_FOLDER.resolve(file.getFileName()), this.bias);
       Linear.disableDebugOutput();
       Model model = Linear.train(prob, this.param);
 
@@ -74,7 +76,8 @@ public class TrainWorker {
       compactAlpha.removeUnusedFeatures(unusedFeatures);
       compactAlpha.writeToFile(Paths.get(alphaFileName));
 
-      Trainer.removeUnusedFeaturesFromModel(modelPath, unusedFeatures, compactAlpha.getNumberOfFeatures());
+      Trainer.removeUnusedFeaturesFromModel(
+          modelPath, unusedFeatures, compactAlpha.getNumberOfFeatures());
     } catch (IOException | InvalidInputDataException e) {
       e.printStackTrace();
     }
@@ -93,7 +96,8 @@ public class TrainWorker {
 
     try (PrintWriter out = new PrintWriter(
         Files.newBufferedWriter(
-            GlobalConfig.SPLIT_COMPACT_FOLDER.resolve(curentTrainingFile.getFileName()), StandardCharsets.UTF_8));
+            GlobalConfig.SPLIT_COMPACT_FOLDER.resolve(curentTrainingFile.getFileName()),
+            StandardCharsets.UTF_8));
         BufferedReader in = Files.newBufferedReader(curentTrainingFile, StandardCharsets.UTF_8)) {
       String line;
       int maxIndex = 1;
@@ -147,7 +151,8 @@ public class TrainWorker {
         try {
           yList.add(Integer.parseInt(token));
         } catch (NumberFormatException e) {
-          throw new InvalidInputDataException("invalid label: " + token, path.toString(), lineNr, e);
+          throw new InvalidInputDataException(
+              "invalid label: " + token, path.toString(), lineNr, e);
         }
 
         int m = st.countTokens() / 2;
@@ -165,7 +170,8 @@ public class TrainWorker {
           try {
             index = Integer.parseInt(token);
           } catch (NumberFormatException e) {
-            throw new InvalidInputDataException("invalid index: " + token, path.toString(), lineNr, e);
+            throw new InvalidInputDataException(
+                "invalid index: " + token, path.toString(), lineNr, e);
           }
 
           // assert that indices are valid and sorted
@@ -173,7 +179,8 @@ public class TrainWorker {
             throw new InvalidInputDataException("invalid index: " + index, path.toString(), lineNr);
           }
           if (index <= indexBefore) {
-            throw new InvalidInputDataException("indices must be sorted in ascending order", path.toString(), lineNr);
+            throw new InvalidInputDataException(
+                "indices must be sorted in ascending order", path.toString(), lineNr);
           }
           indexBefore = index;
 

@@ -37,10 +37,19 @@ public class StackAlgorithm extends ParsingAlgorithm {
     StackParserState curState = new StackParserState(stack, buffer, sentence, curDepStruct);
     while (!curState.isTerminal()) {
       FeatureVector featureVector = featureModel.applyCombined(curState, true, noLabels);
-      // System.out.print(curState.getStackToken(0)+" "+curState.getBufferToken(0)+" "+maxi+" "+stack+" "+buffer+" ");
+      /*
+      System.out.print(
+          curState.getStackToken(0) + " " + curState.getBufferToken(0) + " " + maxi + " " + stack
+              + " " + buffer + " ");
+      */
       String label =
-          findOutCorrectLabel2Combined(curState.getStack(), curState.getBufferToken(0), sentArray, goldDepStruct);
-      // System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
+          findOutCorrectLabel2Combined(curState.getStack(), curState.getBufferToken(0), sentArray,
+              goldDepStruct);
+      /*
+      System.out.println(
+          label + " " + curDepStruct.getDependencies() + " "
+              + curDepStruct.getDependencies().size());
+      */
       featureVector.setLabel(label);
       String labelTrans = "";
       if (label.contains("#")) {
@@ -50,14 +59,16 @@ public class StackAlgorithm extends ParsingAlgorithm {
         sentArray[curState.getStackToken(0) - 1][8] = String.valueOf(curState.getBufferToken(0));
         String depRel = sentArray[curState.getStackToken(0) - 1][7];
         sentArray[curState.getStackToken(0) - 1][9] = depRel;
-        curDepStruct.addDependency(new Dependency(curState.getStackToken(0), curState.getBufferToken(0), depRel));
+        curDepStruct.addDependency(
+            new Dependency(curState.getStackToken(0), curState.getBufferToken(0), depRel));
 
         stack.pop();
       } else if (labelTrans.equals("i")) {
         sentArray[curState.getBufferToken(0) - 1][8] = String.valueOf(curState.getStackToken(0));
         String depRel = sentArray[curState.getBufferToken(0) - 1][7];
         sentArray[curState.getBufferToken(0) - 1][9] = depRel;
-        curDepStruct.addDependency(new Dependency(curState.getBufferToken(0), curState.getStackToken(0), depRel));
+        curDepStruct.addDependency(
+            new Dependency(curState.getBufferToken(0), curState.getStackToken(0), depRel));
         stack.push(buffer.remove(0));
       } else if (label.equals("reduce")) {
         stack.pop();
@@ -82,7 +93,10 @@ public class StackAlgorithm extends ParsingAlgorithm {
     DependencyStructure goldDepStruct = new DependencyStructure(sentArray.length);
     for (int i = 0; i < sentArray.length; i++) {
       goldDepStruct.addDependency(
-          new Dependency(Integer.valueOf(sentArray[i][0]), Integer.valueOf(sentArray[i][6]), sentArray[i][7]));
+          new Dependency(
+              Integer.valueOf(sentArray[i][0]),
+              Integer.valueOf(sentArray[i][6]),
+              sentArray[i][7]));
     }
     return goldDepStruct;
   }
@@ -126,7 +140,8 @@ public class StackAlgorithm extends ParsingAlgorithm {
 
   @Override
   public void parse(
-      Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap) {
+      Sentence sent, FeatureModel featureModel, boolean noLabels,
+      Map<String, Model> feature2ModelMap) {
 
     String[][] sentArray = sent.getSentArray();
     Stack<Integer> buffer = initBuffer(sentArray.length);
@@ -137,16 +152,23 @@ public class StackAlgorithm extends ParsingAlgorithm {
     while (!curState.isTerminal()) {
       super.incNumberOfConfigurations();
       FeatureVector featureVector = featureModel.applyCombined(curState, true, noLabels);
-      //System.out.print(sent.getRootPosition()+" "+curState.getStackToken(0)+" "+curState.getBufferToken(0)
-      //+" "+stack+" "+buffer+" ");
+      /*
+      System.out.print(sent.getRootPosition() + " " + curState.getStackToken(0) + " "
+          + curState.getBufferToken(0)
+          + " " + stack + " " + buffer + " ");
+      */
       Model curModel = feature2ModelMap.get(featureVector.getFeature("pj").getFeatureString());
       if (curModel == null) {
         curModel = feature2ModelMap.values().iterator().next();
       }
       int labelInt = (int)Linear.predict(
-          curModel, featureVector.getLiblinearRepresentation(false, false, featureModel.getParserAlphabet()));
+          curModel,
+          featureVector.getLiblinearRepresentation(false, false, featureModel.getParserAlphabet()));
       String label = featureModel.getParserAlphabet().getLabel(labelInt);
-      //System.out.println(label+" "+curDepStruct.getDependencies()+" "+curDepStruct.getDependencies().size());
+      /*
+      System.out.println(label + " " + curDepStruct.getDependencies() + " "
+          + curDepStruct.getDependencies().size());
+      */
       String labelTrans = "";
       String labelDepRel = "";
       if (label.contains("#")) {
@@ -159,7 +181,8 @@ public class StackAlgorithm extends ParsingAlgorithm {
         String depRel = labelDepRel;
         sentArray[curState.getStackToken(0) - 1][7] = depRel;
         sentArray[curState.getStackToken(0) - 1][9] = depRel;
-        curDepStruct.addDependency(new Dependency(curState.getStackToken(0), curState.getBufferToken(0), depRel));
+        curDepStruct.addDependency(
+            new Dependency(curState.getStackToken(0), curState.getBufferToken(0), depRel));
         stack.pop();
       } else if (labelTrans.equals("i")) {
         int head = curState.getStackToken(0);
@@ -167,7 +190,8 @@ public class StackAlgorithm extends ParsingAlgorithm {
         String depRel = labelDepRel;
         sentArray[curState.getBufferToken(0) - 1][7] = depRel;
         sentArray[curState.getBufferToken(0) - 1][9] = depRel;
-        curDepStruct.addDependency(new Dependency(curState.getBufferToken(0), curState.getStackToken(0), depRel));
+        curDepStruct.addDependency(
+            new Dependency(curState.getBufferToken(0), curState.getStackToken(0), depRel));
         stack.push(buffer.remove(0));
         if (head == 0) {
           sent.setRootPosition(curState.getBufferToken(0));

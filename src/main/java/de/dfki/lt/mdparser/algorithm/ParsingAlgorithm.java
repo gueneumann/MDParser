@@ -42,7 +42,8 @@ public abstract class ParsingAlgorithm {
 
   //TEST-GDS-COMBINED
   public abstract void parse(
-      Sentence sent, FeatureModel featureModel, boolean noLabels, Map<String, Model> feature2ModelMap);
+      Sentence sent, FeatureModel featureModel, boolean noLabels,
+      Map<String, Model> feature2ModelMap);
 
 
   public synchronized String findMostFrequentLabel(String pos) {

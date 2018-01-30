@@ -91,19 +91,23 @@ public class StackFeatureModel extends FeatureModel {
     fIndex = parserAlpha.getFeatureIndex(fpi_fpj.getFeatureString());
     fpi_fpj.setParserIndex(fIndex);
     featureVector.addFeature(fpi_fpj, parserAlpha, train);
-    Feature fpjp2_fpjp1_fpi = FeatureExtractor.mergeFeatures(1, this.featureNamesForMerging, fpjp1, fpj, fpi);
+    Feature fpjp2_fpjp1_fpi =
+        FeatureExtractor.mergeFeatures(1, this.featureNamesForMerging, fpjp1, fpj, fpi);
     fIndex = parserAlpha.getFeatureIndex(fpjp2_fpjp1_fpi.getFeatureString());
     fpjp2_fpjp1_fpi.setParserIndex(fIndex);
     featureVector.addFeature(fpjp2_fpjp1_fpi, parserAlpha, train);
-    Feature fpj_fpi1_fpip1 = FeatureExtractor.mergeFeatures(2, this.featureNamesForMerging, fpj, fpi, fpip1);
+    Feature fpj_fpi1_fpip1 =
+        FeatureExtractor.mergeFeatures(2, this.featureNamesForMerging, fpj, fpi, fpip1);
     fIndex = parserAlpha.getFeatureIndex(fpj_fpi1_fpip1.getFeatureString());
     fpj_fpi1_fpip1.setParserIndex(fIndex);
     featureVector.addFeature(fpj_fpi1_fpip1, parserAlpha, train);
-    Feature fpi_fpip1_fpip2 = FeatureExtractor.mergeFeatures(3, this.featureNamesForMerging, fpi, fpip1, fpip2);
+    Feature fpi_fpip1_fpip2 =
+        FeatureExtractor.mergeFeatures(3, this.featureNamesForMerging, fpi, fpip1, fpip2);
     fIndex = parserAlpha.getFeatureIndex(fpi_fpip1_fpip2.getFeatureString());
     fpi_fpip1_fpip2.setParserIndex(fIndex);
     featureVector.addFeature(fpi_fpip1_fpip2, parserAlpha, train);
-    Feature fpip1_fpip2_fpip3 = FeatureExtractor.mergeFeatures(4, this.featureNamesForMerging, fpip1, fpip2, fpip3);
+    Feature fpip1_fpip2_fpip3 =
+        FeatureExtractor.mergeFeatures(4, this.featureNamesForMerging, fpip1, fpip2, fpip3);
     fIndex = parserAlpha.getFeatureIndex(fpip1_fpip2_fpip3.getFeatureString());
     fpip1_fpip2_fpip3.setParserIndex(fIndex);
     featureVector.addFeature(fpip1_fpip2_fpip3, parserAlpha, train);

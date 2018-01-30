@@ -8,12 +8,19 @@ import java.util.Set;
 import de.dfki.lt.mdparser.data.Sentence;
 import de.dfki.lt.mdparser.parser.ConllUtils;
 
-public class TestConllUtils {
+public final class TestConllUtils {
+
+  private TestConllUtils() {
+
+    // private constructor to enforce noninstantiability
+  }
+
 
   public static void main(String[] args) {
 
     try {
-      List<Sentence> sentences = ConllUtils.readConllFile("/Users/gune00/data/MLDP/2009/en-train-2009.conll", true);
+      List<Sentence> sentences =
+          ConllUtils.readConllFile("/Users/gune00/data/MLDP/2009/en-train-2009.conll", true);
       //Data d = new Data("input/english.train", true);
       countDifLabels(sentences);
     } catch (IOException e) {

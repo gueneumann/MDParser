@@ -9,8 +9,8 @@ public class Dependency {
 
   private String label;
 
-//  private String dependentString;
-//  private String headString;
+  //  private String dependentString;
+  //  private String headString;
 
   private String dependentWord;
   private String dependentPos;
@@ -59,7 +59,7 @@ public class Dependency {
   }
 
 
-  public void setHeadString (String headWord, String headPos) {
+  public void setHeadString(String headWord, String headPos) {
 
     this.headWord = headWord;
     this.headPos = headPos;
@@ -175,9 +175,12 @@ public class Dependency {
 
   public boolean isPermissible(DependencyStructure depStruct, boolean projective) {
 
-    //System.out.println("single head: " + this.isSingleHead(depStruct) + " not reflexive: " + this.isNotReflexive()
-    //    + " not introducing cycle: " + notIntroducingCycle(depStruct) + " is not improper root "
-    //    + this.isNotImproperRoot() + " is projective " + this.isProjective(depStruct));
+    /*
+    System.out.println(
+        "single head: " + this.isSingleHead(depStruct) + " not reflexive: " + this.isNotReflexive()
+            + " not introducing cycle: " + notIntroducingCycle(depStruct) + " is not improper root "
+            + this.isNotImproperRoot() + " is projective " + this.isProjective(depStruct));
+    */
     int[] heads = depStruct.getHeads();
     if (projective) {
       return this.isSingleHead(heads)

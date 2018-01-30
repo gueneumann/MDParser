@@ -27,7 +27,8 @@ public class TestMDParser {
       throws IOException {
 
     Utils.deleteFolder(GlobalConfig.getModelBuildFolder());
-    List<Path> filesToDelete = Utils.getAllFilesFromFolder(Paths.get("src/test/resources"), "*.zip");
+    List<Path> filesToDelete =
+        Utils.getAllFilesFromFolder(Paths.get("src/test/resources"), "*.zip");
     for (Path oneFileToDelete : filesToDelete) {
       Files.delete(oneFileToDelete);
     }
@@ -89,7 +90,8 @@ public class TestMDParser {
         Paths.get("src/test/resources/expected/file-" + algorithmId + "/split_alphas"));
     compareFolders(
         GlobalConfig.FEATURE_VECTORS_FOLDER,
-        Paths.get("src/test/resources/expected/file-" + algorithmId + "/1_initial_feature_vectors"));
+        Paths.get(
+            "src/test/resources/expected/file-" + algorithmId + "/1_initial_feature_vectors"));
     compareFolders(
         GlobalConfig.SPLIT_INITIAL_FOLDER,
         Paths.get("src/test/resources/expected/file-" + algorithmId + "/2_initial_splits"));
@@ -103,10 +105,12 @@ public class TestMDParser {
         GlobalConfig.SPLIT_MODELS_FOLDER,
         Paths.get("src/test/resources/expected/file-" + algorithmId + "/split_models"));
     assertThat(GlobalConfig.ALPHA_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/file-" + algorithmId + "/alpha.txt"),
+        .hasSameContentAs(
+            Paths.get("src/test/resources/expected/file-" + algorithmId + "/alpha.txt"),
             StandardCharsets.UTF_8);
     assertThat(GlobalConfig.SPLIT_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/file-" + algorithmId + "/split.txt"),
+        .hasSameContentAs(
+            Paths.get("src/test/resources/expected/file-" + algorithmId + "/split.txt"),
             StandardCharsets.UTF_8);
   }
 
@@ -165,15 +169,18 @@ public class TestMDParser {
         GlobalConfig.SPLIT_MODELS_FOLDER,
         Paths.get("src/test/resources/expected/memory-" + algorithmId + "/split_models"));
     assertThat(GlobalConfig.ALPHA_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/memory-" + algorithmId + "/alpha.txt"),
+        .hasSameContentAs(
+            Paths.get("src/test/resources/expected/memory-" + algorithmId + "/alpha.txt"),
             StandardCharsets.UTF_8);
     assertThat(GlobalConfig.SPLIT_FILE).usingCharset(StandardCharsets.UTF_8)
-        .hasSameContentAs(Paths.get("src/test/resources/expected/memory-" + algorithmId + "/split.txt"),
+        .hasSameContentAs(
+            Paths.get("src/test/resources/expected/memory-" + algorithmId + "/split.txt"),
             StandardCharsets.UTF_8);
   }
 
 
-  private void testEval(String modelName, double expectedParentAccuracy, double expectedLabelAccuracy)
+  private void testEval(
+      String modelName, double expectedParentAccuracy, double expectedLabelAccuracy)
       throws IOException {
 
     Eval evaluator = MDPrunner.parseAndEvalConllFile(
@@ -196,7 +203,8 @@ public class TestMDParser {
     filesCreatedByTest.sort(null);
     expectedFiles.sort(null);
     for (int i = 0; i < filesCreatedByTest.size(); i++) {
-      assertThat(filesCreatedByTest.get(i).getFileName()).isEqualTo(expectedFiles.get(i).getFileName());
+      assertThat(filesCreatedByTest.get(i).getFileName())
+          .isEqualTo(expectedFiles.get(i).getFileName());
       assertThat(filesCreatedByTest.get(i)).usingCharset(StandardCharsets.UTF_8)
           .hasSameContentAs(expectedFiles.get(i), StandardCharsets.UTF_8);
     }
