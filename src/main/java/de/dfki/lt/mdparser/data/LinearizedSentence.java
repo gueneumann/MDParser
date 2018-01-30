@@ -72,7 +72,8 @@ public class LinearizedSentence {
   private String makeSentenceTokenPosNode(Dependency dependency) {
 
     return dependency.getDependentWord()
-        + "|"
+     // please note that this is NOT the standard pipe character
+        + "￨"
         + dependency.getDependentPos();
   }
 
