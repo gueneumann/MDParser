@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +119,45 @@ public class Parser {
     }
 
     return sentencesList;
+  }
+
+
+  /**
+   * Applies the tagger to the tokens of the given CoNLL tables.
+   *
+   * @param coNllTables
+   *          CoNLL tables, each table representing a single sentence
+   * @param headColumnIndex
+   *          column where to add the dependency relation head indices, zero-based
+   * @param deprelColumnIndex
+   *          column where to add the dependency relation label, zero-based
+   * @return CoNLL tables, extended with dependency relations
+   */
+  public List<String[][]> parse(
+      List<String[][]> coNllTables, int headColumnIndex, int deprelColumnIndex) {
+
+    // create parser internal sentences
+    List<Sentence> sentences = new ArrayList<>();
+    for (String[][] oneCoNllTable : coNllTables) {
+      // copy table, as MDParser modifies it internally
+      String[][] oneCoNllTableCopy = new String[oneCoNllTable.length][];
+      for (int i = 0; i < oneCoNllTable.length; i++) {
+        oneCoNllTableCopy[i] = Arrays.copyOf(oneCoNllTable[i], oneCoNllTable[i].length);
+      }
+      sentences.add(new Sentence(oneCoNllTableCopy));
+    }
+    // create dependency structures
+    sentences = parse(sentences);
+    // write dependency structures to CoNLL tables
+    for (int i = 0; i < sentences.size(); i++) {
+      Sentence oneSentence = sentences.get(i);
+      String[][] oneCoNllTable = coNllTables.get(i);
+      for (int j = 0; j < oneCoNllTable.length; j++) {
+        oneCoNllTable[j][headColumnIndex] = oneSentence.getSentArray()[j][6];
+        oneCoNllTable[j][deprelColumnIndex] = oneSentence.getSentArray()[j][7];
+      }
+    }
+    return coNllTables;
   }
 
 
