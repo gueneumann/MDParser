@@ -88,6 +88,9 @@ public class Alphabet {
   }
 
 
+  // GN:
+  // This causes an error, because it seems that it can happen that the hash map contains curIndex
+  // whose value us larger as that of the size of the hashmap
   private synchronized String[] getIndex2FeatureArray() {
 
     if (this.featureArrayDirty) {
