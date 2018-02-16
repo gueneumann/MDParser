@@ -12,6 +12,8 @@ import de.dfki.lt.mdparser.data.Sentence;
 
 public final class ConllUtils {
 
+  public static int infosize = 12;
+
   private ConllUtils() {
 
     // private constructor to enforce noninstantiability
@@ -21,7 +23,7 @@ public final class ConllUtils {
   public static List<Sentence> readConllFile(String conllFileName, boolean train)
       throws IOException {
 
-    int infoSize = 12;
+    int infoSize = ConllUtils.infosize;
 
     List<Sentence> sentencesList = new ArrayList<Sentence>();
 
