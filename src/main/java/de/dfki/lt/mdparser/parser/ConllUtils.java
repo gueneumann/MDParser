@@ -30,6 +30,7 @@ public final class ConllUtils {
     try (BufferedReader in = Files.newBufferedReader(
         Paths.get(conllFileName), StandardCharsets.UTF_8)) {
       List<String> curSent = new ArrayList<String>(50);
+
       String line;
       while ((line = in.readLine()) != null) {
         if (line.length() > 0) {
@@ -44,6 +45,8 @@ public final class ConllUtils {
           curSent.add(line);
         } else {
           String[][] sentArray = new String[curSent.size()][infoSize];
+          //System.err.println(curSent);
+
           for (int i = 0; i < curSent.size(); i++) {
             String[] curWord = curSent.get(i).split("\t");
 
@@ -63,6 +66,30 @@ public final class ConllUtils {
           curSent = new ArrayList<String>();
         }
       }
+      // Add all items upto eof -> should be a function call !!
+      {
+        String[][] sentArray = new String[curSent.size()][infoSize];
+        //System.err.println(curSent);
+
+        for (int i = 0; i < curSent.size(); i++) {
+          String[] curWord = curSent.get(i).split("\t");
+
+          //System.err.println("Label: " + curWord[7]);
+
+          for (int j = 0; j < curWord.length; j++) {
+            if (!train && (j == 6 || j == 7 || j == 8 || j == 9)) {
+              sentArray[i][j] = null;
+            } else if (train && (j == 8 || j == 9)) {
+              sentArray[i][j] = null;
+            } else {
+              sentArray[i][j] = curWord[j].trim();
+            }
+          }
+        }
+        sentencesList.add(new Sentence(sentArray));
+        curSent = new ArrayList<String>();
+      }
+
     }
 
     return sentencesList;
