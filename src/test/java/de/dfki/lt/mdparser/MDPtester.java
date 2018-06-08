@@ -50,23 +50,23 @@ public final class MDPtester {
           "resources/input/german_tiger_test.conll", "resources/input/german_tiger_result.conll");
       */
 
-      /*
+      ///*
       trainAndEvaluate("resources/input/en-train-2009.conll", "en-2009.zip",
           "resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
-      */
+      //*/
 
       /*
       trainAndEvaluate("resources/input/de-train-2009.conll", "de-2009.zip",
           "resources/input/de-test-2009.conll", "resources/input/de-result-2009.conll");
       */
 
-      // DE
-      trainAndEvaluate("de-train-2009.conll", "de-2009.zip",
-          "de-test-2009.conll", "de-2009-result.conll");
-
-      // EN
-      trainAndEvaluate("en-train-2009.conll", "en-2009.zip",
-          "en-test-2009.conll", "en-2009-result.conll");
+//      // DE
+//      trainAndEvaluate("de-train-2009.conll", "de-2009.zip",
+//          "de-test-2009.conll", "de-2009-result.conll");
+//
+//      // EN
+//      trainAndEvaluate("en-train-2009.conll", "en-2009.zip",
+//          "en-test-2009.conll", "en-2009-result.conll");
 
       // pure Tiger corpus
       /*

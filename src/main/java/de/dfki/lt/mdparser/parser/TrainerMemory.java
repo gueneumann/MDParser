@@ -93,6 +93,7 @@ public final class TrainerMemory {
       //     the result is then a list of parser states in form of feature vectors whose values
       //     are based one the specific training example
       List<FeatureVector> featureVectorList = algorithm.train(sent, model, noLabels);
+
       totalConfigurations += featureVectorList.size();
 
       // GN: for each feature vector (which represents ONE parser configuration) do

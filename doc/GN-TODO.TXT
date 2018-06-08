@@ -22,25 +22,21 @@ Feb, 2017:
 -> defined non-parallel versions for training and application
 -> DONE
 
-HIERIX
-
-- remove MorphAdorner -> use GNT GntTextSegmentizer instead
+- remove MorphAdorner -> use GNT GntTextSegmentizer instead -> DONE
 
 - remove reference to nemex -> DONE
 
-- remove reference to SVN tagger via Nereid -> use GNT tagger instead
+- remove reference to SVN tagger via Nereid -> use GNT tagger instead -> DONE
 
-- remove or adapt sentence splitter or move to Gnt
+- remove or adapt sentence splitter or move to Gnt -> DONE
 
-- clean code
+- clean code -> DONE
 
-- log file
+- log file -> DONE
 
 - properties for training with MDParser and POS
 
-- github wiki docu
-
-- apply MDParser for SRL-AMR
+- github wiki docu -> DONE
 
 Improve MDP:
 
@@ -113,19 +109,29 @@ um dann festzustellen, dass es zu selten ist, dann würde man Zeit sparen.
 d.h. im Prinzip wird es nur an einer Stelle geändert und gilt für beide Phasen.
 
 
+HIERIX:, June, 2018:
+
 MDParser and Morphology
 - check how to integrate morphology and stemming
-- how to generate goldstandard with true morphix results
-    - POS from training data
-    - labels used for disambiguation
-    - stems from morphix
-    - I would to create a morphix-model for disambiguation
-    - then learn a dependency grammar that also uses the morpholgical constraints
-- how to integrate it into preprocessing
-    - I would to create a morphix-model for disambiguation
-    - then apply morphix, map to conll format, filter withnpos tagger and then
-      apply model - in this caseneventually no pos tagger necessary ?
-      
-FEB, 2017:
 
-Define DFKIdependencyPipeline
+using Universal Dependency UD
+
+add feature functions in de.dfki.lt.mdparser.features.FeatureExtractor
+
+- morph feature from UD (or only some features)
+- cluster ID of words: using Marmot
+
+Do ablation tests for features:
+
+- pj is essential feature
+  - what else
+- check how far WORDs are necessary
+- which dynamic features are necessary
+
+- ablation test could be realized by listing all names of existing features and then
+  only use those which are listed !
+
+
+
+
+      

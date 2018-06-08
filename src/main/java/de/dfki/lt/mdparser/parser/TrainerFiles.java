@@ -135,6 +135,9 @@ public final class TrainerFiles {
     // using a distributed approach based on the available processors
     // stores and adjust the split files in folder split/
     // and finally calls the trainer on each file in parallel
+
+    // GN: NOTE
+    // This means that files are spit based on POS tags, hence feature pj is essential !
     alpha.writeToFile(GlobalConfig.ALPHA_FILE);
     int numberOfFeatures = alpha.getNumberOfFeatures();
     // feature indices start at 1, so we iterate until num + 1

@@ -81,6 +81,16 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
       }
     }
     //postprocess(sentArray, sent,curDepStruct);
+
+//    System.out.println(sent.toString());
+//    int cntP = 1;
+//    for (FeatureVector x : featureVectorList){
+//      System.out.println(cntP +": " + x.toString());
+//      cntP++;
+//    }
+//    System.out.println("----------------");
+
+
     return featureVectorList;
   }
 

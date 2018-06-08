@@ -195,6 +195,22 @@ i = left word
 26. merge3(wfj,wfi,pjp3)		= returns the concatenation of wfj, wfi and pjp3 features
 27. merge3(dist,pj,wfjp1)		= returns the concatenation of dist, pj and pjp1 features
 
+
+NOTE: GN, June, 2018:
+
+when features depl* and depr* are commented put in de.dfki.lt.mdparser.features.CovingtonFeatureModel.applyCombined(ParserState, boolean, boolean)
+-> NO effect on accuracy
+
+when features wfj and wfi are commented out in de.dfki.lt.mdparser.features.CovingtonFeatureModel.initializeStaticFeaturesCombined(Sentence, boolean)
+-> only modest decrease (about 0.03)
+
+removing pi has no effect, even improves a little bit
+
+removing pj creates crash
+-> no creation of src/test/resources/model/split_alphas
+-> OK; this is because  files are split based on POS tag set and hence feature pj is essential !
+
+
 ******* Feature templates of MDP 
 
 are defined in de.dfki.lt.mdparser.features.FeatureExtractor.templatePos(int, String, Sentence)

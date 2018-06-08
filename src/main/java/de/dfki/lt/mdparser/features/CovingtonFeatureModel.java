@@ -113,7 +113,7 @@ public class CovingtonFeatureModel extends FeatureModel {
   -> but harmless according to AV -> but I do not use it
   11. pip1  OK (used as static)
   pip2  EXTRA in Implementation
-  
+
   12. wfhi  OK (used as dynamic)
   13. phi   OK (used as dynamic)
   14. depi  OK (used as dynamic)
@@ -121,13 +121,13 @@ public class CovingtonFeatureModel extends FeatureModel {
   16. deprdi  OK (used as dynamic)
   17. depldj  OK (used as dynamic)
   18. dist  OK (used as dynamic)
-  
+
   19. merge2(pi,pip1)       OK (used as static no. 0)
   20. merge2(wfi,pi)        UNCLEAR (used as static no. 1)
-  -> is/was actually used with cposi, which is basically the same as pi, 
+  -> is/was actually used with cposi, which is basically the same as pi,
   but unclear why is this defined
   21. merge3(pjp1,pjp2,pjp3)    OK (used as static no. 2)
-  
+
   22. merge2(depldj,pj)     OK (used as dynamic no. 3; access to static features)
   23. merge3(pi,deprdi,depldi)  OK (used as dynamic no. 4; access to static features)
   24. merge2(depi,wfhi)     OK (used as dynamic no. 5)
@@ -232,7 +232,7 @@ public class CovingtonFeatureModel extends FeatureModel {
     // GN: show contents of static features J
     // System.out.println("curStaticFeaturesJ: ");
 
-    // GN: I read this as such as the static features are inserted dynamically for 
+    // GN: I read this as such as the static features are inserted dynamically for
     // each new training example.
     // The advantage is that we do not have to build the feature-value strings again.
     // So, this is how static features are used in memorization manner.
@@ -291,7 +291,7 @@ public class CovingtonFeatureModel extends FeatureModel {
         6, this.featureNamesForMerging, fphi, curStaticFeaturesI[1], curStaticFeaturesJ[1]);
     featureVector.addFeature(fphi_fpjp1_fpip1, parserAlpha, train);
 
-    // curStaticFeaturesJ[4] wfj is , curStaticFeaturesI[2] is wfi, curStaticFeaturesJ[2] is pjp2
+    // curStaticFeaturesJ[4] is wfj, curStaticFeaturesI[2] is wfi, curStaticFeaturesJ[2] is pjp2
     // laut thesis muesste das sein: wfj,wfi,pjp3
     Feature fst2 = FeatureExtractor.mergeFeatures(
         7, this.featureNamesForMerging, curStaticFeaturesJ[4], curStaticFeaturesI[2],
