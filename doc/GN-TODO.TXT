@@ -81,16 +81,11 @@ Den Tipp mit den Integer-Multiplikationen hatte ich schon damals erhalten
 als wir Besuch von Google(Slav Petrov) hatten. 
 Er wollte/konnte mir jedoch keine Einzelheiten verraten. 
 
-Ich meinte aber die Anwendung von hashCode() ausprobiert zu haben, 
-ohne den im Paper beschriebenen Erfolg. Man muss ja bedenken, 
+Ich meinte aber die Anwendung von hashCode() ausprobiert zu haben, ohne den im Paper beschriebenen Erfolg. Man muss ja bedenken, 
 auch Konkatenationen sind sehr billig, problematisch ist nur ihre Anzahl. 
-Durch die Multiplikationen sinkt die Anzahl nicht, daher kann es meiner Meinung 
-nach nicht zum Durchbruch kommen. 
+Durch die Multiplikationen sinkt die Anzahl nicht, daher kann es meiner Meinung nach nicht zum Durchbruch kommen. 
 
-Die anderen Schritte sind sehr glaubwürdig, 
-insbesondere die Experimente mit der Permissibility, 
-ich muss gestehen ich habe nie daran gedacht damit rumzuspielen, 
-erkenne aber jetzt das Potenzial.
+Die anderen Schritte sind sehr glaubwürdig, insbesondere die Experimente mit der Permissibility, ich muss gestehen ich habe nie daran gedacht damit rumzuspielen, erkenne aber jetzt das Potenzial.
 
 Hallo Herr Neumann,
 
@@ -130,8 +125,6 @@ Do ablation tests for features:
 
 - ablation test could be realized by listing all names of existing features and then
   only use those which are listed !
-
-
-
-
-      
+  
+Check de.dfki.lt.mdparser.algorithm.Dependency.isProjective(int[])
+- did tests but do not see what it brings

@@ -56,8 +56,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
           // and create the class/label name from it (an instance of left-arc, right-arc,
           // shift, terminate)
           String label = findOutCorrectLabelCombined(j, i, sentArray);
-          //label = indianLabel(label,sentArray, j,i);
-          //System.out.println(i+" "+j+" "+label+" ... "+fvParser);
+          //System.out.println(i+" "+j+" "+label+" ... "+featureVector.toString());
           String labelTrans = "";
           if (label.contains("#")) {
             labelTrans = label.split("#")[0];
