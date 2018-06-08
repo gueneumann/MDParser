@@ -137,6 +137,8 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
   public void parse(
       Sentence sent, FeatureModel featureModel, boolean noLabels,
       Map<String, Model> feature2ModelMap) {
+// For tracing
+//    List<FeatureVector> featureVectorList = new ArrayList<FeatureVector>();
 
     String[][] sentArray = sent.getSentArray();
     sent.setRootPosition(-1);
@@ -163,7 +165,10 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
                   false, false, covFeatureModel.getParserAlphabet()));
 
           String label = covFeatureModel.getParserAlphabet().getLabel(labelInt);
-          //System.out.println(j+" "+i+" "+label+" "+fvParser);
+
+//          featureVector.setLabel(label);
+//          featureVectorList.add(featureVector);
+
           String labelTrans = "";
           String labelDepRel = "";
           if (label.contains("#")) {
@@ -172,6 +177,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
           }
           //System.out.println(j+" "+i+" "+ps.isL1Permissible()+" "+ps.isL2Permissible());
           if (labelTrans.equals("j") && state.isL1Permissible()) {
+
             sentArray[j - 1][6] = String.valueOf(i);
             String depRel = labelDepRel;
             sentArray[j - 1][7] = depRel;
@@ -181,6 +187,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
               sent.setRootPosition(j);
             }
           } else if (labelTrans.equals("i") && state.isL2Permissible()) {
+
             sentArray[i - 1][6] = String.valueOf(j);
             String depRel = labelDepRel;
             sentArray[i - 1][7] = depRel;
@@ -192,7 +199,17 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
         }
       }
     }
-    postprocess(sentArray, sent, curDepStruct);
+
+    // For tracing
+//  System.out.println(sent.toString());
+//  int cntP = 1;
+//  for (FeatureVector x : featureVectorList){
+//    System.out.println(cntP +": " + x.toString());
+//    cntP++;
+//  }
+//  System.out.println("----------------");
+
+    //postprocess(sentArray, sent, curDepStruct);
   }
 
 

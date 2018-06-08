@@ -125,6 +125,16 @@ Do ablation tests for features:
 
 - ablation test could be realized by listing all names of existing features and then
   only use those which are listed !
+  -> define here: de.dfki.lt.mdparser.features.CovingtonFeatureModel
   
 Check de.dfki.lt.mdparser.algorithm.Dependency.isProjective(int[])
 - did tests but do not see what it brings
+
+Integrate tracing:
+- store in file CONLL trees and feature vectors + labels
+- do it for training and testing
+
+On training I only achieve:
+
+Parent accuracy: 0.9210743012439376
+Label accuracy:  0.9067333773757602

@@ -36,6 +36,20 @@ public final class MDPtester {
     System.out.println("\n\n");
   }
 
+  private static void testAndEvaluate(String modelFileName, String testConllFileName,
+      String resultFileName)
+      throws IOException {
+
+    // evaluation
+    System.out.println("Do evaluation with: " + testConllFileName);
+    Eval evaluator = MDPrunner.parseAndEvalConllFile(testConllFileName, resultFileName,
+        // load model from file system and not classpath
+        GlobalConfig.getPath(ConfigKeys.MODEL_OUTPUT_FOLDER).resolve(modelFileName).toString());
+    System.out.println("Parent accuracy: " + evaluator.getParentsAccuracy());
+    System.out.println("Label accuracy:  " + evaluator.getLabelsAccuracy());
+    System.out.println("\n\n");
+  }
+
 
   public static void main(String[] args) {
 
@@ -50,8 +64,13 @@ public final class MDPtester {
           "resources/input/german_tiger_test.conll", "resources/input/german_tiger_result.conll");
       */
 
-      ///*
+      /*
       trainAndEvaluate("resources/input/en-train-2009.conll", "en-2009.zip",
+          "resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
+      */
+
+    ///*
+      testAndEvaluate("en-2009.zip",
           "resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
       //*/
 
