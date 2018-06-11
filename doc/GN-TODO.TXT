@@ -138,3 +138,46 @@ On training I only achieve:
 
 Parent accuracy: 0.9210743012439376
 Label accuracy:  0.9067333773757602
+
+## MDP dependency analysis on train of iread languages:
+
+Complete testing for 4 languages:
+System time (msec): 13201
+Lang                 |  UAS   |  LAS   |  Speed tot. 
+--------------------------------------------
+English              |  91.06 |  89.74 | 
+German               |  86.91 |  84.63 | 
+Greek                |  90.79 |  89.03 | 
+Spanish              |  89.99 |  87.86 | 
+--------------------------------------------
+Avg                  |  89.69 |  87.81
+
+
+
+NOTE:
+Liblinear solver is set hard-frozen:
+
+de.dfki.lt.mdparser.parser.TrainWorker.TrainWorker(Alphabet, double)
+de.dfki.lt.mdparser.parser.TrainerMemory.trainWithSplittingFromMemory(String, String)
+
+Used defaults:
+
+new Parameter(SolverType.MCSVM_CS, 0.1, 0.3)
+
+(in TrainWorker eps = 0.1 is used, but shows no effect for en-train:
+Parent accuracy: 0.9212350247921292
+Label accuracy:  0.906892013605144
+)
+
+
+de.dfki.lt.mdparser.parser.TrainerFiles.trainWithSplittingFromDisk(String, String)
+de.dfki.lt.mdparser.parser.TrainerMemory.trainWithSplittingFromMemory(String, String)
+
+Used default:
+
+bias = -1
+
+de.dfki.lt.mdparser.parser.Trainer.restoreModels(Path, Alphabet, Path)
+
+Used default:
+Uses string of solver type into to model file

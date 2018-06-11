@@ -69,10 +69,10 @@ public final class MDPtester {
           "resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
       */
 
-    ///*
+//    /*
       testAndEvaluate("en-2009.zip",
           "resources/input/en-test-2009.conll", "resources/input/en-result-2009.conll");
-      //*/
+//      */
 
       /*
       trainAndEvaluate("resources/input/de-train-2009.conll", "de-2009.zip",

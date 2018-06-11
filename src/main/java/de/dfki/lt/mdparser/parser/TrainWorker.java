@@ -36,7 +36,7 @@ public class TrainWorker {
 
     this.alpha = alpha;
     this.bias = bias;
-    this.param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.1);
+    this.param = new Parameter(SolverType.MCSVM_CS, 0.1, 0.3);
 
     Files.createDirectories(GlobalConfig.SPLIT_COMPACT_FOLDER);
     Files.createDirectories(GlobalConfig.SPLIT_MODELS_FOLDER);
