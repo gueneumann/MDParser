@@ -181,3 +181,7 @@ de.dfki.lt.mdparser.parser.Trainer.restoreModels(Path, Alphabet, Path)
 
 Used default:
 Uses string of solver type into to model file
+
+NOTE:
+
+In mdparser.pdf Alexander uses L1 regularized logistic regression
