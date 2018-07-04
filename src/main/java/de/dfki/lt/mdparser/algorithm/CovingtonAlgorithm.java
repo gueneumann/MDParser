@@ -209,7 +209,7 @@ public class CovingtonAlgorithm extends ParsingAlgorithm {
 //  }
 //  System.out.println("----------------");
 
-    //postprocess(sentArray, sent, curDepStruct);
+    postprocess(sentArray, sent, curDepStruct);
   }
 
 
